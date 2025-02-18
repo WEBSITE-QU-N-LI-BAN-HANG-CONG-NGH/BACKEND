@@ -25,9 +25,6 @@ public class Image {
     @JoinColumn(name="download_url")
     private String downloadUrl;
 
-    @Lob
-    private Blob image;
-
     @ManyToOne
     @JoinColumn(name="product_id")
     private Product product;

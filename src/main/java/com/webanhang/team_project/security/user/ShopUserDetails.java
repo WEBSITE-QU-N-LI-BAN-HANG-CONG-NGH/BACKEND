@@ -1,8 +1,10 @@
 package com.webanhang.team_project.security.user;
 
 import com.webanhang.team_project.enums.UserRole;
-import jakarta.persistence.Entity;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,7 +19,7 @@ import java.util.Collections;
 @EqualsAndHashCode
 public class ShopUserDetails implements UserDetails {
 
-    private Integer id;
+    private int id;
     private String name;
     private String username;
     private String email;
