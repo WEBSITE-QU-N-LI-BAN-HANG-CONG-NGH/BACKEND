@@ -20,11 +20,13 @@ public class  User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(name="first_name")
     private String firstName;
 
     private String lastName;
 
     @NaturalId
+    @Column(unique = true, nullable = false)
     private String email;
     private String password;
     private String phone;
@@ -48,6 +50,4 @@ public class  User {
     )
     private Collection<Role> roles = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Review> reviews;
 }

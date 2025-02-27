@@ -25,6 +25,5 @@ public class JwtEntryPoint implements AuthenticationEntryPoint {
         body.put("Message: ", "Invalid credentials");
         final ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(response.getOutputStream(), body);
-
     }
 }

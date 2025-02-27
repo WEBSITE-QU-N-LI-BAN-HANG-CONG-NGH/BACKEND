@@ -20,7 +20,11 @@ public class CartItem {
     private int id;
 
     private int quantity;
+
+    @Column(name="unit_price", precision = 19)
     private BigDecimal unitPrice;
+
+    @Column(name="total_price", precision = 19)
     private BigDecimal totalPrice;
 
     @ManyToOne(cascade = CascadeType.ALL)

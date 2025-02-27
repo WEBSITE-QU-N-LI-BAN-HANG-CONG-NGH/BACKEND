@@ -19,7 +19,7 @@ public class CategoryController {
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllCategories() {
         List<Category> categories = categoryService.getAllCategories();
-        return ResponseEntity.ok().body(new ApiResponse("Found", categories));
+        return ResponseEntity.ok().body(new ApiResponse("Get success", categories));
     }
 
     @PostMapping("/add")

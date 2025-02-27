@@ -20,6 +20,7 @@ public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    @Column(name="total_amount", precision = 19)
     private BigDecimal totalAmount;
 
     @OneToOne

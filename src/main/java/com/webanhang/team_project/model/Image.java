@@ -19,10 +19,13 @@ public class Image {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(name="file_name")
     private String fileName;
+
+    @Column(name="file_type", length = 50)
     private String fileType;
 
-    @JoinColumn(name="download_url")
+    @Column(name="download_url", length = 500)
     private String downloadUrl;
 
     @ManyToOne

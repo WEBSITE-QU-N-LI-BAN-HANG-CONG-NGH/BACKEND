@@ -23,7 +23,6 @@ public class ProductService implements IProductService {
     private final CategoryRepository categoryRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
-    private final ModelMapper modelMapper;
     private final ImageRepository imageRepository;
 
     @Override
@@ -37,7 +36,8 @@ public class ProductService implements IProductService {
                     return categoryRepository.save(newCategory);
                 });
         request.setCategory(category);
-        return productRepository.save(createProduct(request, category));
+        Product product = createProduct(request, category);
+        return productRepository.save(product);
     }
 
     private boolean productExists(String name, String brand) {
@@ -167,6 +167,7 @@ public class ProductService implements IProductService {
                 product.getPrice(),
                 product.getInventory(),
                 product.getDescription(),
+                product.getCategory(),
                 imageDtos
                 );
     }

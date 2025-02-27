@@ -1,5 +1,6 @@
 package com.webanhang.team_project.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,15 +20,20 @@ public class Product {
     private int id;
     private String name;
     private String brand;
+
+    @Column(precision = 19)
     private BigDecimal price;
     private int inventory;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Image> images;
 
     public Product(String name, String brand, BigDecimal price, int inventory, String description, Category category) {

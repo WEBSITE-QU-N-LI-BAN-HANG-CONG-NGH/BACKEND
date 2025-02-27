@@ -1,5 +1,6 @@
 package com.webanhang.team_project.dtos;
 
+import com.webanhang.team_project.model.Category;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,5 +18,6 @@ public class ProductDto {
     private BigDecimal price;
     private int inventory;
     private String description;
+    private Category category;
     private List<ImageDto> images;
 }

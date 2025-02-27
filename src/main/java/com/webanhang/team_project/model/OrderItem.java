@@ -16,7 +16,9 @@ public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-        private int quantity;
+    private int quantity;
+
+    @Column(precision = 19)
     private BigDecimal price;
 
     @ManyToOne

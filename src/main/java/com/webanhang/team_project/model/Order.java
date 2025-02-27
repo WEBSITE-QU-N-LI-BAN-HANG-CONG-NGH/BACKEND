@@ -22,11 +22,16 @@ public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int order_id;
+    private int id;
+
+    @Column(name="order_date")
     private LocalDate orderDate;
+
+    @Column(name="total_amount", precision = 19)
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
+    @Column(name="order_status")
     private OrderStatus orderStatus;
 
     @ManyToOne

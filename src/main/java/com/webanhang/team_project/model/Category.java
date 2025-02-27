@@ -1,5 +1,7 @@
 package com.webanhang.team_project.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,8 +18,11 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private String name; 
 
+    @Column(unique = true, nullable = false)
+    private String name;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "category")
     List<Product> products;
 
