@@ -2,7 +2,7 @@ package com.webanhang.team_project.controller.admin;
 
 
 import com.webanhang.team_project.dto.role.ChangeRoleRequest;
-import com.webanhang.team_project.dto.user.UserDto;
+import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.dto.user.request.UpdateUserStatusRequest;
 import com.webanhang.team_project.service.admin.ManageUserService;
@@ -25,13 +25,13 @@ public class ManageUserController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String role) {
 
-        Page<UserDto> users = adminUserService.getAllUsers(page, size, search, role);
+        Page<UserDTO> users = adminUserService.getAllUsers(page, size, search, role);
         return ResponseEntity.ok(ApiResponse.success(users, "Get all users success"));
     }
 
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse> getUserDetails(@PathVariable int userId) {
-        UserDto user = adminUserService.getUserDetails(userId);
+        UserDTO user = adminUserService.getUserDetails(userId);
         return ResponseEntity.ok(ApiResponse.success(user, "Get user details success"));
     }
 
@@ -40,7 +40,7 @@ public class ManageUserController {
             @PathVariable int userId,
             @RequestBody ChangeRoleRequest request) {
 
-        UserDto updatedUser = adminUserService.changeUserRole(userId, request.getRole());
+        UserDTO updatedUser = adminUserService.changeUserRole(userId, request.getRole());
         return ResponseEntity.ok(ApiResponse.success(updatedUser, "Change user role success"));
     }
 
@@ -49,7 +49,7 @@ public class ManageUserController {
             @PathVariable int userId,
             @RequestBody UpdateUserStatusRequest request) {
 
-        UserDto updatedUser = adminUserService.updateUserStatus(userId, request.isActive());
+        UserDTO updatedUser = adminUserService.updateUserStatus(userId, request.isActive());
         return ResponseEntity.ok(ApiResponse.success(updatedUser, "Update user status success"));
     }
 

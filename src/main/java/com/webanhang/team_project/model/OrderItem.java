@@ -1,11 +1,13 @@
 package com.webanhang.team_project.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -15,24 +17,37 @@ import java.math.BigDecimal;
 public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private int quantity;
+    private Long id;
 
-    @Column(precision = 19, scale = 2)
-    private BigDecimal price;
-
+    @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @ManyToOne
-    @JoinColumn(name = "product_id")
-    private  Product product;
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
 
-    public OrderItem(Order order, Product product, BigDecimal price, int quantity) {
-        this.order = order;
-        this.product = product;
-        this.price = price;
-        this.quantity = quantity;
+    @Column(name = "quantity")
+    private int quantity;
+
+    @Column(name = "price")
+    private int price;
+
+    @Column(name = "size")
+    private String size;
+
+    @Column(name = "discounted_price")
+    private Integer discountedPrice;
+
+    @Column(name = "delivery_date")
+    private LocalDateTime deliveryDate;
+
+    @Column(name = "discount_percent")
+    private Integer discountPercent;
+
+    // Helper method to get user through order
+    public User getUser() {
+        return order != null ? order.getUser() : null;
     }
 }

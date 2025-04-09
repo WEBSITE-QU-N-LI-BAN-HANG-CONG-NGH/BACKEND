@@ -1,9 +1,14 @@
 package com.webanhang.team_project.service.user;
 
-import com.webanhang.team_project.dto.user.UserDto;
+import com.webanhang.team_project.dto.AddAddressRequest;
+import com.webanhang.team_project.dto.AddressDTO;
+import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.enums.UserRole;
+import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
+import com.webanhang.team_project.model.Address;
 import com.webanhang.team_project.model.Role;
 import com.webanhang.team_project.model.User;
+import com.webanhang.team_project.repository.AddressRepository;
 import com.webanhang.team_project.repository.RoleRepository;
 import com.webanhang.team_project.repository.UserRepository;
 import com.webanhang.team_project.dto.user.request.CreateUserRequest;
@@ -19,6 +24,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,6 +36,7 @@ public class UserService implements IUserService {
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
+    private final AddressRepository addressRepository;
 
     @Override
     public User createUser(CreateUserRequest request) {
@@ -68,8 +76,8 @@ public class UserService implements IUserService {
 
     @Transactional
     @Override
-    public UserDto convertUserToDto(User user) {
-        return modelMapper.map(user, UserDto.class);
+    public UserDTO convertUserToDto(User user) {
+        return modelMapper.map(user, UserDTO.class);
     }
 
     @Transactional
@@ -106,4 +114,51 @@ public class UserService implements IUserService {
         return isValid;
     }
 
+    @Override
+    public UserDTO findUserProfileByJwt(String jwt) {
+        if (jwt != null && jwt.startsWith("Bearer ")) {
+            jwt = jwt.substring(7); // Remove "Bearer " prefix
+        }
+        String email = jwtProvider.getEmailFromToken(jwt);
+        User user = userRepository.findByEmail(email);
+
+        if(user == null) {
+            throw new GlobalExceptionHandler("User not found " + email, "USER_NOT_FOUND");
+        }
+        return new UserDTO(user);
+    }
+
+    @Override
+    public User findUserByJwt(String jwt)  {
+        if (jwt != null && jwt.startsWith("Bearer ")) {
+            jwt = jwt.substring(7); // Remove "Bearer " prefix
+        }
+        String email = jwtProvider.getEmailFromToken(jwt);
+        User user = userRepository.findByEmail(email);
+
+        if(user == null) {
+            throw new GlobalExceptionHandler("User not found " + email, "USER_NOT_FOUND");
+        }
+        return user;
+    }
+
+    @Override
+    public AddressDTO addUserAddress(User user, AddAddressRequest request) {
+        List<Address> address=user.getAddress();
+        if(address==null){
+            address=new ArrayList<>();
+        }
+        Address newAddress=new Address();
+        newAddress.setFirstName(request.getFirstName());
+        newAddress.setLastName(request.getLastName());
+        newAddress.setStreetAddress(request.getStreetAddress());
+        newAddress.setCity(request.getCity());
+        newAddress.setState(request.getState());
+        newAddress.setZipCode(request.getZipCode());
+        newAddress.setMobile(request.getMobile());
+        newAddress.setUser(user);
+        address.add(newAddress);
+        addressRepository.save(newAddress);
+        return new AddressDTO(newAddress);
+    }
 }

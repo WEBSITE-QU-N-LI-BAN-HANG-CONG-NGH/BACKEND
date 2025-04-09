@@ -1,6 +1,8 @@
 package com.webanhang.team_project.service.cart;
 
 
+import com.webanhang.team_project.dto.AddItemRequest;
+import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.User;
 
@@ -16,5 +18,17 @@ public interface ICartService {
     Cart initializeNewCartForUser(User user);
 
     BigDecimal getTotalPrice(int cartId);
+
+    public Cart createCart(User user);
+
+    public Cart findUserCart(Long userId) throws GlobalExceptionHandler;
+
+    public Cart addCartItem(Long userId, AddItemRequest req) throws GlobalExceptionHandler;
+
+    public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req) throws GlobalExceptionHandler;
+
+    public void removeCartItem(Long userId, Long itemId) throws GlobalExceptionHandler;
+
+    public void clearCart(Long userId) throws GlobalExceptionHandler;
 }
 

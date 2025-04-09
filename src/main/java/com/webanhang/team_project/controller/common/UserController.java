@@ -1,7 +1,7 @@
 package com.webanhang.team_project.controller.common;
 
 
-import com.webanhang.team_project.dto.user.UserDto;
+import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.dto.user.request.CreateUserRequest;
 import com.webanhang.team_project.dto.user.request.UpdateUserRequest;
@@ -20,21 +20,21 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse> getUserById(@PathVariable int userId) {
         User user = userService.getUserById(userId);
-        UserDto userDto = userService.convertUserToDto(user);
+        UserDTO userDto = userService.convertUserToDto(user);
         return ResponseEntity.ok(ApiResponse.success(userDto, "Found!"));
     }
 
     @PostMapping("/add")
     public ResponseEntity<ApiResponse> createUser(@RequestBody CreateUserRequest request) {
         User user = userService.createUser(request);
-        UserDto userDto = userService.convertUserToDto(user);
+        UserDTO userDto = userService.convertUserToDto(user);
         return ResponseEntity.ok(ApiResponse.success(userDto, "Create User Success!"));
     }
 
     @PutMapping("/{userId}/update")
     public ResponseEntity<ApiResponse> updateUser(@RequestBody UpdateUserRequest request, @PathVariable int userId) {
         User user = userService.updateUser(request, userId);
-        UserDto userDto = userService.convertUserToDto(user);
+        UserDTO userDto = userService.convertUserToDto(user);
         return ResponseEntity.ok(ApiResponse.success(userDto, "Update User Success!"));
     }
 

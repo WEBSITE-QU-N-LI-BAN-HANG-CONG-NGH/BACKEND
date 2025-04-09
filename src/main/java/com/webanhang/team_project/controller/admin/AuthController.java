@@ -1,10 +1,10 @@
-package com.webanhang.team_project.controller.common;
+package com.webanhang.team_project.controller.admin;
 
 import com.webanhang.team_project.dto.auth.request.LoginRequest;
 import com.webanhang.team_project.dto.auth.request.OtpVerificationRequest;
 import com.webanhang.team_project.dto.auth.request.RegisterRequest;
 import com.webanhang.team_project.dto.response.ApiResponse;
-import com.webanhang.team_project.dto.user.UserDto;
+import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.repository.UserRepository;
 import com.webanhang.team_project.security.jwt.JwtUtils;
@@ -74,11 +74,11 @@ public class AuthController {
             userMap.put("isActive", user.isActive());
             responseData.put("user", userMap);
 
-            return ResponseEntity.ok(ApiResponse.success(responseData, "Success"));
+            return ResponseEntity.ok(ApiResponse.success(responseData, "Đăng nhập thành công"));
         } catch (AuthenticationException e) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("Error: Email hoặc mật khẩu không đúng!"));
+                    .body(ApiResponse.error("Email hoặc mật khẩu không đúng!"));
         }
     }
 
@@ -177,7 +177,7 @@ public class AuthController {
 
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
         User user = userService.getUserById(userDetails.getId());
-        UserDto userDto = userService.convertUserToDto(user);
+        UserDTO userDto = userService.convertUserToDto(user);
 
         return ResponseEntity.ok(ApiResponse.success(userDto, "Current user info retrieved successfully"));
     }

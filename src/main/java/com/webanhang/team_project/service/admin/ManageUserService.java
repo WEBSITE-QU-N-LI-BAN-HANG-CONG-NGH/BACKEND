@@ -1,6 +1,6 @@
 package com.webanhang.team_project.service.admin;
 
-import com.webanhang.team_project.dto.user.UserDto;
+import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.enums.UserRole;
 import com.webanhang.team_project.model.Role;
 import com.webanhang.team_project.model.User;
@@ -29,7 +29,7 @@ public class ManageUserService implements IManageUserService {
     private final ModelMapper modelMapper;
 
     @Override
-    public Page<UserDto> getAllUsers(int page, int size, String search, String role) {
+    public Page<UserDTO> getAllUsers(int page, int size, String search, String role) {
         Pageable pageable = PageRequest.of(page, size);
 
         // Filter logic
@@ -50,15 +50,15 @@ public class ManageUserService implements IManageUserService {
             users = userRepository.findAll(pageable).getContent();
         }
 
-        List<UserDto> userDtos = users.stream()
+        List<UserDTO> userDTOS = users.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(userDtos, pageable, userRepository.count());
+        return new PageImpl<>(userDTOS, pageable, userRepository.count());
     }
 
     @Override
-    public UserDto getUserDetails(int userId) {
+    public UserDTO getUserDetails(int userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         return convertToDto(user);
@@ -66,7 +66,7 @@ public class ManageUserService implements IManageUserService {
 
     @Override
     @Transactional
-    public UserDto changeUserRole(int userId, String roleName) {
+    public UserDTO changeUserRole(int userId, String roleName) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -88,7 +88,7 @@ public class ManageUserService implements IManageUserService {
 
     @Override
     @Transactional
-    public UserDto updateUserStatus(int userId, boolean active) {
+    public UserDTO updateUserStatus(int userId, boolean active) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -107,8 +107,8 @@ public class ManageUserService implements IManageUserService {
         userRepository.delete(user);
     }
 
-    private UserDto convertToDto(User user) {
-        UserDto dto = new UserDto();
+    private UserDTO convertToDto(User user) {
+        UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setEmail(user.getEmail());
         dto.setFirstName(user.getFirstName());

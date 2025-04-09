@@ -1,5 +1,6 @@
 package com.webanhang.team_project.dto.auth.request;
 
+import jakarta.validation.constraints.Email;
 import lombok.Data;
 import jakarta.validation.constraints.NotBlank;
 
@@ -7,8 +8,9 @@ import jakarta.validation.constraints.NotBlank;
 @Data
 public class LoginRequest {
 
-    @NotBlank(message = "Invalid login credentials")
+    @NotBlank(message = "Email can't be blank")
+    @Email(message = "Email is not valid")
     private String email;
-    @NotBlank(message = "Invalid login credentials")
+    @NotBlank(message = "Password can't be blank")
     private String password;
 }
