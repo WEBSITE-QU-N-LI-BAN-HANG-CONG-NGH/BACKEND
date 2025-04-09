@@ -8,7 +8,10 @@ import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.PaymentDetail;
 import com.webanhang.team_project.repository.PaymentRepository;
 import com.google.gson.Gson;
+import com.webanhang.team_project.service.cart.ICartService;
+import com.webanhang.team_project.service.order.IOrderService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
     @Value("${vnpay.tmn-code}")
@@ -39,14 +43,11 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${vnpay.return-url}")
     private String vnp_Returnurl;
 
-    @Autowired
-    private IOrderService orderService;
-    
-    @Autowired
-    private PaymentRepository paymentRepository;
+    private final IOrderService orderService;
 
-    @Autowired
-    private ICartService ICartService;
+    private final PaymentRepository paymentRepository;
+
+    private final ICartService ICartService;
 
     @Override
     @Transactional

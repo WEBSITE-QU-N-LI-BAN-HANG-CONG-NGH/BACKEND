@@ -9,11 +9,11 @@ import com.webanhang.team_project.model.User;
 import java.math.BigDecimal;
 
 public interface ICartService {
-    Cart getCart(int cartId);
+    Cart getCart(Long cartId);
 
-    Cart getCartByUserId(int userId);
+    Cart getCartByUserId(Long userId);
 
-    void clearCart(int cartId);
+    void clearCart(Long cartId);
 
     Cart initializeNewCartForUser(User user);
 
@@ -21,14 +21,14 @@ public interface ICartService {
 
     public Cart createCart(User user);
 
-    public Cart findUserCart(Long userId) throws GlobalExceptionHandler;
+    public Cart findUserCart(Long userId);
 
-    public Cart addCartItem(Long userId, AddItemRequest req) throws GlobalExceptionHandler;
+    public Cart addCartItem(Long userId, AddItemRequest req);
 
-    public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req) throws GlobalExceptionHandler;
+    public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req);
 
-    public void removeCartItem(Long userId, Long itemId) throws GlobalExceptionHandler;
+    public void removeCartItem(Long userId, Long itemId);
 
-    public void clearCart(Long userId) throws GlobalExceptionHandler;
+    public void clearCart(Long userId);
 }
 

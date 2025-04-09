@@ -12,7 +12,7 @@ import com.webanhang.team_project.dto.user.request.UpdateUserRequest;
 
 public interface IUserService {
     User createUser(CreateUserRequest request);
-    User updateUser(UpdateUserRequest request, int userId);
+    User updateUser(UpdateUserRequest request, Long userId);
     User getUserById(Long userId);
     void deleteUser(Long userId);
 

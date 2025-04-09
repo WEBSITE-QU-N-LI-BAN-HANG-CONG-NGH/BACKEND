@@ -15,6 +15,7 @@ import com.webanhang.team_project.dto.user.request.CreateUserRequest;
 import com.webanhang.team_project.dto.auth.request.OtpVerificationRequest;
 import com.webanhang.team_project.dto.auth.request.RegisterRequest;
 import com.webanhang.team_project.dto.user.request.UpdateUserRequest;
+import com.webanhang.team_project.security.jwt.JwtUtils;
 import com.webanhang.team_project.security.otp.OtpService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -37,6 +38,7 @@ public class UserService implements IUserService {
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
     private final AddressRepository addressRepository;
+    private final JwtUtils jwtUtils;
 
     @Override
     public User createUser(CreateUserRequest request) {
@@ -53,7 +55,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public User updateUser(UpdateUserRequest request, int userId) {
+    public User updateUser(UpdateUserRequest request, Long userId) {
         return userRepository.findById(userId).map(existingUser -> {
             existingUser.setFirstName(request.getFirstName());
             existingUser.setLastName(request.getLastName());
@@ -62,13 +64,13 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public User getUserById(int userId) {
+    public User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
     @Override
-    public void deleteUser(int userId) {
+    public void deleteUser(Long userId) {
         userRepository.findById(userId).ifPresentOrElse(userRepository::delete, () -> {
             throw new EntityNotFoundException("User not found");
         });
@@ -119,13 +121,13 @@ public class UserService implements IUserService {
         if (jwt != null && jwt.startsWith("Bearer ")) {
             jwt = jwt.substring(7); // Remove "Bearer " prefix
         }
-        String email = jwtProvider.getEmailFromToken(jwt);
+        String email = jwtUtils.getEmailFromToken(jwt);
         User user = userRepository.findByEmail(email);
 
         if(user == null) {
-            throw new GlobalExceptionHandler("User not found " + email, "USER_NOT_FOUND");
+            throw new EntityNotFoundException("User not found " + email);
         }
-        return new UserDTO(user);
+        return convertUserToDto(user);
     }
 
     @Override
@@ -133,11 +135,11 @@ public class UserService implements IUserService {
         if (jwt != null && jwt.startsWith("Bearer ")) {
             jwt = jwt.substring(7); // Remove "Bearer " prefix
         }
-        String email = jwtProvider.getEmailFromToken(jwt);
+        String email = jwtUtils.getEmailFromToken(jwt);
         User user = userRepository.findByEmail(email);
 
         if(user == null) {
-            throw new GlobalExceptionHandler("User not found " + email, "USER_NOT_FOUND");
+            throw new EntityNotFoundException("User not found " + email);
         }
         return user;
     }

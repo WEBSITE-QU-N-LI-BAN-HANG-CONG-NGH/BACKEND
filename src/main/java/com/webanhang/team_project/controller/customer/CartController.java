@@ -1,8 +1,15 @@
 package com.webanhang.team_project.controller.customer;
 
 
-import com.ecommerce.DTO.CartDTO;
+
 import com.webanhang.team_project.dto.AddItemRequest;
+import com.webanhang.team_project.dto.cart.CartDTO;
+import com.webanhang.team_project.dto.response.ApiResponse;
+import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
+import com.webanhang.team_project.model.Cart;
+import com.webanhang.team_project.model.User;
+import com.webanhang.team_project.service.cart.CartService;
+import com.webanhang.team_project.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +33,8 @@ public class CartController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<ApiResponse> addItemToCart(@RequestHeader("Authorization") String jwt, 
-            @RequestBody AddItemRequest req) throws GlobalExceptionHandler {
+    public ResponseEntity<ApiResponse> addItemToCart(@RequestHeader("Authorization") String jwt,
+                                                     @RequestBody AddItemRequest req) throws GlobalExceptionHandler {
         User user = userService.findUserByJwt(jwt);
         cartService.addCartItem(user.getId(), req);
 
