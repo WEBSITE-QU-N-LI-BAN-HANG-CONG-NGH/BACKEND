@@ -28,43 +28,6 @@ public class CartService implements ICartService {
     private final IProductService productService;
     private final UserService userService;
 
-    @Override
-    public Cart getCart(Long cartId) {
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new EntityNotFoundException("Cart not found!"));
-        return cartRepository.save(cart);
-    }
-
-    @Override
-    public Cart getCartByUserId(Long userId) {
-        return cartRepository.findByUserId(userId);
-    }
-
-//
-//    @Override
-//    public void clearCart(Long cartId) {
-//        Cart cart = getCart(cartId);
-//        cartItemRepository.deleteAllByCartId(cartId);
-//        cart.clearCart();
-//        cartRepository.deleteById(cartId);
-//    }
-
-
-    @Override
-    public Cart initializeNewCartForUser(User user) {
-        return Optional.ofNullable(getCartByUserId(user.getId()))
-                .orElseGet(() -> {
-                    Cart cart = new Cart();
-                    cart.setUser(user);
-                    return cartRepository.save(cart);
-                });
-    }
-
-//    @Override
-//    public BigDecimal getTotalPrice(Long cartId) {
-//        Cart cart = getCart(cartId);
-//        return BigDecimal.valueOf(cart.getTotalAmount());
-//    }
 
     @Override
     public Cart createCart(User user) {
@@ -89,7 +52,7 @@ public class CartService implements ICartService {
     }
 
     @Override
-    public Cart addCartItem(Long userId, AddItemRequest req) throws GlobalExceptionHandler{
+    public Cart addCartItem(Long userId, AddItemRequest req) {
         Cart cart = findUserCart(userId);
         Product product = productService.findProductById(req.getProductId());
 
@@ -126,10 +89,10 @@ public class CartService implements ICartService {
     public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req) throws GlobalExceptionHandler {
         Cart cart = findUserCart(userId);
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new GlobalExceptionHandler("Cart item not found", "ITEM_NOT_FOUND"));
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
 
         if (!item.getCart().getId().equals(cart.getId())) {
-            throw new GlobalExceptionHandler("Cart item does not belong to user", "INVALID_ITEM");
+            throw new RuntimeException("Cart item does not belong to user");
         }
 
         item.setQuantity(req.getQuantity());
@@ -140,13 +103,13 @@ public class CartService implements ICartService {
     }
 
     @Override
-    public void removeCartItem(Long userId, Long itemId) throws GlobalExceptionHandler {
+    public void removeCartItem(Long userId, Long itemId) {
         Cart cart = findUserCart(userId);
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new GlobalExceptionHandler("Cart item not found", "ITEM_NOT_FOUND"));
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
 
         if (!item.getCart().getId().equals(cart.getId())) {
-            throw new GlobalExceptionHandler("Cart item does not belong to user", "INVALID_ITEM");
+            throw new RuntimeException("Cart item does not belong to user");
         }
 
         cart.getCartItems().remove(item);
@@ -158,7 +121,7 @@ public class CartService implements ICartService {
 
     @Override
     @Transactional  // Thêm annotation này
-    public void clearCart(Long userId) throws GlobalExceptionHandler {
+    public void clearCart(Long userId) {
         Cart cart = findUserCart(userId);
 
         // Xóa các mục từ bảng cart_items trước

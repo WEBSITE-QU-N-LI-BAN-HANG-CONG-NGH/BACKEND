@@ -7,11 +7,6 @@ import com.webanhang.team_project.model.CartItem;
 import com.webanhang.team_project.model.Product;
 
 public interface ICartItemService {
-    void addItemToCart(int cartId, int productId, int quantity);
-    void removeItemFromCart(int cartId, int productId);
-    void updateItemQuantity(int cartId, int productId, int quantity);
-    CartItem getCartItem(int cartId, int productId);
-
     public CartItem createCartItem(CartItem cartItem);
     public CartItem updateCartItem(Long userId, Long id, CartItem cartItem) ;
     public void deleteAllCartItems(Long cartId, Long userId) ;
