@@ -1,7 +1,9 @@
 package com.webanhang.team_project.service.order;
 
 
-import com.webanhang.team_project.dto.order.OrderDto;
+
+
+import com.webanhang.team_project.dto.order.OrderDTO;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
@@ -77,17 +79,17 @@ public class OrderService implements IOrderService {
 
 
     @Override
-    public List<OrderDto> getUserOrders(int userId) {
+    public List<OrderDTO> getUserOrders(int userId) {
         List<Order> orders = orderRepository.findByUserId(userId);
         return  orders.stream().map(this :: convertToDto).toList();
     }
 
     @Override
-    public OrderDto convertToDto(Order order) {
-        return modelMapper.map(order, OrderDto.class);
+    public OrderDTO convertToDto(Order order) {
+        return modelMapper.map(order, OrderDTO.class);
     }
 
-    public OrderService(CartRepository cartRepository, com.ecommerce.service.ICartService ICartService,
+    public OrderService(CartRepository cartRepository, ICartService ICartService,
                         IProductService productService, OrderRepository orderRepository, AddressRepository addressRepository) {
         this.cartRepository = cartRepository;
         this.ICartService = ICartService;
@@ -97,13 +99,13 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public Order findOrderById(Long orderId) throws GlobalExceptionHandler {
+    public Order findOrderById(Long orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new GlobalExceptionHandler("Không tìm thấy đơn hàng với ID: " + orderId, "ORDER_ERROR"));
     }
 
     @Override
-    public List<Order> userOrderHistory(Long userId) throws GlobalExceptionHandler {
+    public List<Order> userOrderHistory(Long userId) {
         List<Order> orders = orderRepository.findByUserId(userId);
         if (orders.isEmpty()) {
             throw new GlobalExceptionHandler("Không tìm thấy lịch sử đơn hàng cho người dùng: " + userId, "ORDER_ERROR");
@@ -113,7 +115,7 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
-    public Order placeOrder(Long addressId, User user) throws GlobalExceptionHandler {
+    public Order placeOrder(Long addressId, User user) {
         try {
             Cart cart = cartRepository.findByUserId(user.getId());
             if (cart == null || cart.getCartItems().isEmpty()) {
@@ -189,7 +191,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public Order confirmedOrder(Long orderId) throws GlobalExceptionHandler {
+    public Order confirmedOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.PENDING) {
             throw new GlobalExceptionHandler("Đơn hàng không thể xác nhận ở trạng thái hiện tại", "ORDER_ERROR");
@@ -199,7 +201,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public Order shippedOrder(Long orderId) throws GlobalExceptionHandler {
+    public Order shippedOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
             throw new GlobalExceptionHandler("Đơn hàng phải được xác nhận trước khi gửi", "ORDER_ERROR");
@@ -209,7 +211,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public Order deliveredOrder(Long orderId) throws GlobalExceptionHandler {
+    public Order deliveredOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.SHIPPED) {
             throw new GlobalExceptionHandler("Đơn hàng phải được gửi trước khi giao", "ORDER_ERROR");
@@ -220,7 +222,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public Order cancelOrder(Long orderId) throws GlobalExceptionHandler {
+    public Order cancelOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() == OrderStatus.DELIVERED) {
             throw new GlobalExceptionHandler("Không thể hủy đơn hàng đã giao", "ORDER_ERROR");
@@ -231,7 +233,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public List<Order> getAllOrders() throws GlobalExceptionHandler {
+    public List<Order> getAllOrders() {
         List<Order> orders = orderRepository.findAll();
         if (orders.isEmpty()) {
             throw new GlobalExceptionHandler("Không có đơn hàng nào", "ORDER_ERROR");
@@ -240,7 +242,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public void deleteOrder(Long orderId) throws GlobalExceptionHandler {
+    public void deleteOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.CANCELLED) {
             throw new GlobalExceptionHandler("Chỉ có thể xóa đơn hàng đã hủy", "ORDER_ERROR");

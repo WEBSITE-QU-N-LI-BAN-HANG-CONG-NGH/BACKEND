@@ -2,59 +2,55 @@ package com.webanhang.team_project.controller.admin;
 
 
 
+import com.webanhang.team_project.dto.response.ApiResponse;
+import com.webanhang.team_project.model.Order;
+import com.webanhang.team_project.service.order.IOrderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin/order")
 @RequiredArgsConstructor
+@RequestMapping("${api.prefix}/admin/orders")
 public class AdminOrderController {
 
-    private OrderService orderService;
+    private final IOrderService orderService;
 
-    @GetMapping("/")
-    public ResponseEntity<List<Order>> getAllOrders()  {
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse> getAllOrders() {
         List<Order> orders = orderService.getAllOrders();
-        return new ResponseEntity<>(orders, HttpStatus.ACCEPTED);
+        return ResponseEntity.ok(ApiResponse.success(orders, "Lấy tất cả đơn hàng thành công"));
     }
 
-    @PutMapping("/{orderId}/confirmed")
-    public ResponseEntity<Order> confirmedOrder(@PathVariable Long orderId) {
+    @PutMapping("/{orderId}/confirm")
+    public ResponseEntity<ApiResponse> confirmOrder(@PathVariable Long orderId) {
         Order order = orderService.confirmedOrder(orderId);
-        return new ResponseEntity<>(order, HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.success(order, "Xác nhận đơn hàng thành công"));
     }
 
-    @PutMapping("/{orderId}/shipped")
-    public ResponseEntity<Order> shippedOrder(@PathVariable Long orderId) {
+    @PutMapping("/{orderId}/ship")
+    public ResponseEntity<ApiResponse> shipOrder(@PathVariable Long orderId) {
         Order order = orderService.shippedOrder(orderId);
-        return new ResponseEntity<>(order, HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.success(order, "Chuyển trạng thái vận chuyển thành công"));
     }
 
-    @PutMapping("/{orderId}/delivered")
-    public ResponseEntity<Order> deliveredOrder(@PathVariable Long orderId) {
+    @PutMapping("/{orderId}/deliver")
+    public ResponseEntity<ApiResponse> deliverOrder(@PathVariable Long orderId) {
         Order order = orderService.deliveredOrder(orderId);
-        return new ResponseEntity<>(order, HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.success(order, "Đánh dấu đã giao hàng thành công"));
     }
 
     @PutMapping("/{orderId}/cancel")
-    public ResponseEntity<Order> cancelOrder(@PathVariable Long orderId) {
+    public ResponseEntity<ApiResponse> cancelOrder(@PathVariable Long orderId) {
         Order order = orderService.cancelOrder(orderId);
-        return new ResponseEntity<>(order, HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.success(order, "Hủy đơn hàng thành công"));
     }
 
-    @DeleteMapping("/{orderId}/delete")
+    @DeleteMapping("/{orderId}")
     public ResponseEntity<ApiResponse> deleteOrder(@PathVariable Long orderId) {
         orderService.deleteOrder(orderId);
-
-        ApiResponse res = new ApiResponse();
-        res.setMessage("Order deleted successfully");
-        res.setStatus(true);
-
-        return new ResponseEntity<>(res, HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.success(null, "Xóa đơn hàng thành công"));
     }
 }

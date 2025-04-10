@@ -30,23 +30,23 @@ public interface IProductService {
 
     ProductDTO convertToDto(Product product);
 
-    public Product createProduct(CreateProductRequest req) throws GlobalExceptionHandler;
+    Product createProduct(CreateProductRequest req);
 
-    public String deleteProduct(Long productId) throws GlobalExceptionHandler;
+    String deleteProduct(Long productId);
 
-    public Product updateProduct(Long productId, Product product) throws GlobalExceptionHandler;
+    Product updateProduct(Long productId, Product product);
 
-    public Product findProductById(Long id) throws GlobalExceptionHandler;
+    Product findProductById(Long id);
 
-    public List<Product> findProductByCategory(String category) throws GlobalExceptionHandler;
+    List<Product> findProductByCategory(String category);
 
-    public Page<Product> findAllProductsByFilter(String category, List<String> colors, List<String> sizes,
+    Page<Product> findAllProductsByFilter(String category, List<String> colors, List<String> sizes,
                                                  Integer minPrice, Integer maxPrice, Integer minDiscount, String sort,
-                                                 String stock, Integer pageNumber, Integer pageSize) throws GlobalExceptionHandler;
+                                                 String stock, Integer pageNumber, Integer pageSize);
 
-    public List<Product> findAllProducts() throws GlobalExceptionHandler;
+    List<Product> findAllProducts();
 
-    public List<Product> searchProducts(String keyword) throws GlobalExceptionHandler;
+    List<Product> searchProducts(String keyword);
 
-    public List<Product> getFeaturedProducts() throws GlobalExceptionHandler;
+    List<Product> getFeaturedProducts();
 }

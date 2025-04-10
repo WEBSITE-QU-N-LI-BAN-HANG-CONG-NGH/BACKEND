@@ -16,13 +16,13 @@ public class CartController {
     private final ICartService cartService;
 
     @GetMapping("/user/{userId}/cart")
-    public ResponseEntity<ApiResponse> getUserCart(@PathVariable int userId){
+    public ResponseEntity<ApiResponse> getUserCart(@PathVariable Long userId){
         Cart cart = cartService.getCartByUserId(userId);
         return ResponseEntity.ok(ApiResponse.success(cart, "Success"));
     }
 
     @DeleteMapping("/cart/{cartId}/clear")
-    public void clearCart(@PathVariable int cartId){
+    public void clearCart(@PathVariable Long cartId){
         cartService.clearCart(cartId);
     }
 }

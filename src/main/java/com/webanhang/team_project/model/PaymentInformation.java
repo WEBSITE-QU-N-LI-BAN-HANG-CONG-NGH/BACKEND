@@ -38,7 +38,7 @@ public class PaymentInformation {
     public PaymentInformation() {
     }
 
-    public PaymentInformation(Long id, com.ecommerce.model.User user, String cardNumber, String cvv, String cardholderName, String expirationDate) {
+    public PaymentInformation(Long id, User user, String cardNumber, String cvv, String cardholderName, String expirationDate) {
         this.id = id;
         this.user = user;
         this.cardNumber = cardNumber;
@@ -55,7 +55,7 @@ public class PaymentInformation {
         this.id = id;
     }
 
-    public com.ecommerce.model.User getUser() {
+    public User getUser() {
         return user;
     }
 

@@ -1,11 +1,17 @@
 package com.webanhang.team_project.controller.customer;
 
 
-import com.ecommerce.DTO.AddressDTO;
-import com.ecommerce.DTO.CartDTO;
-import com.ecommerce.DTO.OrderDTO;
+
 import com.webanhang.team_project.dto.AddAddressRequest;
+import com.webanhang.team_project.dto.AddressDTO;
+import com.webanhang.team_project.dto.cart.CartDTO;
+import com.webanhang.team_project.dto.order.OrderDTO;
 import com.webanhang.team_project.dto.user.UserProfileResponse;
+import com.webanhang.team_project.model.Address;
+import com.webanhang.team_project.model.Order;
+import com.webanhang.team_project.model.User;
+import com.webanhang.team_project.repository.UserRepository;
+import com.webanhang.team_project.service.user.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

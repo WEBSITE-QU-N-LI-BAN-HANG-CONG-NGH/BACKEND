@@ -17,7 +17,7 @@ public interface ICartService {
 
     Cart initializeNewCartForUser(User user);
 
-    BigDecimal getTotalPrice(int cartId);
+    BigDecimal getTotalPrice(Long cartId);
 
     public Cart createCart(User user);
 
@@ -28,7 +28,5 @@ public interface ICartService {
     public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req);
 
     public void removeCartItem(Long userId, Long itemId);
-
-    public void clearCart(Long userId);
 }
 

@@ -1,6 +1,5 @@
 package com.webanhang.team_project.dto.product;
 
-import com.webanhang.team_project.dto.image.ImageDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

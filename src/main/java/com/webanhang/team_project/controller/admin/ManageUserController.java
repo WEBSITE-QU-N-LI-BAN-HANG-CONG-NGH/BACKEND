@@ -1,11 +1,11 @@
 package com.webanhang.team_project.controller.admin;
 
 
+import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.dto.role.ChangeRoleRequest;
 import com.webanhang.team_project.dto.user.UserDTO;
-import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.dto.user.request.UpdateUserStatusRequest;
-import com.webanhang.team_project.service.admin.ManageUserService;
+import com.webanhang.team_project.service.admin.IManageUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("${api.prefix}/admin/users")
 public class ManageUserController {
 
-    private final ManageUserService adminUserService;
+    private final IManageUserService adminUserService;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllUsers(

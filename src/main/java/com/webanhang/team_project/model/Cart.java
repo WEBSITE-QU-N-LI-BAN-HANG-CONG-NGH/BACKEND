@@ -22,6 +22,7 @@ public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name="total_amount", precision = 19, scale = 2)
     private BigDecimal totalAmount;
 
@@ -43,17 +44,6 @@ public class Cart {
 
     @OneToMany(mappedBy="cart", cascade=CascadeType.ALL, orphanRemoval=true)
     private Set<CartItem> cartItems = new HashSet<>();
-
-    public Cart(Long id, User user, Set<CartItem> cartItems, int totalPrice,
-                int totalItems, int totalDiscountedPrice, int discount) {
-        this.id = id;
-        this.user = user;
-        this.cartItems = cartItems;
-        this.totalPrice = totalPrice;
-        this.totalItems = totalItems;
-        this.totalDiscountedPrice = totalDiscountedPrice;
-        this.discount = discount;
-    }
 
     public int getTotalAmount() {
         return cartItems.stream()

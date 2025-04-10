@@ -1,9 +1,12 @@
 package com.webanhang.team_project.controller.customer;
 
 
+import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Review;
 import com.webanhang.team_project.dto.ReviewRequest;
+import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.service.ReviewService;
+import com.webanhang.team_project.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +32,7 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<Review>> getProductReview(@PathVariable Long productId) throws GlobalExceptionHandler {
+    public ResponseEntity<List<Review>> getProductReview(@PathVariable Long productId) {
         List<Review> res = reviewService.getReviewsByProductId(productId);
         return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
     }

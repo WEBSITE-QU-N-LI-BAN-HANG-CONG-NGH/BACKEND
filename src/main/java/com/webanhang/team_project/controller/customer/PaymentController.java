@@ -1,8 +1,13 @@
 package com.webanhang.team_project.controller.customer;
 
 
+import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
+import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.PaymentDetail;
+import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.service.PaymentService;
+import com.webanhang.team_project.service.order.OrderService;
+import com.webanhang.team_project.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,11 +59,13 @@ public class PaymentController {
                 "message", "Tạo URL thanh toán thành công",
                 "paymentUrl", paymentUrl
             ));
-        } catch (GlobalExceptionHandler e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage(), "code", e.getCode()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Lỗi hệ thống khi tạo thanh toán", 
                                  "code", "PAYMENT_ERROR",
                                  "message", e.getMessage()));
@@ -89,11 +96,13 @@ public class PaymentController {
             }
             
             return ResponseEntity.ok(response);
-        } catch (GlobalExceptionHandler e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage(), "code", e.getCode()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Lỗi hệ thống khi xử lý kết quả thanh toán", 
                                  "code", "PAYMENT_CALLBACK_ERROR",
                                  "message", e.getMessage()));
@@ -131,11 +140,13 @@ public class PaymentController {
             }
             
             return ResponseEntity.ok(payment);
-        } catch (GlobalExceptionHandler e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage(), "code", e.getCode()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Lỗi hệ thống khi lấy thông tin thanh toán", 
                                  "code", "PAYMENT_ERROR",
                                  "message", e.getMessage()));

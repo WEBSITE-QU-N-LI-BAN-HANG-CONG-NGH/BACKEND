@@ -37,7 +37,7 @@ public class Rating {
     public Rating() {
     }
 
-    public Rating(Long id, com.ecommerce.model.User user, Product product, int rating, LocalDateTime createdAt) {
+    public Rating(Long id, User user, Product product, int rating, LocalDateTime createdAt) {
         this.id = id;
         this.user = user;
         this.product = product;
@@ -53,7 +53,7 @@ public class Rating {
         this.id = id;
     }
 
-    public com.ecommerce.model.User getUser() {
+    public User getUser() {
         return user;
     }
 

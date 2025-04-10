@@ -1,7 +1,6 @@
 package com.webanhang.team_project.service.product;
 
 
-import com.webanhang.team_project.dto.image.ImageDto;
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.dto.product.request.CreateProductRequest;
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
@@ -35,7 +34,6 @@ public class ProductService implements IProductService {
     private final CategoryRepository categoryRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
-    private final ImageRepository imageRepository;
     private final ModelMapper modelMapper;
 
     @Override

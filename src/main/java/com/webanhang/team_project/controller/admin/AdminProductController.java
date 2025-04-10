@@ -1,55 +1,56 @@
-package com.webanhang.team_project.controller.admin;
-
-
-import com.ecommerce.request.CreateProductRequest;
+import com.webanhang.team_project.dto.product.request.CreateProductRequest;
+import com.webanhang.team_project.dto.response.ApiResponse;
+import com.webanhang.team_project.model.Product;
+import com.webanhang.team_project.repository.CategoryRepository;
+import com.webanhang.team_project.service.product.IProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("${api.prefix}/admin/products")
 @RequiredArgsConstructor
+@RequestMapping("${api.prefix}/admin/products")
 public class AdminProductController {
 
-    private final ProductService productService;
+    private final IProductService productService;
     private final CategoryRepository categoryRepository;
 
-    @PostMapping("/products/create")
-    public ResponseEntity<Product> createProduct(@RequestBody CreateProductRequest req) {
-        Product product = productService.createProduct(req);
-        return new ResponseEntity<>(product, HttpStatus.CREATED);
+    @PostMapping("/create")
+    public ResponseEntity<ApiResponse> createProduct(@RequestBody CreateProductRequest request) {
+        Product product = productService.createProduct(request);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(product, "Tạo sản phẩm thành công"));
     }
-    
-    
-    @DeleteMapping("/products/{productId}")
-    public ResponseEntity<String> deleteProduct(@PathVariable Long productId) {
+
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) {
         String result = productService.deleteProduct(productId);
-        return new ResponseEntity<>(result, HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.success(null, result));
     }
 
-    @GetMapping("/products/all")
-    public ResponseEntity<List<Product>> findAllProducts() {
-        List<Product> p = productService.findAllProducts();
-        return new ResponseEntity<>(p, HttpStatus.ACCEPTED);
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse> findAllProducts() {
+        List<Product> products = productService.findAllProducts();
+        return ResponseEntity.ok(ApiResponse.success(products, "Lấy tất cả sản phẩm thành công"));
     }
 
-    @PutMapping("/products/{productId}/update")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long productId, @RequestBody Product product)  {
-        Product p = productService.updateProduct(productId, product);
-        return new ResponseEntity<>(p, HttpStatus.OK);
+    @PutMapping("/{productId}/update")
+    public ResponseEntity<ApiResponse> updateProduct(@PathVariable Long productId, @RequestBody Product product) {
+        Product updatedProduct = productService.updateProduct(productId, product);
+        return ResponseEntity.ok(ApiResponse.success(updatedProduct, "Cập nhật sản phẩm thành công"));
     }
 
-    @PostMapping("/products/create-multiple")
-    public ResponseEntity<ApiResponse> createMultipleProducts(@RequestBody CreateProductRequest[] createProductRequests) {
-        for(CreateProductRequest temp: createProductRequests) {
-            productService.createProduct(temp);
+    @PostMapping("/create-multiple")
+    public ResponseEntity<ApiResponse> createMultipleProducts(@RequestBody CreateProductRequest[] requests) {
+        for (CreateProductRequest request : requests) {
+            productService.createProduct(request);
         }
-
-        ApiResponse res = new ApiResponse();
-        res.setStatus(true);
-        res.setMessage("Products created successfully");
-
-        return new ResponseEntity<>(res, HttpStatus.CREATED);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(null, "Tạo nhiều sản phẩm thành công"));
     }
 }

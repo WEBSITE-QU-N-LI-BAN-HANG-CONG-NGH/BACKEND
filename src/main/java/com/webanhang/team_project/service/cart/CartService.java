@@ -9,6 +9,8 @@ import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.repository.CartItemRepository;
 import com.webanhang.team_project.repository.CartRepository;
+import com.webanhang.team_project.service.product.IProductService;
+import com.webanhang.team_project.service.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,30 +25,29 @@ import java.util.Optional;
 public class CartService implements ICartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-
+    private final IProductService productService;
+    private final UserService userService;
 
     @Override
-    public Cart getCart(int cartId) {
+    public Cart getCart(Long cartId) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new EntityNotFoundException("Cart not found!"));
-        BigDecimal totalAmount = cart.getTotalAmount();
-        cart.setTotalAmount(totalAmount);
         return cartRepository.save(cart);
     }
 
     @Override
-    public Cart getCartByUserId(int userId) {
+    public Cart getCartByUserId(Long userId) {
         return cartRepository.findByUserId(userId);
     }
 
-
-    @Override
-    public void clearCart(int cartId) {
-        Cart cart = getCart(cartId);
-        cartItemRepository.deleteAllByCartId(cartId);
-        cart.clearCart();
-        cartRepository.deleteById(cartId);
-    }
+//
+//    @Override
+//    public void clearCart(Long cartId) {
+//        Cart cart = getCart(cartId);
+//        cartItemRepository.deleteAllByCartId(cartId);
+//        cart.clearCart();
+//        cartRepository.deleteById(cartId);
+//    }
 
 
     @Override
@@ -59,11 +60,11 @@ public class CartService implements ICartService {
                 });
     }
 
-    @Override
-    public BigDecimal getTotalPrice(int cartId) {
-        Cart cart = getCart(cartId);
-        return cart.getTotalAmount();
-    }
+//    @Override
+//    public BigDecimal getTotalPrice(Long cartId) {
+//        Cart cart = getCart(cartId);
+//        return BigDecimal.valueOf(cart.getTotalAmount());
+//    }
 
     @Override
     public Cart createCart(User user) {
@@ -72,13 +73,13 @@ public class CartService implements ICartService {
         return cartRepository.save(cart);
     }
 
-    private Cart createCart(Long userId) throws GlobalExceptionHandler {
+    private Cart createCart(Long userId)  {
         User user = userService.findUserById(userId);
         return createCart(user);
     }
 
     @Override
-    public Cart findUserCart(Long userId) throws GlobalExceptionHandler {
+    public Cart findUserCart(Long userId) {
         Cart cart = cartRepository.findByUserId(userId);
         if (cart == null) {
             // Tạo giỏ hàng mới nếu chưa có
