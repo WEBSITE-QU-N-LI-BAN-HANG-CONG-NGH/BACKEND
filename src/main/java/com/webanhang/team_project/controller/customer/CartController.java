@@ -5,6 +5,7 @@ package com.webanhang.team_project.controller.customer;
 import com.webanhang.team_project.dto.AddItemRequest;
 import com.webanhang.team_project.dto.cart.CartDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
+import com.webanhang.team_project.exceptions.AppException;
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.User;
@@ -25,7 +26,7 @@ public class CartController {
     private UserService userService;
 
     @GetMapping("/")
-    public ResponseEntity<CartDTO> findUserCart(@RequestHeader("Authorization") String jwt) throws GlobalExceptionHandler {
+    public ResponseEntity<CartDTO> findUserCart(@RequestHeader("Authorization") String jwt) {
         User user = userService.findUserByJwt(jwt);
         Cart cart = cartService.findUserCart(user.getId());
         CartDTO cartDTO = new CartDTO(cart);
@@ -34,7 +35,7 @@ public class CartController {
 
     @PostMapping("/add")
     public ResponseEntity<ApiResponse> addItemToCart(@RequestHeader("Authorization") String jwt,
-                                                     @RequestBody AddItemRequest req) throws GlobalExceptionHandler {
+                                                     @RequestBody AddItemRequest req) {
         User user = userService.findUserByJwt(jwt);
         cartService.addCartItem(user.getId(), req);
 
@@ -46,7 +47,8 @@ public class CartController {
 
     @PutMapping("/update/{itemId}")
     public ResponseEntity<CartDTO> updateCartItem(@RequestHeader("Authorization") String jwt,
-                                                  @PathVariable Long itemId, @RequestBody AddItemRequest req) throws GlobalExceptionHandler {
+                                                  @PathVariable Long itemId,
+                                                  @RequestBody AddItemRequest req) {
         User user = userService.findUserByJwt(jwt);
         Cart cart = cartService.updateCartItem(user.getId(), itemId, req);
         CartDTO cartDTO = new CartDTO(cart);
@@ -55,7 +57,7 @@ public class CartController {
 
     @DeleteMapping("/remove/{itemId}")
     public ResponseEntity<ApiResponse> removeCartItem(@RequestHeader("Authorization") String jwt,
-            @PathVariable Long itemId) throws GlobalExceptionHandler {
+            @PathVariable Long itemId) throws AppException {
         User user = userService.findUserByJwt(jwt);
         cartService.removeCartItem(user.getId(), itemId);
         
@@ -67,7 +69,7 @@ public class CartController {
 
     @DeleteMapping("/clear")
     public ResponseEntity<ApiResponse> clearCart(@RequestHeader("Authorization") String jwt) 
-            throws GlobalExceptionHandler {
+            throws AppException {
         User user = userService.findUserByJwt(jwt);
         cartService.clearCart(user.getId());
         

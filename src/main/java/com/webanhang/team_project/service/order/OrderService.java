@@ -36,67 +36,67 @@ public class OrderService implements IOrderService {
     private final ModelMapper modelMapper;
 
 
-    @Transactional
-    @Override
-    public Order placeOrder(int userId) {
-        Cart cart = cartService.getCartByUserId(userId);
-        Order order = createOrder(cart);
-        List<OrderItem> orderItemList = createOrderItems(order, cart);
-        order.setOrderItems(new HashSet<>(orderItemList));
-        order.setTotalAmount(calculateTotalAmount(orderItemList));
-        Order savedOrder = orderRepository.save(order);
-        cartService.clearCart(cart.getId());
-        return savedOrder;
-    }
+//    @Transactional
+//    @Override
+//    public Order placeOrder(int userId) {
+//        Cart cart = cartService.getCartByUserId(userId);
+//        Order order = createOrder(cart);
+//        List<OrderItem> orderItemList = createOrderItems(order, cart);
+//        order.setOrderItems(new HashSet<>(orderItemList));
+//        order.setTotalAmount(calculateTotalAmount(orderItemList));
+//        Order savedOrder = orderRepository.save(order);
+//        cartService.clearCart(cart.getId());
+//        return savedOrder;
+//    }
 
-    private Order createOrder(Cart cart) {
-        Order order = new Order();
-        order.setUser(cart.getUser());
-        order.setOrderStatus(OrderStatus.PENDING);
-        order.setOrderDate(LocalDate.now());
-        return order;
-    }
+//    private Order createOrder(Cart cart) {
+//        Order order = new Order();
+//        order.setUser(cart.getUser());
+//        order.setOrderStatus(OrderStatus.PENDING);
+//        order.setOrderDate(LocalDate.now());
+//        return order;
+//    }
+//
+//    private List<OrderItem> createOrderItems(Order order, Cart cart) {
+//        return cart.getItems().stream().map(cartItem -> {
+//            Product product = cartItem.getProduct();
+//            product.setInventory(product.getInventory() - cartItem.getQuantity());
+//            productRepository.save(product);
+//            return new OrderItem(
+//                    order,
+//                    product,
+//                    cartItem.getUnitPrice(),
+//                    cartItem.getQuantity());
+//        }).toList();
+//    }
+//
+//    private BigDecimal calculateTotalAmount(List<OrderItem> orderItemList) {
+//        return orderItemList.stream()
+//                .map(item -> item.getPrice()
+//                        .multiply(new BigDecimal(item.getQuantity())))
+//                .reduce(BigDecimal.ZERO, BigDecimal::add);
+//    }
 
-    private List<OrderItem> createOrderItems(Order order, Cart cart) {
-        return cart.getItems().stream().map(cartItem -> {
-            Product product = cartItem.getProduct();
-            product.setInventory(product.getInventory() - cartItem.getQuantity());
-            productRepository.save(product);
-            return new OrderItem(
-                    order,
-                    product,
-                    cartItem.getUnitPrice(),
-                    cartItem.getQuantity());
-        }).toList();
-    }
 
-    private BigDecimal calculateTotalAmount(List<OrderItem> orderItemList) {
-        return orderItemList.stream()
-                .map(item -> item.getPrice()
-                        .multiply(new BigDecimal(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
+//    @Override
+//    public List<OrderDTO> getUserOrders(int userId) {
+//        List<Order> orders = orderRepository.findByUserId(userId);
+//        return  orders.stream().map(this :: convertToDto).toList();
+//    }
 
-
-    @Override
-    public List<OrderDTO> getUserOrders(int userId) {
-        List<Order> orders = orderRepository.findByUserId(userId);
-        return  orders.stream().map(this :: convertToDto).toList();
-    }
-
-    @Override
-    public OrderDTO convertToDto(Order order) {
-        return modelMapper.map(order, OrderDTO.class);
-    }
-
-    public OrderService(CartRepository cartRepository, ICartService ICartService,
-                        IProductService productService, OrderRepository orderRepository, AddressRepository addressRepository) {
-        this.cartRepository = cartRepository;
-        this.ICartService = ICartService;
-        this.productService = productService;
-        this.orderRepository = orderRepository;
-        this.addressRepository = addressRepository;
-    }
+//    @Override
+//    public OrderDTO convertToDto(Order order) {
+//        return modelMapper.map(order, OrderDTO.class);
+//    }
+//
+//    public OrderService(CartRepository cartRepository, ICartService ICartService,
+//                        IProductService productService, OrderRepository orderRepository, AddressRepository addressRepository) {
+//        this.cartRepository = cartRepository;
+//        this.ICartService = ICartService;
+//        this.productService = productService;
+//        this.orderRepository = orderRepository;
+//        this.addressRepository = addressRepository;
+//    }
 
     @Override
     public Order findOrderById(Long orderId) {

@@ -19,5 +19,7 @@ public interface ICartService {
     public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req);
 
     public void removeCartItem(Long userId, Long itemId);
+
+    public void clearCart(Long userId);
 }
 

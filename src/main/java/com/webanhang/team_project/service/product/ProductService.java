@@ -2,12 +2,15 @@ package com.webanhang.team_project.service.product;
 
 
 import com.webanhang.team_project.dto.product.ProductDTO;
+import com.webanhang.team_project.dto.product.request.AddProductRequest;
 import com.webanhang.team_project.dto.product.request.CreateProductRequest;
+import com.webanhang.team_project.dto.product.request.UpdateProductRequest;
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.*;
-import com.webanhang.team_project.repository.*;
-import com.webanhang.team_project.dto.product.request.AddProductRequest;
-import com.webanhang.team_project.dto.product.request.UpdateProductRequest;
+import com.webanhang.team_project.repository.CartItemRepository;
+import com.webanhang.team_project.repository.CategoryRepository;
+import com.webanhang.team_project.repository.OrderItemRepository;
+import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.service.user.UserService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -35,139 +38,141 @@ public class ProductService implements IProductService {
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
     private final ModelMapper modelMapper;
+    private final UserService userService;
 
-    @Override
-    public Product addProduct(AddProductRequest request) {
-        if (productExists(request.getName(), request.getBrand())) {
-            throw new EntityExistsException(request.getName() + " already exists");
-        }
-        Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
-                .orElseGet(() -> {
-                    Category newCategory = new Category(request.getCategory().getName());
-                    return categoryRepository.save(newCategory);
-                });
-        request.setCategory(category);
-        Product product = createProduct(request, category);
-        return productRepository.save(product);
-    }
 
-    private boolean productExists(String name, String brand) {
-        return productRepository.existsByNameAndBrand(name, brand);
-    }
-
-    private Product createProduct(AddProductRequest request, Category category) {
-        return new Product(
-                request.getName(),
-                request.getBrand(),
-                request.getPrice(),
-                request.getInventory(),
-                request.getDescription(),
-                category
-        );
-    }
-
-    @Override
-    public Product updateProduct(UpdateProductRequest request, int productId) {
-        return productRepository.findById(productId)
-                .map(existingProduct -> updateExistingProduct(existingProduct, request))
-                .map(productRepository :: save)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found!"));
-    }
-
-    private Product updateExistingProduct(Product existingProduct, UpdateProductRequest request) {
-        existingProduct.setName(request.getName());
-        existingProduct.setBrand(request.getBrand());
-        existingProduct.setPrice(request.getPrice());
-        existingProduct.setInventory(request.getInventory());
-        existingProduct.setDescription(request.getDescription());
-        Category category = categoryRepository.findByName(request.getCategory().getName());
-        existingProduct.setCategory(category);
-        return existingProduct;
-    }
-
-    @Override
-    public void deleteProduct(int productId) {
-        productRepository.findById(productId)
-                .ifPresentOrElse(product -> {
-
-                    List<CartItem> cartItems = cartItemRepository.findByProductId(product.getId());
-                    cartItems.forEach(cartItem -> {
-                        Cart cart = cartItem.getCart();
-                        cart.removeItem(cartItem);
-                        cartItemRepository.delete(cartItem);
-                    });
-
-                    List<OrderItem> orderItems = orderItemRepository.findByProductId(productId);
-                    orderItems.forEach(orderItem -> {
-                        orderItem.setProduct(null);
-                        orderItemRepository.save(orderItem);
-                    });
-
-                    Optional.ofNullable(product.getCategory())
-                            .ifPresent(category -> category.getProducts().remove(product));
-                    product.setCategory(null);
-
-                    productRepository.deleteById(productId);
-
-                }, () -> {
-                    throw new EntityNotFoundException("Product not found!");
-                });
-        productRepository.deleteById(productId);
-    }
-
-    @Override
-    public Product getProductById(int productId) {
-        return productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
-    }
-
-    @Override
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
-    }
-
-    @Override
-    public List<Product> getProductsByCategoryAndBrand(String category, String brand) {
-        return productRepository.findByCategoryNameAndBrand(category, brand);
-    }
-
-    @Override
-    public List<Product> getProductsByBrandAndName(String brand, String name) {
-        return productRepository.findByBrandAndName(brand, name);
-    }
-
-    @Override
-    public List<Product> getProductsByName(String name) {
-        return productRepository.findByName(name);
-    }
-
-    @Override
-    public List<Product> getProductsByBrand(String brand) {
-        return productRepository.findByBrand(brand);
-    }
-
-    @Override
-    public List<Product> getProductsByCategory(String category) {
-        return productRepository.findByCategoryName(category);
-    }
-
-    @Override
-    public List<ProductDTO> getConvertedProducts(List<Product> products) {
-        return products.stream()
-                .map(this::convertToDto)
-                .toList();
-    }
-
-    @Override
-    public ProductDTO convertToDto(Product product) {
-        ProductDTO productDto = modelMapper.map(product, ProductDTO.class);
-        List<Image> images = imageRepository.findByProductId(product.getId());
-        List<ImageDto> imageDtos = images.stream()
-                .map(image -> modelMapper.map(image, ImageDto.class))
-                .toList();
-        productDto.setImages(imageDtos);
-        return productDto;
-    }
+//    @Override
+//    public Product addProduct(AddProductRequest request) {
+//        if (productExists(request.getName(), request.getBrand())) {
+//            throw new EntityExistsException(request.getName() + " already exists");
+//        }
+//        Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
+//                .orElseGet(() -> {
+//                    Category newCategory = new Category(request.getCategory().getName());
+//                    return categoryRepository.save(newCategory);
+//                });
+//        request.setCategory(category);
+//        Product product = createProduct(request, category);
+//        return productRepository.save(product);
+//    }
+//
+//    private boolean productExists(String name, String brand) {
+//        return productRepository.existsByTitleAndBrand(name, brand);
+//    }
+//
+//    private Product createProduct(AddProductRequest request, Category category) {
+//        return new Product(
+//                request.getName(),
+//                request.getBrand(),
+//                request.getPrice(),
+//                request.getInventory(),
+//                request.getDescription(),
+//                category
+//        );
+//    }
+//
+//    @Override
+//    public Product updateProduct(UpdateProductRequest request, int productId) {
+//        return productRepository.findById(productId)
+//                .map(existingProduct -> updateExistingProduct(existingProduct, request))
+//                .map(productRepository :: save)
+//                .orElseThrow(() -> new EntityNotFoundException("Product not found!"));
+//    }
+//
+//    private Product updateExistingProduct(Product existingProduct, UpdateProductRequest request) {
+//        existingProduct.setName(request.getName());
+//        existingProduct.setBrand(request.getBrand());
+//        existingProduct.setPrice(request.getPrice());
+//        existingProduct.setInventory(request.getInventory());
+//        existingProduct.setDescription(request.getDescription());
+//        Category category = categoryRepository.findByName(request.getCategory().getName());
+//        existingProduct.setCategory(category);
+//        return existingProduct;
+//    }
+//
+//    @Override
+//    public void deleteProduct(int productId) {
+//        productRepository.findById(productId)
+//                .ifPresentOrElse(product -> {
+//
+//                    List<CartItem> cartItems = cartItemRepository.findByProductId(product.getId());
+//                    cartItems.forEach(cartItem -> {
+//                        Cart cart = cartItem.getCart();
+//                        cart.removeItem(cartItem);
+//                        cartItemRepository.delete(cartItem);
+//                    });
+//
+//                    List<OrderItem> orderItems = orderItemRepository.findByProductId(productId);
+//                    orderItems.forEach(orderItem -> {
+//                        orderItem.setProduct(null);
+//                        orderItemRepository.save(orderItem);
+//                    });
+//
+//                    Optional.ofNullable(product.getCategory())
+//                            .ifPresent(category -> category.getProducts().remove(product));
+//                    product.setCategory(null);
+//
+//                    productRepository.deleteById(productId);
+//
+//                }, () -> {
+//                    throw new EntityNotFoundException("Product not found!");
+//                });
+//        productRepository.deleteById(productId);
+//    }
+//
+//    @Override
+//    public Product getProductById(int productId) {
+//        return productRepository.findById(productId)
+//                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+//    }
+//
+//    @Override
+//    public List<Product> getAllProducts() {
+//        return productRepository.findAll();
+//    }
+//
+//    @Override
+//    public List<Product> getProductsByCategoryAndBrand(String category, String brand) {
+//        return productRepository.findByCategoryNameAndBrand(category, brand);
+//    }
+//
+//    @Override
+//    public List<Product> getProductsByBrandAndName(String brand, String name) {
+//        return productRepository.findByBrandAndName(brand, name);
+//    }
+//
+//    @Override
+//    public List<Product> getProductsByName(String name) {
+//        return productRepository.findByName(name);
+//    }
+//
+//    @Override
+//    public List<Product> getProductsByBrand(String brand) {
+//        return productRepository.findByBrand(brand);
+//    }
+//
+//    @Override
+//    public List<Product> getProductsByCategory(String category) {
+//        return productRepository.findByCategoryName(category);
+//    }
+//
+//    @Override
+//    public List<ProductDTO> getConvertedProducts(List<Product> products) {
+//        return products.stream()
+//                .map(this::convertToDto)
+//                .toList();
+//    }
+//
+//    @Override
+//    public ProductDTO convertToDto(Product product) {
+//        ProductDTO productDto = modelMapper.map(product, ProductDTO.class);
+//        List<Image> images = imageRepository.findByProductId(product.getId());
+//        List<ImageDto> imageDtos = images.stream()
+//                .map(image -> modelMapper.map(image, ImageDto.class))
+//                .toList();
+//        productDto.setImages(imageDtos);
+//        return productDto;
+//    }
 
     public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository, UserService userService) {
         this.productRepository = productRepository;
@@ -232,7 +237,7 @@ public class ProductService implements IProductService {
 
     @Override
     @Transactional
-    public String deleteProduct(Long id) throws GlobalExceptionHandler {
+    public String deleteProduct(Long id) {
         Product product = findProductById(id);
         if(product == null) {
             throw new GlobalExceptionHandler("Product not found with id: " + id, "PRODUCT_NOT_FOUND");
@@ -243,7 +248,7 @@ public class ProductService implements IProductService {
 
     @Override
     @Transactional
-    public Product updateProduct(Long id, Product product) throws GlobalExceptionHandler {
+    public Product updateProduct(Long id, Product product) {
         Product existingProduct = findProductById(id);
         if(existingProduct.getQuantity() != 0) {
             existingProduct.setQuantity(product.getQuantity());
@@ -252,23 +257,23 @@ public class ProductService implements IProductService {
     }
 
     @Override
-    public Product findProductById(Long id) throws GlobalExceptionHandler {
+    public Product findProductById(Long id) {
         Optional<Product> product = productRepository.findById(id);
         if(product.isPresent()) {
             return product.get();
         }
-        throw new GlobalExceptionHandler("Product not found with id: " + id, "PRODUCT_NOT_FOUND");
+        throw new RuntimeException("Product not found with id: " + id, "PRODUCT_NOT_FOUND");
     }
 
     @Override
-    public List<Product> findProductByCategory(String category) throws GlobalExceptionHandler {
+    public List<Product> findProductByCategory(String category) {
         return productRepository.findByCategoryName(category);
     }
 
     @Override
     public Page<Product> findAllProductsByFilter(String category, List<String> colors, List<String> sizes,
                                                  Integer minPrice, Integer maxPrice, Integer minDiscount, String sort, String stock,
-                                                 Integer pageNumber, Integer pageSize) throws GlobalExceptionHandler {
+                                                 Integer pageNumber, Integer pageSize) {
 
         System.out.println("Filtering products with: category=" + category + ", colors=" + colors + ", sizes=" + sizes);
 
@@ -340,17 +345,17 @@ public class ProductService implements IProductService {
     }
 
     @Override
-    public List<Product> findAllProducts() throws GlobalExceptionHandler {
+    public List<Product> findAllProducts() {
         return productRepository.findAll();
     }
 
     @Override
-    public List<Product> searchProducts(String keyword) throws GlobalExceptionHandler {
+    public List<Product> searchProducts(String keyword) {
         return productRepository.findByTitleContainingIgnoreCase(keyword);
     }
 
     @Override
-    public List<Product> getFeaturedProducts() throws GlobalExceptionHandler {
+    public List<Product> getFeaturedProducts() {
         return productRepository.findByDiscountPersentGreaterThan(0);
     }
 }
