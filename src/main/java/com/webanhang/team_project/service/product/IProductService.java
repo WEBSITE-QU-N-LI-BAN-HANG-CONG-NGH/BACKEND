@@ -11,29 +11,27 @@ import java.util.List;
 import java.util.Map;
 
 public interface IProductService {
+    public Product createProduct(CreateProductRequest req) ;
 
-    ProductDTO convertToDto(Product product);
+    public String deleteProduct(Long productId) ;
 
-    Product createProduct(CreateProductRequest req);
+    public Product updateProduct(Long productId, Product product) ;
 
-    String deleteProduct(Long productId);
+    public Product findProductById(Long id) ;
 
-    Product updateProduct(Long productId, Product product);
+    public List<Product> findProductByCategory(String category) ;
 
-    Product findProductById(Long id);
-
-    List<Product> findProductByCategory(String category);
-
-    Page<Product> findAllProductsByFilter(String category, List<String> colors, List<String> sizes,
+    public Page<Product> findAllProductsByFilter(String category, List<String> colors, List<String> sizes,
                                                  Integer minPrice, Integer maxPrice, Integer minDiscount, String sort,
-                                                 String stock, Integer pageNumber, Integer pageSize);
+                                                 String stock, Integer pageNumber, Integer pageSize) ;
 
-    List<Product> findAllProducts();
+    public List<Product> findAllProducts() ;
 
-    List<Product> searchProducts(String keyword);
+    public List<Product> searchProducts(String keyword);
 
-    List<Product> getFeaturedProducts();
-
-    List<Map<String, Object>> getTopSellingProducts(int limit);
+    public List<Product> getFeaturedProducts();
+    
+    public List<Map<String, Object>> getTopSellingProducts(int limit);
+    
     public Map<String, Object> getRevenueByCateogry();
 }

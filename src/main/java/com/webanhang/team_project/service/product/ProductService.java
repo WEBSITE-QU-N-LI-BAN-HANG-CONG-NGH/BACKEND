@@ -5,6 +5,7 @@ import com.webanhang.team_project.dto.product.AddProductRequest;
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.dto.product.UpdateProductRequest;
+import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.*;
 import com.webanhang.team_project.repository.CartItemRepository;
 import com.webanhang.team_project.repository.CategoryRepository;
@@ -24,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,127 +42,8 @@ public class ProductService implements IProductService {
     private final UserService userService;
 
     @Override
-    public Product updateProduct(UpdateProductRequest request, int productId) {
-        return productRepository.findById((long) productId)
-                .map(existingProduct -> updateExistingProduct(existingProduct, request))
-                .map(productRepository :: save)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found!"));
-    }
-
-    private Product updateExistingProduct(Product existingProduct, UpdateProductRequest request) {
-        existingProduct.setTitle(request.getName());
-        existingProduct.setBrand(request.getBrand());
-        existingProduct.setPrice(request.getPrice().intValue());
-        existingProduct.setQuantity(request.getInventory());
-        existingProduct.setDescription(request.getDescription());
-        Category category = categoryRepository.findByName(request.getCategory().getName());
-        existingProduct.setCategory(category);
-        return existingProduct;
-    }
-
-    @Override
-    public void deleteProduct(int productId) {
-        productRepository.findById((long) productId)
-                .ifPresentOrElse(product -> {
-                    // Xóa các liên kết trước khi xóa sản phẩm
-                    product.getCartItems().clear();
-                    product.getOrderItems().forEach(orderItem -> {
-                        orderItem.setProduct(null);
-                    });
-                    
-                    Optional.ofNullable(product.getCategory())
-                            .ifPresent(category -> category.getProducts().remove(product));
-                    product.setCategory(null);
-
-                    productRepository.deleteById(product.getId());
-                }, () -> {
-                    throw new EntityNotFoundException("Product not found!");
-                });
-    }
-
-    @Override
-    public Product getProductById(int productId) {
-        return productRepository.findById((long) productId)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
-    }
-
-    @Override
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
-    }
-
-    @Override
-    public List<Product> getProductsByCategoryAndBrand(String category, String brand) {
-        return productRepository.findByCategoryNameAndBrand(category, brand);
-    }
-
-    @Override
-    public List<Product> getProductsByBrandAndName(String brand, String name) {
-        return productRepository.findByBrandAndTitle(brand, name);
-    }
-
-    @Override
-    public List<Product> getProductsByName(String name) {
-        return productRepository.findByName(name);
-    }
-
-    @Override
-    public List<Product> getProductsByBrand(String brand) {
-        return productRepository.findByBrand(brand);
-    }
-
-    @Override
-    public List<Product> getProductsByCategory(String category) {
-        return productRepository.findByCategoryName(category);
-    }
-
-    @Override
-    public List<ProductDTO> getConvertedProducts(List<Product> products) {
-        return products.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public ProductDTO convertToDto(Product product) {
-        return modelMapper.map(product, ProductDTO.class);
-    }
-    
-    @Override
-    public Product addProduct(AddProductRequest request) {
-        if (productExists(request.getName(), request.getBrand())) {
-            throw new EntityExistsException(request.getName() + " already exists");
-        }
-        Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
-                .orElseGet(() -> {
-                    Category newCategory = new Category();
-                    newCategory.setName(request.getCategory().getName());
-                    newCategory.setLevel(1);
-                    return categoryRepository.save(newCategory);
-                });
-        request.setCategory(category);
-        Product product = createProduct(request, category);
-        return productRepository.save(product);
-    }
-
-    private boolean productExists(String name, String brand) {
-        return productRepository.existsByTitleAndBrand(name, brand);
-    }
-
-    private Product createProduct(AddProductRequest request, Category category) {
-        return new Product(
-                request.getName(),
-                request.getBrand(),
-                request.getPrice(),
-                request.getInventory(),
-                request.getDescription(),
-                category
-        );
-    }
-    
-    @Override
     @Transactional
-    public Product createProduct(CreateProductRequest req) {
+    public Product createProduct(CreateProductRequest req)  {
         // Xử lý category theo cấp
         Category topLevel = categoryRepository.findByName(req.getTopLevelCategory());
         if(topLevel == null) {
@@ -186,148 +70,195 @@ public class ProductService implements IProductService {
             thirdLevel.setParentCategory(secondLevel);
             thirdLevel = categoryRepository.save(thirdLevel);
         }
-        
-        // Tạo product
+
+        // Tạo sản phẩm mới
         Product product = new Product();
         product.setTitle(req.getTitle());
         product.setDescription(req.getDescription());
         product.setPrice(req.getPrice());
         product.setDiscountPersent(req.getDiscountPersent());
+        product.setDiscountedPrice(req.getDiscountedPrice());
         product.setQuantity(req.getQuantity());
         product.setBrand(req.getBrand());
         product.setColor(req.getColor());
         product.setImageUrl(req.getImageUrl());
         product.setCategory(thirdLevel);
         product.setCreatedAt(LocalDateTime.now());
-        
-        // Tính giá sau khi giảm giá
-        product.updateDiscountedPrice();
-        
+
+        // Xử lý sizes
+        if (req.getSizes() != null) {
+            for (ProductSize size : req.getSizes()) {
+                size.setProduct(product);
+            }
+            product.setSizes(req.getSizes());
+        }
+
         return productRepository.save(product);
     }
-    
+
     @Override
-    public String deleteProduct(Long productId) {
-        try {
-            productRepository.deleteById(productId);
-            return "Xóa sản phẩm thành công";
-        } catch (Exception e) {
-            return "Không thể xóa sản phẩm: " + e.getMessage();
+    @Transactional
+    public String deleteProduct(Long id) {
+        Product product = findProductById(id);
+        if(product == null) {
+            throw new EntityNotFoundException("Product not found with id: " + id);
         }
+        productRepository.delete(product);
+        return "Product deleted successfully";
     }
-    
+
     @Override
-    public Product updateProduct(Long productId, Product product) {
-        Product existingProduct = findProductById(productId);
-        existingProduct.setTitle(product.getTitle());
-        existingProduct.setDescription(product.getDescription());
-        existingProduct.setPrice(product.getPrice());
-        existingProduct.setQuantity(product.getQuantity());
-        existingProduct.setDiscountPersent(product.getDiscountPersent());
-        existingProduct.setBrand(product.getBrand());
-        existingProduct.setColor(product.getColor());
-        existingProduct.setImageUrl(product.getImageUrl());
-        existingProduct.updateDiscountedPrice();
+    @Transactional
+    public Product updateProduct(Long id, Product product)  {
+        Product existingProduct = findProductById(id);
+        if(existingProduct.getQuantity() != 0) {
+            existingProduct.setQuantity(product.getQuantity());
+        }
         return productRepository.save(existingProduct);
     }
-    
+
     @Override
-    public Product findProductById(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
+    public Product findProductById(Long id)  {
+        Optional<Product> product = productRepository.findById(id);
+        if(product.isPresent()) {
+            return product.get();
+        }
+        throw new EntityNotFoundException("Product not found with id: " + id);
     }
-    
+
     @Override
     public List<Product> findProductByCategory(String category) {
         return productRepository.findByCategoryName(category);
     }
-    
+
     @Override
     public Page<Product> findAllProductsByFilter(String category, List<String> colors, List<String> sizes,
-                                                Integer minPrice, Integer maxPrice, Integer minDiscount, String sort,
-                                                String stock, Integer pageNumber, Integer pageSize) {
+                                                 Integer minPrice, Integer maxPrice, Integer minDiscount, String sort, String stock,
+                                                 Integer pageNumber, Integer pageSize){
+
+        System.out.println("Filtering products with: category=" + category + ", colors=" + colors + ", sizes=" + sizes);
+
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        List<Product> products = new ArrayList<>();
-        
-        // Lọc theo category
-        if (category != null && !category.isEmpty()) {
-            products = productRepository.findByCategoryName(category);
-        } else {
+
+        // Nếu category là null, lấy tất cả sản phẩm
+        List<Product> products;
+        if (category == null || category.isEmpty()) {
+            System.out.println("Category is null or empty, fetching all products");
             products = productRepository.findAll();
+        } else {
+            products = productRepository.filterProducts(category, minPrice, maxPrice, minDiscount, sort, "");
         }
-        
-        // Lọc theo giá
-        if (minPrice != null && maxPrice != null) {
+
+        System.out.println("Found " + products.size() + " products from initial query");
+
+        // Xử lý colors nếu không null và không trống
+        if(colors != null && !colors.isEmpty()) {
+            List<String> finalColors = colors;
             products = products.stream()
-                    .filter(p -> p.getDiscountedPrice() >= minPrice && p.getDiscountedPrice() <= maxPrice)
+                    .filter(product -> product.getColor() != null && finalColors.stream()
+                            .anyMatch(c -> c.equalsIgnoreCase(product.getColor())))
                     .collect(Collectors.toList());
+            System.out.println("After color filter: " + products.size() + " products");
         }
-        
-        // Lọc theo discount
-        if (minDiscount != null) {
+
+        // Xử lý sizes nếu không null và không trống
+        if(sizes != null && !sizes.isEmpty()) {
             products = products.stream()
-                    .filter(p -> p.getDiscountPersent() >= minDiscount)
+                    .filter(product -> {
+                        // Nếu sản phẩm không có danh sách size hoặc danh sách rỗng thì bỏ qua
+                        if(product.getSizes() == null || product.getSizes().isEmpty()) {
+                            return false;
+                        }
+
+                        // Kiểm tra xem có size nào khớp với yêu cầu không
+                        return product.getSizes().stream()
+                                .anyMatch(size -> size != null && size.getName() != null &&
+                                        sizes.stream().anyMatch(s ->
+                                                s.equalsIgnoreCase(size.getName()) ||
+                                                        size.getName().toLowerCase().contains(s.toLowerCase())));
+                    })
                     .collect(Collectors.toList());
+            System.out.println("After size filter: " + products.size() + " products");
         }
-        
-        // Lọc theo màu sắc
-        if (colors != null && !colors.isEmpty()) {
-            products = products.stream()
-                    .filter(p -> colors.contains(p.getColor()))
-                    .collect(Collectors.toList());
-        }
-        
-        // Lọc theo sizes
-        if (sizes != null && !sizes.isEmpty()) {
-            products = products.stream()
-                    .filter(p -> p.getSizes().stream()
-                            .anyMatch(size -> sizes.contains(size.getName())))
-                    .collect(Collectors.toList());
-        }
-        
-        // Lọc theo stock
-        if (stock != null && stock.equals("in_stock")) {
-            products = products.stream()
-                    .filter(p -> p.getQuantity() > 0)
-                    .collect(Collectors.toList());
-        } else if (stock != null && stock.equals("out_of_stock")) {
-            products = products.stream()
-                    .filter(p -> p.getQuantity() == 0)
-                    .collect(Collectors.toList());
-        }
-        
-        // Sắp xếp
-        if (sort != null) {
-            if (sort.equals("price_low")) {
-                products.sort((p1, p2) -> p1.getDiscountedPrice() - p2.getDiscountedPrice());
-            } else if (sort.equals("price_high")) {
-                products.sort((p1, p2) -> p2.getDiscountedPrice() - p1.getDiscountedPrice());
+
+        if(stock != null) {
+            if(stock.equals("in_stock")) {
+                products = products.stream().filter(p -> p.getQuantity() > 0).collect(Collectors.toList());
             }
+            else if(stock.equals("out_of_stock")) {
+                products = products.stream().filter(p -> p.getQuantity() == 0).collect(Collectors.toList());
+            }
+            System.out.println("After stock filter: " + products.size() + " products");
         }
-        
-        // Phân trang
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), products.size());
-        
-        if (start > products.size()) {
-            return new PageImpl<>(new ArrayList<>(), pageable, 0);
+
+        int startIndex = (int) pageable.getOffset();
+        int endIndex = Math.min((startIndex + pageable.getPageSize()), products.size());
+
+        if (startIndex >= products.size()) {
+            System.out.println("Returning empty page because startIndex >= products.size()");
+            return new PageImpl<>(new ArrayList<>(), pageable, products.size());
         }
-        
-        return new PageImpl<>(products.subList(start, end), pageable, products.size());
+
+        List<Product> pageProducts = products.subList(startIndex, endIndex);
+        System.out.println("Returning " + pageProducts.size() + " products on page " + pageNumber);
+
+        return new PageImpl<>(pageProducts, pageable, products.size());
     }
-    
+
     @Override
-    public List<Product> findAllProducts() {
+    public List<Product> findAllProducts()  {
         return productRepository.findAll();
     }
-    
+
     @Override
     public List<Product> searchProducts(String keyword) {
         return productRepository.findByTitleContainingIgnoreCase(keyword);
     }
-    
+
     @Override
     public List<Product> getFeaturedProducts() {
         return productRepository.findByDiscountPersentGreaterThan(0);
+    }
+
+    @Override
+    public List<Map<String, Object>> getTopSellingProducts(int limit) {
+        // Triển khai phương thức lấy các sản phẩm bán chạy nhất
+        // Đây là triển khai mẫu, cần sửa theo logic thực tế của ứng dụng
+        List<Map<String, Object>> result = new ArrayList<>();
+        List<Product> products = productRepository.findAll();
+        // Sắp xếp theo số lượng đã bán giảm dần (ở đây giả định)
+        products.sort((p1, p2) -> Integer.compare(p2.getQuantity(), p1.getQuantity()));
+        // Lấy limit sản phẩm đầu tiên
+        int count = Math.min(limit, products.size());
+        for (int i = 0; i < count; i++) {
+            Product p = products.get(i);
+            Map<String, Object> productMap = new HashMap<>();
+            productMap.put("id", p.getId());
+            productMap.put("title", p.getTitle());
+            productMap.put("brand", p.getBrand());
+            productMap.put("price", p.getPrice());
+            productMap.put("quantity", p.getQuantity());
+            result.add(productMap);
+        }
+        return result;
+    }
+    
+    @Override
+    public Map<String, Object> getRevenueByCateogry() {
+        // Triển khai phương thức lấy doanh thu theo danh mục
+        // Đây là triển khai mẫu, cần sửa theo logic thực tế của ứng dụng
+        Map<String, Object> result = new HashMap<>();
+        List<Product> allProducts = productRepository.findAll();
+        // Nhóm sản phẩm theo danh mục
+        Map<String, Double> categoryRevenue = new HashMap<>();
+        for (Product product : allProducts) {
+            String category = product.getCategory() != null ? product.getCategory().getName() : "Uncategorized";
+            Double revenue = categoryRevenue.getOrDefault(category, 0.0);
+            // Giả định doanh thu dựa trên giá và số lượng
+            revenue += product.getPrice() * product.getQuantity();
+            categoryRevenue.put(category, revenue);
+        }
+        result.put("categoryRevenue", categoryRevenue);
+        return result;
     }
 }    

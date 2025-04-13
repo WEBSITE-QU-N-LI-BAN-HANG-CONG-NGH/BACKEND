@@ -25,9 +25,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -244,9 +247,52 @@ public class OrderService implements IOrderService {
     @Override
     public void deleteOrder(Long orderId) {
         Order order = findOrderById(orderId);
-        if (order.getOrderStatus() != OrderStatus.CANCELLED) {
-            throw new RuntimeException("Chỉ có thể xóa đơn hàng đã hủy");
-        }
         orderRepository.delete(order);
+    }
+
+    @Override
+    public Map<String, Object> getOrderStatistics(LocalDate start, LocalDate end) {
+        // Lấy tất cả đơn hàng từ cơ sở dữ liệu
+        List<Order> allOrders = orderRepository.findAll();
+        
+        // Lọc ra các đơn hàng trong khoảng thời gian
+        List<Order> filteredOrders = allOrders.stream()
+                .filter(order -> {
+                    LocalDate orderDate = order.getOrderDate().toLocalDate();
+                    return !orderDate.isBefore(start) && !orderDate.isAfter(end);
+                })
+                .collect(Collectors.toList());
+        
+        // Tính toán số liệu thống kê
+        long totalOrders = filteredOrders.size();
+        double totalRevenue = filteredOrders.stream()
+                .mapToDouble(order -> order.getTotalDiscountedPrice().doubleValue())
+                .sum();
+        
+        // Thống kê theo trạng thái
+        Map<OrderStatus, Long> ordersByStatus = filteredOrders.stream()
+                .collect(Collectors.groupingBy(Order::getOrderStatus, Collectors.counting()));
+        
+        // Thống kê đơn hàng theo ngày
+        Map<LocalDate, Long> ordersByDate = filteredOrders.stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getOrderDate().toLocalDate(),
+                        Collectors.counting()));
+        
+        // Thống kê doanh thu theo ngày
+        Map<LocalDate, Double> revenueByDate = filteredOrders.stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getOrderDate().toLocalDate(),
+                        Collectors.summingDouble(order -> order.getTotalDiscountedPrice().doubleValue())));
+        
+        // Kết quả trả về
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalOrders", totalOrders);
+        result.put("totalRevenue", totalRevenue);
+        result.put("ordersByStatus", ordersByStatus);
+        result.put("ordersByDate", ordersByDate);
+        result.put("revenueByDate", revenueByDate);
+        
+        return result;
     }
 }

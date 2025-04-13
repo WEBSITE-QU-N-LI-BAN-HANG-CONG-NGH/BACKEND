@@ -7,7 +7,9 @@ import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.User;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public interface IOrderService {
     Order placeOrder(int userId);
@@ -23,4 +25,5 @@ public interface IOrderService {
     public Order cancelOrder(Long orderId);
     public List<Order> getAllOrders();
     public void deleteOrder(Long orderId);
+    public Map<String, Object> getOrderStatistics(LocalDate start, LocalDate end);
 }

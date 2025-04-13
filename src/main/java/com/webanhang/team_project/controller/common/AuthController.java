@@ -154,6 +154,7 @@ public class AuthController {
     /**
      * Kiểm tra trạng thái xác thực hiện tại
      */
+
     @GetMapping("/status")
     public ResponseEntity<ApiResponse> checkAuthStatus(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated()) {
