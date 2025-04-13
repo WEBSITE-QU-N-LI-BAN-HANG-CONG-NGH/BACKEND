@@ -19,11 +19,5 @@ public class AppConfig {
         return new BCryptPasswordEncoder();
     }
 
-    private String getRealClientIP(HttpServletRequest request) {
-        String ip = request.getHeader("CF-Connecting-IP");
-        if (ip == null) {
-            ip = request.getRemoteAddr();
-        }
-        return ip;
-    }
+
 }

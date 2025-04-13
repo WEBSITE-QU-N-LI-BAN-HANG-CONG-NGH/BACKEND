@@ -4,45 +4,87 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
-@Component
 public class RateLimitFilter extends OncePerRequestFilter {
-    private final Map<String, Integer> requestCounts = new ConcurrentHashMap<>();
-    private final Map<String, Long> blockUntil = new ConcurrentHashMap<>();
+
+    // Map lưu trữ số lượng request theo IP
+    private final Map<String, RequestCounter> requestCounters = new ConcurrentHashMap<>();
+    // Giới hạn request trong khoảng thời gian
+    private final int rateLimit = 50; // Số request tối đa
+    private final long timeWindow = 60000; // Khoảng thời gian (1 phút)
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws IOException, ServletException {
-        String ip = request.getHeader("CF-Connecting-IP");
-        if (ip == null) {
-            ip = request.getRemoteAddr();
-        }
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-        // Kiểm tra nếu IP bị chặn
-        if (blockUntil.containsKey(ip) && System.currentTimeMillis() < blockUntil.get(ip)) {
-            response.setStatus(429);
-            response.getWriter().write("Too many requests");
+        // Lấy địa chỉ IP của client
+        String clientIp = getClientIp(request);
+
+        // Kiểm tra và cập nhật counter
+        if (isRateLimited(clientIp)) {
+        response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+            response.getWriter().write("Rate limit exceeded. Please try again later.");
             return;
         }
 
-        // Đếm request
-        int count = requestCounts.getOrDefault(ip, 0) + 1;
-        requestCounts.put(ip, count);
-
-        // Rate limit: 100 requests per minute
-        if (count > 100) {
-            blockUntil.put(ip, System.currentTimeMillis() + 60000);
-            response.setStatus(429);
-            response.getWriter().write("Too many requests");
-            return;
-        }
-
+        // Tiếp tục chuỗi filter nếu không bị giới hạn
         filterChain.doFilter(request, response);
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            // Lấy IP đầu tiên trong chuỗi X-Forwarded-For
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
+    private boolean isRateLimited(String clientIp) {
+        long now = System.currentTimeMillis();
+
+        // Lấy hoặc tạo counter cho IP
+        RequestCounter counter = requestCounters.computeIfAbsent(clientIp,
+                ip -> new RequestCounter(now));
+
+        // Reset counter nếu đã hết thời gian
+        if (now - counter.getStartTime() > timeWindow) {
+            counter.reset(now);
+        }
+
+        // Tăng số lượng request
+        int count = counter.incrementAndGet();
+
+        // Kiểm tra giới hạn
+        return count > rateLimit;
+    }
+
+    // Lớp nội bộ để theo dõi số lượng request
+    private static class RequestCounter {
+        private final AtomicInteger count = new AtomicInteger(0);
+        private long startTime;
+
+        public RequestCounter(long startTime) {
+            this.startTime = startTime;
+        }
+
+        public int incrementAndGet() {
+            return count.incrementAndGet();
+        }
+
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public void reset(long newStartTime) {
+            count.set(0);
+            startTime = newStartTime;
+        }
     }
 }
