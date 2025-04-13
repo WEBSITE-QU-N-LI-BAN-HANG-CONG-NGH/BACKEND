@@ -1,20 +1,22 @@
 package com.webanhang.team_project.service.cart;
 
 
+import com.webanhang.team_project.dto.cart.AddItemRequest;
 import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.User;
 
-import java.math.BigDecimal;
-
 public interface ICartService {
-    Cart getCart(int cartId);
 
-    Cart getCartByUserId(int userId);
+    public Cart createCart(User user);
 
-    void clearCart(int cartId);
+    public Cart findUserCart(Long userId);
 
-    Cart initializeNewCartForUser(User user);
+    public Cart addCartItem(Long userId, AddItemRequest req);
 
-    BigDecimal getTotalPrice(int cartId);
+    public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req);
+
+    public void removeCartItem(Long userId, Long itemId);
+
+    public void clearCart(Long userId);
 }
 

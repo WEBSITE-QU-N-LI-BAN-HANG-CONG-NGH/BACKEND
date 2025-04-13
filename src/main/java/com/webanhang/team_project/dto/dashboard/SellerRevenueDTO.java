@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
 public class SellerRevenueDTO {
-    private int sellerId;
+    private Long sellerId;
     private String sellerName;
     private BigDecimal totalRevenue;
     private int totalOrders;

@@ -1,15 +1,20 @@
 package com.webanhang.team_project.service.user;
 
-import com.webanhang.team_project.dto.user.UserDto;
+import com.webanhang.team_project.dto.address.AddAddressRequest;
+import com.webanhang.team_project.dto.address.AddressDTO;
+import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.enums.UserRole;
+import com.webanhang.team_project.model.Address;
 import com.webanhang.team_project.model.Role;
 import com.webanhang.team_project.model.User;
+import com.webanhang.team_project.repository.AddressRepository;
 import com.webanhang.team_project.repository.RoleRepository;
 import com.webanhang.team_project.repository.UserRepository;
-import com.webanhang.team_project.dto.user.request.CreateUserRequest;
-import com.webanhang.team_project.dto.auth.request.OtpVerificationRequest;
-import com.webanhang.team_project.dto.auth.request.RegisterRequest;
-import com.webanhang.team_project.dto.user.request.UpdateUserRequest;
+import com.webanhang.team_project.dto.user.CreateUserRequest;
+import com.webanhang.team_project.dto.auth.OtpVerificationRequest;
+import com.webanhang.team_project.dto.auth.RegisterRequest;
+import com.webanhang.team_project.dto.user.UpdateUserRequest;
+import com.webanhang.team_project.security.jwt.JwtUtils;
 import com.webanhang.team_project.security.otp.OtpService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -19,6 +24,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,6 +36,8 @@ public class UserService implements IUserService {
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
+    private final AddressRepository addressRepository;
+    private final JwtUtils jwtUtils;
 
     @Override
     public User createUser(CreateUserRequest request) {
@@ -45,7 +54,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public User updateUser(UpdateUserRequest request, int userId) {
+    public User updateUser(UpdateUserRequest request, Long userId) {
         return userRepository.findById(userId).map(existingUser -> {
             existingUser.setFirstName(request.getFirstName());
             existingUser.setLastName(request.getLastName());
@@ -54,13 +63,13 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public User getUserById(int userId) {
+    public User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
     @Override
-    public void deleteUser(int userId) {
+    public void deleteUser(Long userId) {
         userRepository.findById(userId).ifPresentOrElse(userRepository::delete, () -> {
             throw new EntityNotFoundException("User not found");
         });
@@ -68,8 +77,8 @@ public class UserService implements IUserService {
 
     @Transactional
     @Override
-    public UserDto convertUserToDto(User user) {
-        return modelMapper.map(user, UserDto.class);
+    public UserDTO convertUserToDto(User user) {
+        return modelMapper.map(user, UserDTO.class);
     }
 
     @Transactional
@@ -106,4 +115,51 @@ public class UserService implements IUserService {
         return isValid;
     }
 
+    @Override
+    public UserDTO findUserProfileByJwt(String jwt) {
+        if (jwt != null && jwt.startsWith("Bearer ")) {
+            jwt = jwt.substring(7); // Remove "Bearer " prefix
+        }
+        String email = jwtUtils.getEmailFromToken(jwt);
+        User user = userRepository.findByEmail(email);
+
+        if(user == null) {
+            throw new EntityNotFoundException("User not found " + email);
+        }
+        return convertUserToDto(user);
+    }
+
+    @Override
+    public User findUserByJwt(String jwt)  {
+        if (jwt != null && jwt.startsWith("Bearer ")) {
+            jwt = jwt.substring(7); // Remove "Bearer " prefix
+        }
+        String email = jwtUtils.getEmailFromToken(jwt);
+        User user = userRepository.findByEmail(email);
+
+        if(user == null) {
+            throw new EntityNotFoundException("User not found " + email);
+        }
+        return user;
+    }
+
+    @Override
+    public AddressDTO addUserAddress(User user, AddAddressRequest request) {
+        List<Address> address=user.getAddress();
+        if(address==null){
+            address=new ArrayList<>();
+        }
+        Address newAddress=new Address();
+        newAddress.setFirstName(request.getFirstName());
+        newAddress.setLastName(request.getLastName());
+        newAddress.setStreetAddress(request.getStreetAddress());
+        newAddress.setCity(request.getCity());
+        newAddress.setState(request.getState());
+        newAddress.setZipCode(request.getZipCode());
+        newAddress.setMobile(request.getMobile());
+        newAddress.setUser(user);
+        address.add(newAddress);
+        addressRepository.save(newAddress);
+        return new AddressDTO(newAddress);
+    }
 }

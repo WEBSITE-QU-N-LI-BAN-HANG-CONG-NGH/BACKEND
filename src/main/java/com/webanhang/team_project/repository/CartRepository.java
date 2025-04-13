@@ -2,8 +2,18 @@ package com.webanhang.team_project.repository;
 
 
 import com.webanhang.team_project.model.Cart;
+import com.webanhang.team_project.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface CartRepository extends JpaRepository<Cart, Integer> {
-    Cart findByUserId(int userId);
+
+public interface CartRepository extends JpaRepository<Cart, Long> {
+    Cart findByUser(User user);
+
+    @Query("SELECT c FROM Cart c WHERE c.user.id = :userId")
+    Cart findByUserId(@Param("userId") Long userId);
+
+    Long user(User user);
 }
+

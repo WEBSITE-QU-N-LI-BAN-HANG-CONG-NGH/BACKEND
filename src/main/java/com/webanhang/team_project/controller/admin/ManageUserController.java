@@ -1,11 +1,11 @@
 package com.webanhang.team_project.controller.admin;
 
 
-import com.webanhang.team_project.dto.role.ChangeRoleRequest;
-import com.webanhang.team_project.dto.user.UserDto;
 import com.webanhang.team_project.dto.response.ApiResponse;
-import com.webanhang.team_project.dto.user.request.UpdateUserStatusRequest;
-import com.webanhang.team_project.service.admin.ManageUserService;
+import com.webanhang.team_project.dto.role.ChangeRoleRequest;
+import com.webanhang.team_project.dto.user.UserDTO;
+import com.webanhang.team_project.dto.user.UpdateUserStatusRequest;
+import com.webanhang.team_project.service.admin.IManageUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("${api.prefix}/admin/users")
 public class ManageUserController {
 
-    private final ManageUserService adminUserService;
+    private final IManageUserService adminUserService;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllUsers(
@@ -25,36 +25,36 @@ public class ManageUserController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String role) {
 
-        Page<UserDto> users = adminUserService.getAllUsers(page, size, search, role);
+        Page<UserDTO> users = adminUserService.getAllUsers(page, size, search, role);
         return ResponseEntity.ok(ApiResponse.success(users, "Get all users success"));
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse> getUserDetails(@PathVariable int userId) {
-        UserDto user = adminUserService.getUserDetails(userId);
+    public ResponseEntity<ApiResponse> getUserDetails(@PathVariable Long userId) {
+        UserDTO user = adminUserService.getUserDetails(userId);
         return ResponseEntity.ok(ApiResponse.success(user, "Get user details success"));
     }
 
     @PutMapping("/{userId}/change-role")
     public ResponseEntity<ApiResponse> changeUserRole(
-            @PathVariable int userId,
+            @PathVariable Long userId,
             @RequestBody ChangeRoleRequest request) {
 
-        UserDto updatedUser = adminUserService.changeUserRole(userId, request.getRole());
+        UserDTO updatedUser = adminUserService.changeUserRole(userId, request.getRole());
         return ResponseEntity.ok(ApiResponse.success(updatedUser, "Change user role success"));
     }
 
     @PutMapping("/{userId}/status")
     public ResponseEntity<ApiResponse> updateUserStatus(
-            @PathVariable int userId,
+            @PathVariable Long userId,
             @RequestBody UpdateUserStatusRequest request) {
 
-        UserDto updatedUser = adminUserService.updateUserStatus(userId, request.isActive());
+        UserDTO updatedUser = adminUserService.updateUserStatus(userId, request.isActive());
         return ResponseEntity.ok(ApiResponse.success(updatedUser, "Update user status success"));
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<ApiResponse> deleteUser(@PathVariable int userId) {
+    public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long userId) {
         adminUserService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success(null, "Delete user success"));
     }

@@ -1,5 +1,7 @@
 package com.webanhang.team_project.config;
 
+import com.webanhang.team_project.security.CloudflareFilter;
+import com.webanhang.team_project.security.RateLimitFilter;
 import com.webanhang.team_project.security.jwt.AuthTokenFilter;
 import com.webanhang.team_project.security.jwt.JwtEntryPoint;
 import com.webanhang.team_project.security.oauth2.OAuth2FailureHandler;
@@ -91,7 +93,9 @@ public class SecurityConfig {
                         .successHandler(oAuth2SuccessHandler)
                         .failureHandler(oAuth2FailureHandler))
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new CloudflareFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new RateLimitFilter(), CloudflareFilter.class);
         return http.build();
     }
 }

@@ -30,12 +30,13 @@ public class AdminDashboardService implements IAdminDashboardService {
     public BigDecimal totalMonthInCome() {
         LocalDate now = LocalDate.now();
         List<Order> monthOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
-                now.withDayOfMonth(1),
-                now.withDayOfMonth(now.lengthOfMonth()),
+                now.withDayOfMonth(1).atStartOfDay(),
+                now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59),
                 OrderStatus.DELIVERED);
 
         return monthOrders.stream()
                 .map(Order::getTotalAmount)
+                .map(BigDecimal::valueOf)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -65,12 +66,13 @@ public class AdminDashboardService implements IAdminDashboardService {
     public List<SellerRevenueDTO> getTopSellers(int limit) {
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
         List<Order> completedOrders = orderRepository.findByOrderDateGreaterThanEqualAndOrderStatus(
-                startOfMonth, OrderStatus.DELIVERED);
+                startOfMonth.atStartOfDay(),
+                OrderStatus.DELIVERED);
 
-        Map<Integer, SellerRevenueDTO> sellerStats = new HashMap<>();
+        Map<Long, SellerRevenueDTO> sellerStats = new HashMap<>();
 
         completedOrders.forEach(order -> {
-            int sellerId = order.getUser().getId(); // Assuming seller ID is stored in Order
+            Long sellerId = order.getUser().getId();
             sellerStats.computeIfAbsent(sellerId, k -> new SellerRevenueDTO(
                     sellerId,
                     order.getUser().getLastName(),
@@ -78,7 +80,7 @@ public class AdminDashboardService implements IAdminDashboardService {
                     0));
 
             SellerRevenueDTO stats = sellerStats.get(sellerId);
-            stats.setTotalRevenue(stats.getTotalRevenue().add(order.getTotalAmount()));
+            stats.setTotalRevenue(stats.getTotalRevenue().add(BigDecimal.valueOf(order.getTotalAmount())));
             stats.setTotalOrders(stats.getTotalOrders() + 1);
         });
 
@@ -94,7 +96,9 @@ public class AdminDashboardService implements IAdminDashboardService {
         LocalDate endOfMonth = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
 
         List<Order> monthOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
-                startOfMonth, endOfMonth, OrderStatus.DELIVERED);
+                startOfMonth.atStartOfDay(),
+                endOfMonth.atTime(23, 59, 59),
+                OrderStatus.DELIVERED);
 
         Map<String, BigDecimal> distribution = new LinkedHashMap<>();
 
@@ -102,7 +106,7 @@ public class AdminDashboardService implements IAdminDashboardService {
         Map<Integer, BigDecimal> weeklyRevenue = monthOrders.stream()
                 .collect(Collectors.groupingBy(
                         order -> order.getOrderDate().get(WeekFields.ISO.weekOfWeekBasedYear()),
-                        Collectors.mapping(Order::getTotalAmount,
+                        Collectors.mapping(order -> BigDecimal.valueOf(order.getTotalAmount()),
                                 Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
 
         weeklyRevenue.forEach((week, amount) -> distribution.put("Week " + week, amount));
@@ -113,12 +117,13 @@ public class AdminDashboardService implements IAdminDashboardService {
     private BigDecimal getLastMonthIncome() {
         LocalDate lastMonth = LocalDate.now().minusMonths(1);
         List<Order> lastMonthOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
-                lastMonth.withDayOfMonth(1),
-                lastMonth.withDayOfMonth(lastMonth.lengthOfMonth()),
+                lastMonth.withDayOfMonth(1).atStartOfDay(),
+                lastMonth.withDayOfMonth(lastMonth.lengthOfMonth()).atTime(23, 59, 59),
                 OrderStatus.DELIVERED);
 
         return lastMonthOrders.stream()
                 .map(Order::getTotalAmount)
+                .map(BigDecimal::valueOf)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

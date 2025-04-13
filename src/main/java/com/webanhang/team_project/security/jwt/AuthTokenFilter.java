@@ -57,7 +57,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
      */
     private void sendErrorResponse(HttpServletResponse response) throws IOException {
         errorResponseUtils.sendAuthenticationError(response,
-                "Invalid access token, please login and try again!");
+                "Token truy cập không hợp lệ, vui lòng đăng nhập và thử lại!");
     }
 
     /**

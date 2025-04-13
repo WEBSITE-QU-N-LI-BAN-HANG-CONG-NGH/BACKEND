@@ -1,11 +1,20 @@
 package com.webanhang.team_project.service.cart;
 
 
+import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
+import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.CartItem;
+import com.webanhang.team_project.model.Product;
 
 public interface ICartItemService {
-    void addItemToCart(int cartId, int productId, int quantity);
-    void removeItemFromCart(int cartId, int productId);
-    void updateItemQuantity(int cartId, int productId, int quantity);
-    CartItem getCartItem(int cartId, int productId);
+    public CartItem createCartItem(CartItem cartItem);
+    public CartItem updateCartItem(Long userId, Long id, CartItem cartItem) ;
+    public void deleteAllCartItems(Long cartId, Long userId) ;
+    public CartItem isCartItemExist(Cart cart, Product product, String size, Long userId) ;
+    public CartItem findCartItemById(Long cartItemId) ;
+    CartItem addCartItem(CartItem cartItem);
+    CartItem updateCartItem(Long cartItemId, CartItem cartItem) ;
+    void deleteCartItem(Long cartItemId) ;
+    CartItem getCartItemById(Long cartItemId) ;
+    boolean isCartItemExist(Long cartId, Long productId, String size);
 }

@@ -2,7 +2,7 @@ package com.webanhang.team_project.controller.admin;
 
 import com.webanhang.team_project.dto.dashboard.SellerRevenueDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
-import com.webanhang.team_project.service.admin.AdminDashboardService;
+import com.webanhang.team_project.service.admin.IAdminDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +19,7 @@ import java.util.Map;
 @RequestMapping("${api.prefix}/admin/dashboard")
 public class AdminDashboardController {
 
-    private final AdminDashboardService adminDashboardService;
+    private final IAdminDashboardService adminDashboardService;
 
     @GetMapping("/overview")
     public ResponseEntity<ApiResponse> getDashboardOverview() {

@@ -1,12 +1,14 @@
 package com.webanhang.team_project.service.cart;
 
 
+import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.CartItem;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.repository.CartItemRepository;
 import com.webanhang.team_project.repository.CartRepository;
 import com.webanhang.team_project.service.product.IProductService;
+import com.webanhang.team_project.service.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,62 +19,88 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class CartItemService implements ICartItemService {
     private final CartItemRepository cartItemRepository;
-    private final ICartService cartService;
     private final IProductService productService;
-    private final CartRepository cartRepository;
 
     @Override
-    public void addItemToCart(int cartId, int productId, int quantity) {
-        Cart cart = cartService.getCart(cartId);
-        Product product = productService.getProductById(productId);
-        CartItem cartItem = cart.getItems()
-                .stream()
-                .filter(item -> item.getProduct().getId() == productId)
-                .findFirst().orElse(new CartItem());
-        if (cartItem.getId() == 0) {
-            cartItem.setCart(cart);
-            cartItem.setProduct(product);
-            cartItem.setQuantity(quantity);
-            cartItem.setUnitPrice(product.getPrice());
-        } else {
-            cartItem.setQuantity(cartItem.getQuantity() + quantity);
+    public CartItem addCartItem(CartItem cartItem) {
+        try {
+            return cartItemRepository.save(cartItem);
+        } catch (Exception e) {
+            throw new RuntimeException("Error adding cart item: " + e.getMessage());
         }
-        cartItem.setTotalPrice();
-        cart.addItem(cartItem);
-        cartItemRepository.save(cartItem);
-        cartRepository.save(cart);
     }
 
     @Override
-    public void removeItemFromCart(int cartId, int productId) {
-        Cart cart = cartService.getCart(cartId);
-        CartItem itemToRemove = getCartItem(cartId, productId);
-        cart.removeItem(itemToRemove);
-        cartRepository.save(cart);
+    public CartItem updateCartItem(Long cartItemId, CartItem cartItem) {
+        CartItem existingItem = getCartItemById(cartItemId);
+        try {
+            cartItem.setId(cartItemId);
+            return cartItemRepository.save(cartItem);
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating cart item: " + e.getMessage());
+        }
     }
 
     @Override
-    public void updateItemQuantity(int cartId, int productId, int quantity) {
-        Cart cart = cartService.getCart(cartId);
-        cart.getItems().stream()
-                .filter(item -> item.getProduct().getId() == productId)
-                .findFirst().ifPresent(item -> {
-                    item.setQuantity(quantity);
-                    item.setUnitPrice(item.getProduct().getPrice());
-                    item.setTotalPrice();
-                });
-        BigDecimal totalAmount = cart.getItems().stream().map(CartItem::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        cart.setTotalAmount(totalAmount);
-        cartRepository.save(cart);
+    public void deleteCartItem(Long cartItemId) {
+        try {
+            cartItemRepository.deleteById(cartItemId);
+        } catch (Exception e) {
+            throw new RuntimeException("Error deleting cart item: " + e.getMessage());
+        }
     }
 
     @Override
-    public CartItem getCartItem(int cartId, int productId) {
-        Cart cart = cartService.getCart(cartId);
-        return cart.getItems()
-                .stream()
-                .filter(item -> item.getProduct().getId() == productId)
-                .findFirst().orElseThrow(() -> new EntityNotFoundException("Cart not found!"));
+    public CartItem getCartItemById(Long cartItemId) {
+        return cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new RuntimeException("Cart item not found with id: " + cartItemId));
+    }
+
+    @Override
+    public boolean isCartItemExist(Long cartId, Long productId, String size)  {
+        return cartItemRepository.existsByCartIdAndProductIdAndSize(cartId, productId, size);
+    }
+
+    @Override
+    public CartItem createCartItem(CartItem cartItem) {
+        return cartItemRepository.save(cartItem);
+    }
+
+    @Override
+    public CartItem updateCartItem(Long userId, Long id, CartItem cartItem) {
+        try {
+            CartItem existingItem = getCartItemById(id);
+            cartItem.setId(id);
+            return cartItemRepository.save(cartItem);
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating cart item: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteAllCartItems(Long cartId, Long userId) {
+        try {
+            cartItemRepository.deleteByCartId(cartId);
+        } catch (Exception e) {
+            throw new RuntimeException("Error deleting all cart items: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public CartItem isCartItemExist(Cart cart, Product product, String size, Long userId) {
+        try {
+            return cartItemRepository.isCartItemExist(cart, product, size, userId);
+        } catch (Exception e) {
+            throw new RuntimeException("Error checking cart item existence: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public CartItem findCartItemById(Long cartItemId)  {
+        try {
+            return getCartItemById(cartItemId);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }
