@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Controller
-@RequestMapping("/api/rating")
+@RequestMapping("${api.prefix}/rating")
 public class RatingController {
 
     @Autowired

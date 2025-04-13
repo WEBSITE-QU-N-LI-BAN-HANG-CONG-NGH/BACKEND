@@ -1,4 +1,4 @@
-package com.webanhang.team_project.controller.common;
+package com.webanhang.team_project.controller.admin;
 
 
 import com.webanhang.team_project.dto.AddAddressRequest;
@@ -15,10 +15,8 @@ import com.webanhang.team_project.dto.user.request.UpdateUserRequest;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.repository.UserRepository;
 import com.webanhang.team_project.service.user.IUserService;
-import com.webanhang.team_project.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
