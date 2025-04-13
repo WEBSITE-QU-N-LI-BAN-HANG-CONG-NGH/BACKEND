@@ -6,11 +6,11 @@ import org.springframework.data.domain.Page;
 public interface IManageUserService {
     Page<UserDTO> getAllUsers(int page, int size, String search, String role);
 
-    UserDTO getUserDetails(int userId);
+    UserDTO getUserDetails(Long userId);
 
-    UserDTO changeUserRole(int userId, String roleName);
+    UserDTO changeUserRole(Long userId, String roleName);
 
-    UserDTO updateUserStatus(int userId, boolean active);
+    UserDTO updateUserStatus(Long userId, boolean active);
 
-    void deleteUser(int userId);
+    void deleteUser(Long userId);
 }

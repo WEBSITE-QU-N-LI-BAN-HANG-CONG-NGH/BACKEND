@@ -35,16 +35,18 @@ public class ManageUserService implements IManageUserService {
         // Filter logic
         List<User> users;
         if (StringUtils.hasText(search) && StringUtils.hasText(role)) {
+            UserRole userRole = UserRole.valueOf(role.toUpperCase());
             // Search by name/email and filter by role
             users = userRepository.findByEmailContainingOrFirstNameContainingOrLastNameContainingAndRoleName(
-                    search, search, search, role, pageable);
+                    search, search, search, userRole, pageable);
         } else if (StringUtils.hasText(search)) {
             // Only search
             users = userRepository.findByEmailContainingOrFirstNameContainingOrLastNameContaining(
                     search, search, search, pageable);
         } else if (StringUtils.hasText(role)) {
+            UserRole userRole = UserRole.valueOf(role.toUpperCase());
             // Only filter by role
-            users = userRepository.findByRoleName(role, pageable);
+            users = userRepository.findByRoleName(userRole, pageable);
         } else {
             // No filters
             users = userRepository.findAll(pageable).getContent();

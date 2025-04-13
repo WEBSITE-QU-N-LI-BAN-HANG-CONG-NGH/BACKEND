@@ -30,14 +30,14 @@ public class ManageUserController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse> getUserDetails(@PathVariable int userId) {
+    public ResponseEntity<ApiResponse> getUserDetails(@PathVariable Long userId) {
         UserDTO user = adminUserService.getUserDetails(userId);
         return ResponseEntity.ok(ApiResponse.success(user, "Get user details success"));
     }
 
     @PutMapping("/{userId}/change-role")
     public ResponseEntity<ApiResponse> changeUserRole(
-            @PathVariable int userId,
+            @PathVariable Long userId,
             @RequestBody ChangeRoleRequest request) {
 
         UserDTO updatedUser = adminUserService.changeUserRole(userId, request.getRole());
@@ -46,7 +46,7 @@ public class ManageUserController {
 
     @PutMapping("/{userId}/status")
     public ResponseEntity<ApiResponse> updateUserStatus(
-            @PathVariable int userId,
+            @PathVariable Long userId,
             @RequestBody UpdateUserStatusRequest request) {
 
         UserDTO updatedUser = adminUserService.updateUserStatus(userId, request.isActive());
@@ -54,7 +54,7 @@ public class ManageUserController {
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<ApiResponse> deleteUser(@PathVariable int userId) {
+    public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long userId) {
         adminUserService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success(null, "Delete user success"));
     }

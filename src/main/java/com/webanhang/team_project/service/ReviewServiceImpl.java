@@ -29,7 +29,7 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
-    public Review createReview(User user, ReviewRequest reviewRequest) throws GlobalExceptionHandler {
+    public Review createReview(User user, ReviewRequest reviewRequest) {
         try {
             Product product = productService.findProductById(reviewRequest.getProductId());
 
@@ -40,13 +40,13 @@ public class ReviewServiceImpl implements ReviewService{
             review.setCreatedAt(LocalDateTime.now());
 
             return reviewRepository.save(review);
-        } catch (GlobalExceptionHandler e) {
-            throw new GlobalExceptionHandler(e.getMessage());
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
     @Override
-    public List<Review> getReviewsByProductId(Long productId) throws GlobalExceptionHandler{
+    public List<Review> getReviewsByProductId(Long productId){
         return reviewRepository.findAllByProductId(productId);
     }
 }

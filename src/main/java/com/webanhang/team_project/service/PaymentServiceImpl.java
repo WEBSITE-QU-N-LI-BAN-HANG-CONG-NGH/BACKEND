@@ -56,12 +56,12 @@ public class PaymentServiceImpl implements PaymentService {
             // Lấy thông tin đơn hàng
             Order order = orderService.findOrderById(orderId);
             if (order == null) {
-                throw new GlobalExceptionHandler("Không tìm thấy đơn hàng", "ORDER_NOT_FOUND");
+                throw new RuntimeException("Không tìm thấy đơn hàng");
             }
 
             // Tạo mã giao dịch ngẫu nhiên
             String vnp_TxnRef = getRandomNumber(8);
-            
+
             // Thông tin thanh toán
             String vnp_OrderInfo = "Thanh toan don hang #" + orderId;
             String vnp_OrderType = "billpayment";
@@ -90,7 +90,7 @@ public class PaymentServiceImpl implements PaymentService {
             paymentDetail.setTotalAmount(order.getTotalAmount());
             paymentDetail.setTransactionId(vnp_TxnRef);
             paymentDetail.setCreatedAt(LocalDateTime.now());
-            
+
 
 
             // Tạo ngày thanh toán theo múi giờ GMT+7
@@ -156,16 +156,16 @@ public class PaymentServiceImpl implements PaymentService {
             // URL thanh toán hoàn chỉnh
             return vnp_PayUrl + "?" + queryUrl;
         } catch (Exception e) {
-            throw new GlobalExceptionHandler("Lỗi khi tạo yêu cầu thanh toán: " + e.getMessage(), "PAYMENT_ERROR");
+            throw new RuntimeException("Lỗi khi tạo yêu cầu thanh toán: " + e.getMessage());
         }
     }
 
     @Override
     public PaymentDetail getPaymentById(Long paymentId) {
         return paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new GlobalExceptionHandler("Không tìm thấy thông tin thanh toán: " + paymentId, "PAYMENT_NOT_FOUND"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin thanh toán: " + paymentId));
     }
-    
+
     @Override
     @Transactional
     public PaymentDetail processPaymentCallback(Map<String, String> vnpParams)  {
@@ -178,14 +178,14 @@ public class PaymentServiceImpl implements PaymentService {
             String vnp_TransactionNo = vnpParams.get("vnp_TransactionNo");
             String vnp_BankCode = vnpParams.get("vnp_BankCode");
             String vnp_PayDate = vnpParams.get("vnp_PayDate");
-            
+
             // Xác minh chữ ký
             String secureHash = vnpParams.get("vnp_SecureHash");
-            
+
             // Tìm PaymentDetail dựa trên vnp_TxnRef
             PaymentDetail payment = paymentRepository.findByTransactionId(vnp_TxnRef)
-                    .orElseThrow(() -> new GlobalExceptionHandler("Không tìm thấy giao dịch: " + vnp_TxnRef, "TRANSACTION_NOT_FOUND"));
-            
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy giao dịch: " + vnp_TxnRef));
+
             // Kiểm tra mã phản hồi
             if ("00".equals(vnp_ResponseCode)) {
                 // Thanh toán thành công
@@ -195,11 +195,11 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.setPaymentDate(LocalDateTime.now());
                 payment.setPaymentLog(new Gson().toJson(vnpParams));
                 payment.setVnp_ResponseCode(vnp_ResponseCode);
-                
+
                 // Cập nhật trạng thái thanh toán cho đơn hàng
                 Order order = payment.getOrder();
                 order.setPaymentStatus(PaymentStatus.COMPLETED);
-                
+
                 // Lưu thông tin thanh toán
                 return paymentRepository.save(payment);
             } else {
@@ -209,7 +209,7 @@ public class PaymentServiceImpl implements PaymentService {
                 return paymentRepository.save(payment);
             }
         } catch (Exception e) {
-            throw new GlobalExceptionHandler("Lỗi xử lý callback thanh toán: " + e.getMessage(), "PAYMENT_CALLBACK_ERROR");
+            throw new RuntimeException("Lỗi xử lý callback thanh toán: " + e.getMessage());
         }
     }
 

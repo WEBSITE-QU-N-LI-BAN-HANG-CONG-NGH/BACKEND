@@ -34,8 +34,8 @@ public class RatingServiceImpl implements RatingService {
             rating.setUser(user);
             rating.setCreateAt(LocalDateTime.now());
             return ratingRepository.save(rating);
-        } catch (GlobalExceptionHandler e) {
-            throw new GlobalExceptionHandler(e.getMessage());
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
