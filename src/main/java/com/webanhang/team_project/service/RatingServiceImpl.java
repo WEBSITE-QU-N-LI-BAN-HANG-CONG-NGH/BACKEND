@@ -7,20 +7,18 @@ import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.repository.RatingRepository;
 import com.webanhang.team_project.dto.review.RatingRequest;
 import com.webanhang.team_project.service.product.ProductService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class RatingServiceImpl implements RatingService {
-    private RatingRepository ratingRepository;
-    private ProductService productService;
+    private final RatingRepository ratingRepository;
+    private final ProductService productService;
 
-    public RatingServiceImpl(RatingRepository ratingRepository, ProductService productService) {
-        this.ratingRepository = ratingRepository;
-        this.productService = productService;
-    }
 
     @Override
     public Rating createRating(RatingRequest ratingRequest, User user) {

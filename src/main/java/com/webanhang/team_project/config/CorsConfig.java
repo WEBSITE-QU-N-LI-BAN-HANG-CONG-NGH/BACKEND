@@ -19,6 +19,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(allowedOrigins.split(","))
                 .allowedMethods("GET", "POST", "PUT", "DELETE","OPTIONS")
                 .allowedHeaders("*")
+                .exposedHeaders("CF-IPCountry", "CF-RAY", "CF-Connecting-IP") // chấp nhận header từ CloudFlare
                 .allowCredentials(true)
                 .maxAge(3600);
     }

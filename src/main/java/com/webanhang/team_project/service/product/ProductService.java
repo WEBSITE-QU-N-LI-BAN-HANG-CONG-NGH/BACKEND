@@ -36,37 +36,9 @@ public class ProductService implements IProductService {
     private final ModelMapper modelMapper;
     private final UserService userService;
 
-
-    @Override
-    public Product addProduct(AddProductRequest request) {
-        if (productExists(request.getName(), request.getBrand())) {
-            throw new EntityExistsException(request.getName() + " already exists");
-        }
-        Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
-                .orElseGet(() -> {
-                    Category newCategory = new Category(request.getCategory().getName());
-                    return categoryRepository.save(newCategory);
-                });
-        request.setCategory(category);
-        Product product = createProduct(request, category);
-        return productRepository.save(product);
-    }
-
-    private boolean productExists(String name, String brand) {
-        return productRepository.existsByTitleAndBrand(name, brand);
-    }
-
-    private Product createProduct(AddProductRequest request, Category category) {
-        return new Product(
-                request.getName(),
-                request.getBrand(),
-                request.getPrice(),
-                request.getInventory(),
-                request.getDescription(),
-                category
-        );
-    }
 //
+
+////
 //    @Override
 //    public Product updateProduct(UpdateProductRequest request, int productId) {
 //        return productRepository.findById(productId)
@@ -169,7 +141,35 @@ public class ProductService implements IProductService {
 //        productDto.setImages(imageDtos);
 //        return productDto;
 //    }
+    @Override
+    public Product addProduct(AddProductRequest request) {
+        if (productExists(request.getName(), request.getBrand())) {
+            throw new EntityExistsException(request.getName() + " already exists");
+        }
+        Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
+                .orElseGet(() -> {
+                    Category newCategory = new Category(request.getCategory().getName());
+                    return categoryRepository.save(newCategory);
+                });
+        request.setCategory(category);
+        Product product = createProduct(request, category);
+        return productRepository.save(product);
+    }
 
+    private boolean productExists(String name, String brand) {
+        return productRepository.existsByTitleAndBrand(name, brand);
+    }
+
+    private Product createProduct(AddProductRequest request, Category category) {
+        return new Product(
+                request.getName(),
+                request.getBrand(),
+                request.getPrice(),
+                request.getInventory(),
+                request.getDescription(),
+                category
+        );
+    }
     @Override
     @Transactional
     public Product createProduct(CreateProductRequest req) {
