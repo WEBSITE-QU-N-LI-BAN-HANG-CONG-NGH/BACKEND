@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,6 +90,15 @@ public class Product {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    public Product(String title, String brand, BigDecimal price, int quantity, String description, Category category) {
+        this.title = title;
+        this.brand = brand;
+        this.price = price.intValue();
+        this.quantity = quantity;
+        this.description = description;
+        this.category = category;
+    }
 
     public Product(String title, String brand, int price, int quantity, String description, Category category) {
         this.title = title;

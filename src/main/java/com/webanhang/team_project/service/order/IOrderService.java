@@ -10,10 +10,9 @@ import com.webanhang.team_project.model.User;
 import java.util.List;
 
 public interface IOrderService {
-//    Order placeOrder(int userId);
-//    List<OrderDTO> getUserOrders(int userId);
-//
-//    OrderDTO convertToDto(Order order);
+    Order placeOrder(int userId);
+    List<OrderDTO> getUserOrders(int userId);
+    OrderDTO convertToDto(Order order);
 
     public Order findOrderById(Long orderId);
     public List<Order> userOrderHistory(Long userId);

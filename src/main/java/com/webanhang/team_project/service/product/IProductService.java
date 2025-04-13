@@ -4,6 +4,8 @@ package com.webanhang.team_project.service.product;
 
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.dto.product.CreateProductRequest;
+import com.webanhang.team_project.dto.product.AddProductRequest;
+import com.webanhang.team_project.dto.product.UpdateProductRequest;
 import com.webanhang.team_project.model.Product;
 import org.springframework.data.domain.Page;
 
@@ -32,4 +34,17 @@ public interface IProductService {
     List<Product> searchProducts(String keyword);
 
     List<Product> getFeaturedProducts();
+    
+    // Thêm các phương thức cần thiết cho controller
+    List<Product> getAllProducts();
+    Product getProductById(int productId);
+    List<Product> getProductsByCategory(String category);
+    List<Product> getProductsByName(String name);
+    List<Product> getProductsByBrand(String brand);
+    List<Product> getProductsByBrandAndName(String brand, String name);
+    List<Product> getProductsByCategoryAndBrand(String category, String brand);
+    List<ProductDTO> getConvertedProducts(List<Product> products);
+    Product addProduct(AddProductRequest request);
+    Product updateProduct(UpdateProductRequest request, int productId);
+    void deleteProduct(int productId);
 }

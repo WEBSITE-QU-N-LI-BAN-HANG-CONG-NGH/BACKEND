@@ -15,6 +15,7 @@ import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.service.cart.ICartService;
 import com.webanhang.team_project.service.product.IProductService;
 import com.webanhang.team_project.service.product.ProductService;
+import com.webanhang.team_project.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -37,69 +38,65 @@ public class OrderService implements IOrderService {
     private final ModelMapper modelMapper;
     private final CartRepository cartRepository;
     private final ProductService productService;
+    private final UserService userService;
 
+    @Transactional
+    @Override
+    public Order placeOrder(int userId) {
+        Cart cart = cartService.getCartByUserId((long) userId);
+        Order order = createOrder(cart);
+        List<OrderItem> orderItemList = createOrderItems(order, cart);
+        order.setOrderItems(new ArrayList<>(orderItemList));
+        Order savedOrder = orderRepository.save(order);
+        cartService.clearCart((long) userId);
+        return savedOrder;
+    }
 
-//    @Transactional
-//    @Override
-//    public Order placeOrder(int userId) {
-//        Cart cart = cartService.getCartByUserId(userId);
-//        Order order = createOrder(cart);
-//        List<OrderItem> orderItemList = createOrderItems(order, cart);
-//        order.setOrderItems(new HashSet<>(orderItemList));
-//        order.setTotalAmount(calculateTotalAmount(orderItemList));
-//        Order savedOrder = orderRepository.save(order);
-//        cartService.clearCart(cart.getId());
-//        return savedOrder;
-//    }
+    private Order createOrder(Cart cart) {
+        Order order = new Order();
+        order.setUser(cart.getUser());
+        order.setOrderStatus(OrderStatus.PENDING);
+        order.setOrderDate(LocalDateTime.now());
+        order.setTotalAmount(cart.getTotalDiscountedPrice());
+        order.setTotalItems(cart.getTotalItems());
+        order.setDiscount(cart.getDiscount());
+        order.setTotalDiscountedPrice(cart.getTotalDiscountedPrice());
+        order.setPaymentStatus(PaymentStatus.PENDING);
+        return order;
+    }
 
-//    private Order createOrder(Cart cart) {
-//        Order order = new Order();
-//        order.setUser(cart.getUser());
-//        order.setOrderStatus(OrderStatus.PENDING);
-//        order.setOrderDate(LocalDate.now());
-//        return order;
-//    }
-//
-//    private List<OrderItem> createOrderItems(Order order, Cart cart) {
-//        return cart.getItems().stream().map(cartItem -> {
-//            Product product = cartItem.getProduct();
-//            product.setInventory(product.getInventory() - cartItem.getQuantity());
-//            productRepository.save(product);
-//            return new OrderItem(
-//                    order,
-//                    product,
-//                    cartItem.getUnitPrice(),
-//                    cartItem.getQuantity());
-//        }).toList();
-//    }
-//
-//    private BigDecimal calculateTotalAmount(List<OrderItem> orderItemList) {
-//        return orderItemList.stream()
-//                .map(item -> item.getPrice()
-//                        .multiply(new BigDecimal(item.getQuantity())))
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
-//    }
+    private List<OrderItem> createOrderItems(Order order, Cart cart) {
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (CartItem cartItem : cart.getCartItems()) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProduct(cartItem.getProduct());
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setPrice(cartItem.getPrice());
+            orderItem.setDiscountedPrice(cartItem.getDiscountedPrice());
+            orderItem.setSize(cartItem.getSize());
+            orderItem.setDiscountPercent(cartItem.getDiscountPercent());
+            orderItem.setDeliveryDate(LocalDateTime.now().plusDays(7));
+            orderItems.add(orderItem);
+            
+            // Cập nhật số lượng sản phẩm
+            Product product = cartItem.getProduct();
+            product.setQuantity(product.getQuantity() - cartItem.getQuantity());
+            productRepository.save(product);
+        }
+        return orderItems;
+    }
 
+    @Override
+    public List<OrderDTO> getUserOrders(int userId) {
+        List<Order> orders = orderRepository.findByUserId((long) userId);
+        return orders.stream().map(this::convertToDto).toList();
+    }
 
-//    @Override
-//    public List<OrderDTO> getUserOrders(int userId) {
-//        List<Order> orders = orderRepository.findByUserId(userId);
-//        return  orders.stream().map(this :: convertToDto).toList();
-//    }
-
-//    @Override
-//    public OrderDTO convertToDto(Order order) {
-//        return modelMapper.map(order, OrderDTO.class);
-//    }
-//
-//    public OrderService(CartRepository cartRepository, ICartService ICartService,
-//                        IProductService productService, OrderRepository orderRepository, AddressRepository addressRepository) {
-//        this.cartRepository = cartRepository;
-//        this.ICartService = ICartService;
-//        this.productService = productService;
-//        this.orderRepository = orderRepository;
-//        this.addressRepository = addressRepository;
-//    }
+    @Override
+    public OrderDTO convertToDto(Order order) {
+        return modelMapper.map(order, OrderDTO.class);
+    }
 
     @Override
     public Order findOrderById(Long orderId) {

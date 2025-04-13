@@ -1,4 +1,4 @@
-package com.webanhang.team_project.controller.admin;
+package com.webanhang.team_project.controller.common;
 
 
 import com.webanhang.team_project.dto.address.AddAddressRequest;
@@ -110,7 +110,6 @@ public class UserController {
             profileResponse.setMobile(user.getPhone());
             profileResponse.setRole(user.getRole().getName().name());
             profileResponse.setAddress(addressDTOS);
-            profileResponse.setPaymentInformation(user.getPaymentInformation() != null ? user.getPaymentInformation() : new ArrayList<>());
             profileResponse.setRatings(user.getRatings() != null ? user.getRatings() : new ArrayList<>());
             profileResponse.setCart(user.getCart() != null ? new CartDTO(user.getCart()) : null);
             profileResponse.setCreatedAt(user.getCreatedAt());

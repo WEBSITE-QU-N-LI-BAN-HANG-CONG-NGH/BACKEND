@@ -4,7 +4,6 @@ package com.webanhang.team_project.dto.user;
 import com.webanhang.team_project.dto.address.AddressDTO;
 import com.webanhang.team_project.dto.cart.CartDTO;
 import com.webanhang.team_project.dto.order.OrderDTO;
-import com.webanhang.team_project.model.PaymentInformation;
 import com.webanhang.team_project.model.Rating;
 import com.webanhang.team_project.model.Review;
 import lombok.Data;
@@ -23,7 +22,6 @@ public class UserProfileResponse {
     private String role;
     private List<AddressDTO> address = new ArrayList<>();
     private List<Rating> ratings = new ArrayList<>();
-    private List<PaymentInformation> paymentInformation = new ArrayList<>();
     private List<OrderDTO> orders = new ArrayList<>();
     private List<Review> reviews = new ArrayList<>();
     private CartDTO cart;

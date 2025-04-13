@@ -58,10 +58,6 @@ public class User {
 
         @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
         @JsonIgnore
-        private List<PaymentInformation> paymentInformation = new ArrayList<>();
-
-        @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-        @JsonIgnore
         private List<Rating> ratings = new ArrayList<>();
 
         @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)

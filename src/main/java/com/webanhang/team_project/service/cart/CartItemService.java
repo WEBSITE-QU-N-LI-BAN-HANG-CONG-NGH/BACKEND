@@ -103,4 +103,55 @@ public class CartItemService implements ICartItemService {
             throw new RuntimeException(e.getMessage());
         }
     }
+    
+    @Override
+    public CartItem addItemToCart(Long cartId, Long productId, int quantity) {
+        try {
+            // Lấy thông tin sản phẩm
+            Product product = productService.findProductById(productId);
+            
+            // Tạo mục mới trong giỏ hàng
+            CartItem cartItem = new CartItem();
+            Cart cart = new Cart();
+            cart.setId(cartId);
+            cartItem.setCart(cart);
+            cartItem.setProduct(product);
+            cartItem.setQuantity(quantity);
+            cartItem.setPrice(product.getPrice());
+            cartItem.setDiscountedPrice(product.getDiscountedPrice());
+            
+            return cartItemRepository.save(cartItem);
+        } catch (Exception e) {
+            throw new RuntimeException("Error adding item to cart: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public void removeItemFromCart(Long cartId, Long itemId) {
+        try {
+            CartItem cartItem = getCartItemById(itemId);
+            if (cartItem.getCart().getId().equals(cartId)) {
+                cartItemRepository.deleteById(itemId);
+            } else {
+                throw new RuntimeException("Cart item does not belong to the specified cart");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error removing item from cart: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public CartItem updateItemQuantity(Long cartId, Long itemId, int quantity) {
+        try {
+            CartItem cartItem = getCartItemById(itemId);
+            if (cartItem.getCart().getId().equals(cartId)) {
+                cartItem.setQuantity(quantity);
+                return cartItemRepository.save(cartItem);
+            } else {
+                throw new RuntimeException("Cart item does not belong to the specified cart");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating item quantity: " + e.getMessage());
+        }
+    }
 }

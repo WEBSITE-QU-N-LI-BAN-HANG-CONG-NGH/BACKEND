@@ -8,7 +8,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,11 +24,11 @@ import java.io.IOException;
  * Filter xử lý xác thực JWT token cho mỗi request
  * Kiểm tra và set thông tin authentication vào SecurityContext
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthTokenFilter.class);
     private final JwtUtils jwtUtils;
     private final AppUserDetailsService userDetailsService;
     private final ErrorResponseUtils errorResponseUtils;

@@ -30,7 +30,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.List;
-
+//: Cấu hình bảo mật cho ứng dụng Spring Security, định nghĩa các quy tắc xác thực và phân quyền.
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor

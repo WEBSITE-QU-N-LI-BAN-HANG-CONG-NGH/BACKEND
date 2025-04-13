@@ -3,15 +3,16 @@ package com.webanhang.team_project.utils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Cookie;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
 @Component
-@Slf4j
 public class CookieUtils {
+    private static final Logger log = LoggerFactory.getLogger(CookieUtils.class);
 
     @Value("${app.useSecureCookie}")
     private boolean useSecureCookie;

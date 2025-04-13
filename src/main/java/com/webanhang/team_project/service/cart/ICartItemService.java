@@ -17,4 +17,9 @@ public interface ICartItemService {
     void deleteCartItem(Long cartItemId) ;
     CartItem getCartItemById(Long cartItemId) ;
     boolean isCartItemExist(Long cartId, Long productId, String size);
+    
+    // Thêm các phương thức mới
+    CartItem addItemToCart(Long cartId, Long productId, int quantity);
+    void removeItemFromCart(Long cartId, Long itemId);
+    CartItem updateItemQuantity(Long cartId, Long itemId, int quantity);
 }
