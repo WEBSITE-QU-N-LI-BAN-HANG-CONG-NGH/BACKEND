@@ -1,6 +1,7 @@
 package com.webanhang.team_project.service.product;
 
 
+import com.webanhang.team_project.dto.product.AddProductRequest;
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.model.*;
@@ -9,6 +10,7 @@ import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.repository.OrderItemRepository;
 import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.service.user.UserService;
+import jakarta.persistence.EntityExistsException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -35,35 +37,35 @@ public class ProductService implements IProductService {
     private final UserService userService;
 
 
-//    @Override
-//    public Product addProduct(AddProductRequest request) {
-//        if (productExists(request.getName(), request.getBrand())) {
-//            throw new EntityExistsException(request.getName() + " already exists");
-//        }
-//        Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
-//                .orElseGet(() -> {
-//                    Category newCategory = new Category(request.getCategory().getName());
-//                    return categoryRepository.save(newCategory);
-//                });
-//        request.setCategory(category);
-//        Product product = createProduct(request, category);
-//        return productRepository.save(product);
-//    }
-//
-//    private boolean productExists(String name, String brand) {
-//        return productRepository.existsByTitleAndBrand(name, brand);
-//    }
-//
-//    private Product createProduct(AddProductRequest request, Category category) {
-//        return new Product(
-//                request.getName(),
-//                request.getBrand(),
-//                request.getPrice(),
-//                request.getInventory(),
-//                request.getDescription(),
-//                category
-//        );
-//    }
+    @Override
+    public Product addProduct(AddProductRequest request) {
+        if (productExists(request.getName(), request.getBrand())) {
+            throw new EntityExistsException(request.getName() + " already exists");
+        }
+        Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
+                .orElseGet(() -> {
+                    Category newCategory = new Category(request.getCategory().getName());
+                    return categoryRepository.save(newCategory);
+                });
+        request.setCategory(category);
+        Product product = createProduct(request, category);
+        return productRepository.save(product);
+    }
+
+    private boolean productExists(String name, String brand) {
+        return productRepository.existsByTitleAndBrand(name, brand);
+    }
+
+    private Product createProduct(AddProductRequest request, Category category) {
+        return new Product(
+                request.getName(),
+                request.getBrand(),
+                request.getPrice(),
+                request.getInventory(),
+                request.getDescription(),
+                category
+        );
+    }
 //
 //    @Override
 //    public Product updateProduct(UpdateProductRequest request, int productId) {

@@ -1,3 +1,4 @@
+import com.webanhang.team_project.dto.product.AddProductRequest;
 import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Product;
@@ -18,8 +19,8 @@ public class AdminProductController {
     private final IProductService productService;
     private final CategoryRepository categoryRepository;
 
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createProduct(@RequestBody CreateProductRequest request) {
+    @PostMapping("/add")
+    public ResponseEntity<ApiResponse> addProduct(@RequestBody AddProductRequest request) {
         Product product = productService.createProduct(request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -39,7 +40,8 @@ public class AdminProductController {
     }
 
     @PutMapping("/{productId}/update")
-    public ResponseEntity<ApiResponse> updateProduct(@PathVariable Long productId, @RequestBody Product product) {
+    public ResponseEntity<ApiResponse> updateProduct(@PathVariable Long productId,
+                                                     @RequestBody Product product) {
         Product updatedProduct = productService.updateProduct(productId, product);
         return ResponseEntity.ok(ApiResponse.success(updatedProduct, "Cập nhật sản phẩm thành công"));
     }
