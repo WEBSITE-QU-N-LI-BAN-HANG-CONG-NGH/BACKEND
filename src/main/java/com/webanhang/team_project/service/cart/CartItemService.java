@@ -19,8 +19,6 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class CartItemService implements ICartItemService {
     private final CartItemRepository cartItemRepository;
-    private final CartRepository cartRepository;
-    private final ICartService cartService;
     private final IProductService productService;
 
     @Override
