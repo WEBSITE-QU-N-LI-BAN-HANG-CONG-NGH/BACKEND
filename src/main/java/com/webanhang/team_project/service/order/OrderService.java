@@ -14,6 +14,7 @@ import com.webanhang.team_project.repository.OrderRepository;
 import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.service.cart.ICartService;
 import com.webanhang.team_project.service.product.IProductService;
+import com.webanhang.team_project.service.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class OrderService implements IOrderService {
     private final ProductRepository productRepository;
     private final ICartService cartService;
     private final ModelMapper modelMapper;
+    private final CartRepository cartRepository;
+    private final ProductService productService;
 
 
 //    @Transactional
@@ -101,14 +104,14 @@ public class OrderService implements IOrderService {
     @Override
     public Order findOrderById(Long orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new GlobalExceptionHandler("Không tìm thấy đơn hàng với ID: " + orderId, "ORDER_ERROR"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với ID: " + orderId));
     }
 
     @Override
     public List<Order> userOrderHistory(Long userId) {
         List<Order> orders = orderRepository.findByUserId(userId);
         if (orders.isEmpty()) {
-            throw new GlobalExceptionHandler("Không tìm thấy lịch sử đơn hàng cho người dùng: " + userId, "ORDER_ERROR");
+            throw new RuntimeException("Không tìm thấy lịch sử đơn hàng cho người dùng: " + userId);
         }
         return orders;
     }
@@ -119,17 +122,17 @@ public class OrderService implements IOrderService {
         try {
             Cart cart = cartRepository.findByUserId(user.getId());
             if (cart == null || cart.getCartItems().isEmpty()) {
-                throw new GlobalExceptionHandler("Giỏ hàng trống", "ORDER_ERROR");
+                throw new RuntimeException("Giỏ hàng trống");
             }
 
             // Tìm địa chỉ gốc
             Address address = user.getAddress().stream()
                     .filter(a -> Objects.equals(a.getId(), addressId))
                     .findFirst()
-                    .orElseThrow(() -> new GlobalExceptionHandler("Không tìm thấy địa chỉ", "ADDRESS_NOT_FOUND"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
 
             // Tính toán lại tổng giá trị giỏ hàng
-            cart = ICartService.findUserCart(user.getId());
+            cart = cartService.findUserCart(user.getId());
 
             Order order = new Order();
             order.setUser(user);
@@ -167,7 +170,7 @@ public class OrderService implements IOrderService {
                 // Cập nhật số lượng sản phẩm trong kho
                 Product product = cartItem.getProduct();
                 if (product.getQuantity() < cartItem.getQuantity()) {
-                    throw new GlobalExceptionHandler("Sản phẩm " + product.getTitle() + " không đủ số lượng trong kho", "ORDER_ERROR");
+                    throw new RuntimeException("Sản phẩm " + product.getTitle() + " không đủ số lượng trong kho");
                 }
                 product.setQuantity(product.getQuantity() - cartItem.getQuantity());
                 productService.updateProduct(product.getId(), product);
@@ -182,11 +185,11 @@ public class OrderService implements IOrderService {
 
             // Lưu lại order với đầy đủ thông tin orderItems
             return orderRepository.save(order);
-        } catch (Exception e) {
-            if (e instanceof GlobalExceptionHandler) {
+        } catch (RuntimeException e) {
+            if (e instanceof RuntimeException) {
                 throw e;
             }
-            throw new GlobalExceptionHandler("Lỗi khi tạo đơn hàng: " + e.getMessage(), "ORDER_ERROR");
+            throw new RuntimeException("Lỗi khi tạo đơn hàng: " + e.getMessage());
         }
     }
 
@@ -194,7 +197,7 @@ public class OrderService implements IOrderService {
     public Order confirmedOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.PENDING) {
-            throw new GlobalExceptionHandler("Đơn hàng không thể xác nhận ở trạng thái hiện tại", "ORDER_ERROR");
+            throw new RuntimeException("Đơn hàng không thể xác nhận ở trạng thái hiện tại");
         }
         order.setOrderStatus(OrderStatus.CONFIRMED);
         return orderRepository.save(order);
@@ -204,7 +207,7 @@ public class OrderService implements IOrderService {
     public Order shippedOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
-            throw new GlobalExceptionHandler("Đơn hàng phải được xác nhận trước khi gửi", "ORDER_ERROR");
+            throw new RuntimeException("Đơn hàng phải được xác nhận trước khi gửi");
         }
         order.setOrderStatus(OrderStatus.SHIPPED);
         return orderRepository.save(order);
@@ -214,7 +217,7 @@ public class OrderService implements IOrderService {
     public Order deliveredOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.SHIPPED) {
-            throw new GlobalExceptionHandler("Đơn hàng phải được gửi trước khi giao", "ORDER_ERROR");
+            throw new RuntimeException("Đơn hàng phải được gửi trước khi giao");
         }
         order.setOrderStatus(OrderStatus.DELIVERED);
         order.setPaymentStatus(PaymentStatus.COMPLETED);
@@ -225,7 +228,7 @@ public class OrderService implements IOrderService {
     public Order cancelOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() == OrderStatus.DELIVERED) {
-            throw new GlobalExceptionHandler("Không thể hủy đơn hàng đã giao", "ORDER_ERROR");
+            throw new RuntimeException("Không thể hủy đơn hàng đã giao");
         }
         order.setOrderStatus(OrderStatus.CANCELLED);
         order.setPaymentStatus(PaymentStatus.REFUNDED);
@@ -236,7 +239,7 @@ public class OrderService implements IOrderService {
     public List<Order> getAllOrders() {
         List<Order> orders = orderRepository.findAll();
         if (orders.isEmpty()) {
-            throw new GlobalExceptionHandler("Không có đơn hàng nào", "ORDER_ERROR");
+            throw new RuntimeException("Không có đơn hàng nào");
         }
         return orders;
     }
@@ -245,7 +248,7 @@ public class OrderService implements IOrderService {
     public void deleteOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.CANCELLED) {
-            throw new GlobalExceptionHandler("Chỉ có thể xóa đơn hàng đã hủy", "ORDER_ERROR");
+            throw new RuntimeException("Chỉ có thể xóa đơn hàng đã hủy");
         }
         orderRepository.delete(order);
     }

@@ -79,8 +79,8 @@ public class UserController {
             profileResponse.setEmail(user.getEmail());
             profileResponse.setFirstName(user.getFirstName());
             profileResponse.setLastName(user.getLastName());
-            profileResponse.setMobile(user.getMobile());
-            profileResponse.setRole(user.getRole());
+            profileResponse.setMobile(user.getPhone());
+            profileResponse.setRole(user.getRole().getName().name());
             profileResponse.setAddress(addressDTOS);
             profileResponse.setPaymentInformation(user.getPaymentInformation() != null ? user.getPaymentInformation() : new ArrayList<>());
             profileResponse.setRatings(user.getRatings() != null ? user.getRatings() : new ArrayList<>());

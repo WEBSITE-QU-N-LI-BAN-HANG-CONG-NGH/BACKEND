@@ -44,10 +44,6 @@ public class OrderController {
             Order order = orderService.placeOrder(addressId, user);
             OrderDTO orderDTO = new OrderDTO(order);
             return ResponseEntity.status(HttpStatus.CREATED).body(orderDTO);
-
-        } catch (GlobalExceptionHandler e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage(), "code", e.getCode()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occurred", "code", "INTERNAL_ERROR"));
@@ -55,7 +51,7 @@ public class OrderController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<OrderDTO>> userOrderHistory(@RequestHeader("Authorization") String jwt) throws GlobalExceptionHandler {
+    public ResponseEntity<List<OrderDTO>> userOrderHistory(@RequestHeader("Authorization") String jwt) {
         User user = userService.findUserByJwt(jwt);
         List<Order> orders = orderService.userOrderHistory(user.getId());
         List<OrderDTO> orderDTOs = new ArrayList<>();
@@ -66,7 +62,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderDTO> findOrderById(@PathVariable("id") Long orderId) throws GlobalExceptionHandler {
+    public ResponseEntity<OrderDTO> findOrderById(@PathVariable("id") Long orderId) {
         Order order = orderService.findOrderById(orderId);
         OrderDTO orderDTO = new OrderDTO(order);
         return new ResponseEntity<>(orderDTO, HttpStatus.OK);

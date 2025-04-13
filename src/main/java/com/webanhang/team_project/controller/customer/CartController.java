@@ -5,7 +5,7 @@ package com.webanhang.team_project.controller.customer;
 import com.webanhang.team_project.dto.AddItemRequest;
 import com.webanhang.team_project.dto.cart.CartDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
-import com.webanhang.team_project.exceptions.AppException;
+
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.User;
@@ -56,8 +56,7 @@ public class CartController {
     }
 
     @DeleteMapping("/remove/{itemId}")
-    public ResponseEntity<ApiResponse> removeCartItem(@RequestHeader("Authorization") String jwt,
-            @PathVariable Long itemId) throws AppException {
+    public ResponseEntity<ApiResponse> removeCartItem(@RequestHeader("Authorization") String jwt, @PathVariable Long itemId) {
         User user = userService.findUserByJwt(jwt);
         cartService.removeCartItem(user.getId(), itemId);
         
@@ -68,8 +67,7 @@ public class CartController {
     }
 
     @DeleteMapping("/clear")
-    public ResponseEntity<ApiResponse> clearCart(@RequestHeader("Authorization") String jwt) 
-            throws AppException {
+    public ResponseEntity<ApiResponse> clearCart(@RequestHeader("Authorization") String jwt) {
         User user = userService.findUserByJwt(jwt);
         cartService.clearCart(user.getId());
         

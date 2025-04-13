@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class CartService implements ICartService {
     private final CartItemRepository cartItemRepository;
     private final IProductService productService;
     private final UserService userService;
+    private final ICartItemService cartItemService;
 
 
     @Override
@@ -37,7 +39,7 @@ public class CartService implements ICartService {
     }
 
     private Cart createCart(Long userId)  {
-        User user = userService.findUserById(userId);
+        User user = userService.getUserById(userId);
         return createCart(user);
     }
 
@@ -86,7 +88,7 @@ public class CartService implements ICartService {
     }
 
     @Override
-    public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req) throws GlobalExceptionHandler {
+    public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req) {
         Cart cart = findUserCart(userId);
         CartItem item = cartItemRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Cart item not found"));
@@ -125,7 +127,7 @@ public class CartService implements ICartService {
         Cart cart = findUserCart(userId);
 
         // Xóa các mục từ bảng cart_items trước
-        ICartItemService.deleteAllCartItems(cart.getId(), userId);
+        cartItemService.deleteAllCartItems(cart.getId(), userId);
 
         // Cập nhật đối tượng cart
         cart.getCartItems().clear();
@@ -138,7 +140,7 @@ public class CartService implements ICartService {
         cartRepository.save(cart);
     }
     private void updateCartTotals(Cart cart) {
-        List<CartItem> items = cart.getCartItems();
+        Set<CartItem> items = cart.getCartItems(); // use set
 
         int totalPrice = items.stream()
                 .mapToInt(item -> item.getPrice() * item.getQuantity())

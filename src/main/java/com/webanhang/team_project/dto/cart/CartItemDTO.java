@@ -18,4 +18,16 @@ public class CartItemDTO {
     private String productName;
     private String imageUrl;
     private int discountPercent;
+
+    public CartItemDTO(CartItem cartItem) {
+        this.id = cartItem.getId();
+        this.productId = cartItem.getProduct().getId();
+        this.size = cartItem.getSize();
+        this.quantity = cartItem.getQuantity();
+        this.price = cartItem.getPrice();
+        this.discountedPrice = cartItem.getDiscountedPrice();
+        this.productName = cartItem.getProduct().getTitle();
+        this.imageUrl = cartItem.getProduct().getImageUrl();
+        this.discountPercent = cartItem.getDiscountPercent();
+    }
 }

@@ -18,6 +18,7 @@ public class UserDTO {
     private String email;
     private String role;
     private String mobile;
+    private boolean active;
     private List<Address> addresses;
     private LocalDateTime createdAt;
 }

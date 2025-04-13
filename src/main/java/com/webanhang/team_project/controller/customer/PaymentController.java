@@ -1,6 +1,7 @@
 package com.webanhang.team_project.controller.customer;
 
 
+import com.webanhang.team_project.exceptions.AppException;
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.PaymentDetail;
@@ -59,7 +60,7 @@ public class PaymentController {
                 "message", "Tạo URL thanh toán thành công",
                 "paymentUrl", paymentUrl
             ));
-        } catch (RuntimeException e) {
+        } catch (AppException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage(), "code", e.getCode()));
@@ -96,7 +97,7 @@ public class PaymentController {
             }
             
             return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
+        } catch (AppException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage(), "code", e.getCode()));
@@ -140,7 +141,7 @@ public class PaymentController {
             }
             
             return ResponseEntity.ok(payment);
-        } catch (RuntimeException e) {
+        } catch (AppException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage(), "code", e.getCode()));

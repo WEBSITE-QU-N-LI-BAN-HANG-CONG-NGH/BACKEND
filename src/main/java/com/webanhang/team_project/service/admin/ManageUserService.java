@@ -58,7 +58,7 @@ public class ManageUserService implements IManageUserService {
     }
 
     @Override
-    public UserDTO getUserDetails(int userId) {
+    public UserDTO getUserDetails(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         return convertToDto(user);
@@ -66,7 +66,7 @@ public class ManageUserService implements IManageUserService {
 
     @Override
     @Transactional
-    public UserDTO changeUserRole(int userId, String roleName) {
+    public UserDTO changeUserRole(Long userId, String roleName) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -88,7 +88,7 @@ public class ManageUserService implements IManageUserService {
 
     @Override
     @Transactional
-    public UserDTO updateUserStatus(int userId, boolean active) {
+    public UserDTO updateUserStatus(Long userId, boolean active) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -100,7 +100,7 @@ public class ManageUserService implements IManageUserService {
 
     @Override
     @Transactional
-    public void deleteUser(int userId) {
+    public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 

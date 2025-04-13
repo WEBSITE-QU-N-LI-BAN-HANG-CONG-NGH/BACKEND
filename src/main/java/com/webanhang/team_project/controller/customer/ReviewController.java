@@ -25,7 +25,7 @@ public class ReviewController {
     private UserService userService;
 
     @PostMapping("/create")
-    public ResponseEntity<Review> createReview(@RequestHeader("Authorization") String jwt, @RequestBody ReviewRequest reviewRequest) throws GlobalExceptionHandler {
+    public ResponseEntity<Review> createReview(@RequestHeader("Authorization") String jwt, @RequestBody ReviewRequest reviewRequest) {
         User user = userService.findUserByJwt(jwt);
         Review res = reviewService.createReview(user, reviewRequest);
         return new ResponseEntity<>(res, HttpStatus.CREATED);

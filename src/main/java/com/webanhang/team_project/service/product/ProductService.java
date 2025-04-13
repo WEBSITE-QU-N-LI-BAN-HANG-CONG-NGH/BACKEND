@@ -174,15 +174,9 @@ public class ProductService implements IProductService {
 //        return productDto;
 //    }
 
-    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository, UserService userService) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
-        this.userService = userService;
-    }
-
     @Override
     @Transactional
-    public Product createProduct(CreateProductRequest req) throws GlobalExceptionHandler {
+    public Product createProduct(CreateProductRequest req) {
         // Xử lý category theo cấp
         Category topLevel = categoryRepository.findByName(req.getTopLevelCategory());
         if(topLevel == null) {
@@ -240,7 +234,7 @@ public class ProductService implements IProductService {
     public String deleteProduct(Long id) {
         Product product = findProductById(id);
         if(product == null) {
-            throw new GlobalExceptionHandler("Product not found with id: " + id, "PRODUCT_NOT_FOUND");
+            throw new RuntimeException("Product not found with id: " + id);
         }
         productRepository.delete(product);
         return "Product deleted successfully";
@@ -262,7 +256,7 @@ public class ProductService implements IProductService {
         if(product.isPresent()) {
             return product.get();
         }
-        throw new RuntimeException("Product not found with id: " + id, "PRODUCT_NOT_FOUND");
+        throw new RuntimeException("Product not found with id: " + id);
     }
 
     @Override
@@ -285,7 +279,8 @@ public class ProductService implements IProductService {
             System.out.println("Category is null or empty, fetching all products");
             products = productRepository.findAll();
         } else {
-            products = productRepository.filterProducts(category, minPrice, maxPrice, minDiscount, sort);
+            products = productRepository.filterProducts(category, minPrice, maxPrice, minDiscount, null, sort);
+
         }
 
         System.out.println("Found " + products.size() + " products from initial query");
@@ -357,5 +352,41 @@ public class ProductService implements IProductService {
     @Override
     public List<Product> getFeaturedProducts() {
         return productRepository.findByDiscountPersentGreaterThan(0);
+    }
+
+    @Override
+    public ProductDTO convertToDto(Product product) {
+        ProductDTO productDto = new ProductDTO();
+        productDto.setId(product.getId());
+        productDto.setTitle(product.getTitle());
+        productDto.setDescription(product.getDescription());
+        productDto.setPrice(product.getPrice());
+        productDto.setDiscountedPrice(product.getDiscountedPrice());
+        productDto.setQuantity(product.getQuantity());
+        productDto.setBrand(product.getBrand());
+        productDto.setColor(product.getColor());
+
+        // Chuyển đổi danh sách sizes thành danh sách Strings
+        List<String> sizes = product.getSizes().stream()
+                .map(ProductSize::getName)
+                .collect(Collectors.toList());
+        productDto.setSizes(sizes);
+
+        productDto.setImageUrl(product.getImageUrl());
+
+        // Tính toán average rating nếu có ratings
+        if (product.getRatings() != null && !product.getRatings().isEmpty()) {
+            double avgRating = product.getRatings().stream()
+                    .mapToInt(Rating::getRating)
+                    .average()
+                    .orElse(0);
+            productDto.setAverageRating((int) Math.round(avgRating));
+            productDto.setNumRatings(product.getRatings().size());
+        } else {
+            productDto.setAverageRating(0);
+            productDto.setNumRatings(0);
+        }
+
+        return productDto;
     }
 }
