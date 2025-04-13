@@ -11,12 +11,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -125,5 +122,42 @@ public class AdminDashboardService implements IAdminDashboardService {
                 .map(Order::getTotalAmount)
                 .map(BigDecimal::valueOf)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    @Override
+    public Map<String, Object> getMonthlyRevenue() {
+        Map<String, Object> result = new HashMap<>();
+        List<Map<String, Object>> monthlyData = new ArrayList<>();
+
+        // Lấy dữ liệu 12 tháng gần nhất
+        LocalDate now = LocalDate.now();
+
+        for (int i = 6; i >= 0; i--) {
+            LocalDate month = now.minusMonths(i);
+            LocalDateTime startOfMonth = month.withDayOfMonth(1).atStartOfDay();
+            LocalDateTime endOfMonth = month.withDayOfMonth(month.lengthOfMonth()).atTime(23, 59, 59);
+
+            List<Order> monthOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
+                    startOfMonth, endOfMonth, OrderStatus.DELIVERED);
+
+            BigDecimal revenue = monthOrders.stream()
+                    .map(order -> BigDecimal.valueOf(order.getTotalAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal profit = revenue.multiply(new BigDecimal("0.25")); // Giả định lợi nhuận là 25% doanh thu
+
+            int totalOrders = monthOrders.size();
+
+            Map<String, Object> monthData = new HashMap<>();
+            monthData.put("month", month.getMonthValue());
+            monthData.put("revenue", revenue);
+            monthData.put("profit", profit);
+            monthData.put("orders", totalOrders);
+
+            monthlyData.add(monthData);
+        }
+
+        result.put("monthlyData", monthlyData);
+        return result;
     }
 }

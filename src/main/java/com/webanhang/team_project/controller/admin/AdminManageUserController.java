@@ -5,18 +5,20 @@ import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.dto.role.ChangeRoleRequest;
 import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.dto.user.UpdateUserStatusRequest;
-import com.webanhang.team_project.service.admin.IManageUserService;
+import com.webanhang.team_project.service.admin.IAdminManageUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("${api.prefix}/admin/users")
-public class ManageUserController {
+public class AdminManageUserController {
 
-    private final IManageUserService adminUserService;
+    private final IAdminManageUserService adminUserService;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllUsers(
@@ -57,5 +59,11 @@ public class ManageUserController {
     public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long userId) {
         adminUserService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success(null, "Delete user success"));
+    }
+
+    @GetMapping("/customers/stats")
+    public ResponseEntity<ApiResponse> getCustomerStats() {
+        Map<String, Object> stats = adminUserService.getCustomerStatistics();
+        return ResponseEntity.ok(ApiResponse.success(stats, "Get customer statistics success"));
     }
 }

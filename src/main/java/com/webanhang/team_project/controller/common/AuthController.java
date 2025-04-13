@@ -1,4 +1,4 @@
-package com.webanhang.team_project.controller.admin;
+package com.webanhang.team_project.controller.common;
 
 import com.webanhang.team_project.dto.auth.LoginRequest;
 import com.webanhang.team_project.dto.auth.OtpVerificationRequest;

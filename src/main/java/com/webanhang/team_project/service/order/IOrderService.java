@@ -7,14 +7,11 @@ import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.User;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public interface IOrderService {
-//    Order placeOrder(int userId);
-//    List<OrderDTO> getUserOrders(int userId);
-//
-//    OrderDTO convertToDto(Order order);
-
     public Order findOrderById(Long orderId);
     public List<Order> userOrderHistory(Long userId);
     public Order placeOrder(Long addressId, User user);
@@ -24,4 +21,5 @@ public interface IOrderService {
     public Order cancelOrder(Long orderId);
     public List<Order> getAllOrders();
     public void deleteOrder(Long orderId);
+    Map<String, Object> getOrderStatistics(LocalDate startDate, LocalDate endDate);
 }

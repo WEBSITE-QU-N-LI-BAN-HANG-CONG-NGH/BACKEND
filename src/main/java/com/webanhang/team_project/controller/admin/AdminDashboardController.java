@@ -39,6 +39,12 @@ public class AdminDashboardController {
         return ResponseEntity.ok(ApiResponse.success(revenue, "Get revenue overview success"));
     }
 
+    @GetMapping("/revenue/monthly")
+    public ResponseEntity<ApiResponse> getMonthlyRevenue() {
+        Map<String, Object> monthlyData = adminDashboardService.getMonthlyRevenue();
+        return ResponseEntity.ok(ApiResponse.success(monthlyData, "Get monthly revenue success"));
+    }
+
     @GetMapping("/top-sellers")
     public ResponseEntity<ApiResponse> getTopSellers() {
         List<SellerRevenueDTO> topSellers = adminDashboardService.getTopSellers(5);

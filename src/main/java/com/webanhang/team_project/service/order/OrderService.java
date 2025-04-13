@@ -23,10 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,69 +36,6 @@ public class OrderService implements IOrderService {
     private final ModelMapper modelMapper;
     private final CartRepository cartRepository;
     private final ProductService productService;
-
-
-//    @Transactional
-//    @Override
-//    public Order placeOrder(int userId) {
-//        Cart cart = cartService.getCartByUserId(userId);
-//        Order order = createOrder(cart);
-//        List<OrderItem> orderItemList = createOrderItems(order, cart);
-//        order.setOrderItems(new HashSet<>(orderItemList));
-//        order.setTotalAmount(calculateTotalAmount(orderItemList));
-//        Order savedOrder = orderRepository.save(order);
-//        cartService.clearCart(cart.getId());
-//        return savedOrder;
-//    }
-
-//    private Order createOrder(Cart cart) {
-//        Order order = new Order();
-//        order.setUser(cart.getUser());
-//        order.setOrderStatus(OrderStatus.PENDING);
-//        order.setOrderDate(LocalDate.now());
-//        return order;
-//    }
-//
-//    private List<OrderItem> createOrderItems(Order order, Cart cart) {
-//        return cart.getItems().stream().map(cartItem -> {
-//            Product product = cartItem.getProduct();
-//            product.setInventory(product.getInventory() - cartItem.getQuantity());
-//            productRepository.save(product);
-//            return new OrderItem(
-//                    order,
-//                    product,
-//                    cartItem.getUnitPrice(),
-//                    cartItem.getQuantity());
-//        }).toList();
-//    }
-//
-//    private BigDecimal calculateTotalAmount(List<OrderItem> orderItemList) {
-//        return orderItemList.stream()
-//                .map(item -> item.getPrice()
-//                        .multiply(new BigDecimal(item.getQuantity())))
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
-//    }
-
-
-//    @Override
-//    public List<OrderDTO> getUserOrders(int userId) {
-//        List<Order> orders = orderRepository.findByUserId(userId);
-//        return  orders.stream().map(this :: convertToDto).toList();
-//    }
-
-//    @Override
-//    public OrderDTO convertToDto(Order order) {
-//        return modelMapper.map(order, OrderDTO.class);
-//    }
-//
-//    public OrderService(CartRepository cartRepository, ICartService ICartService,
-//                        IProductService productService, OrderRepository orderRepository, AddressRepository addressRepository) {
-//        this.cartRepository = cartRepository;
-//        this.ICartService = ICartService;
-//        this.productService = productService;
-//        this.orderRepository = orderRepository;
-//        this.addressRepository = addressRepository;
-//    }
 
     @Override
     public Order findOrderById(Long orderId) {
@@ -251,5 +187,40 @@ public class OrderService implements IOrderService {
             throw new RuntimeException("Chỉ có thể xóa đơn hàng đã hủy");
         }
         orderRepository.delete(order);
+    }
+
+    @Override
+    public Map<String, Object> getOrderStatistics(LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> result = new HashMap<>();
+
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(23, 59, 59);
+
+        // Lấy đơn hàng trong khoảng thời gian
+        List<Order> orders = orderRepository.findByOrderDateBetween(start, end);
+
+        // Thống kê theo trạng thái
+        Map<OrderStatus, Long> ordersByStatus = orders.stream()
+                .collect(Collectors.groupingBy(Order::getOrderStatus, Collectors.counting()));
+
+        // Thống kê theo thời gian
+        Map<String, Long> ordersByTime = new LinkedHashMap<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        // Nhóm theo ngày
+        Map<String, List<Order>> groupedByDate = orders.stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getOrderDate().format(formatter)
+                ));
+
+        for (Map.Entry<String, List<Order>> entry : groupedByDate.entrySet()) {
+            ordersByTime.put(entry.getKey(), (long) entry.getValue().size());
+        }
+
+        result.put("total", orders.size());
+        result.put("byStatus", ordersByStatus);
+        result.put("byTime", ordersByTime);
+
+        return result;
     }
 }

@@ -8,6 +8,7 @@ import com.webanhang.team_project.model.Product;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IProductService {
 
@@ -32,4 +33,7 @@ public interface IProductService {
     List<Product> searchProducts(String keyword);
 
     List<Product> getFeaturedProducts();
+
+    List<Map<String, Object>> getTopSellingProducts(int limit);
+    public Map<String, Object> getRevenueByCateogry();
 }

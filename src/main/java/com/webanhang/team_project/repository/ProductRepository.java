@@ -44,4 +44,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                  @Param("minDiscount") Integer minDiscount,
                                  @Param("brand") String brand,
                                  @Param("sort") String sort);
+
 }
