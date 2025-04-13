@@ -24,5 +24,7 @@ public class RegisterRequest {
     @Size(min = 6, message = "Password phải có ít nhất 6 ký tự")
     private String password;
 
-    private String role = "CUSTOMER"; // Default role
+    // Không được sử dụng - tất cả người dùng mới đều được gán role CUSTOMER
+    @Deprecated
+    private String role;
 }

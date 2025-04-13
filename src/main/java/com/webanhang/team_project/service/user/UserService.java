@@ -48,7 +48,13 @@ public class UserService implements IUserService {
                     user.setFirstName(req.getFirstName());
                     user.setLastName(req.getLastName());
                     user.setEmail(req.getEmail());
-                    user.setPassword(req.getPassword());
+                    user.setPassword(passwordEncoder.encode(req.getPassword()));
+
+                    // role mặc định là CUSTOMER
+                    Role customerRole = roleRepository.findByName(UserRole.CUSTOMER)
+                            .orElseThrow(() -> new RuntimeException("Role CUSTOMER không tìm thấy"));
+                    user.setRole(customerRole);
+
                     return userRepository.save(user);
                 }).orElseThrow(() -> new EntityExistsException("Email " + request.getEmail() + " already be used"));
     }
@@ -96,8 +102,7 @@ public class UserService implements IUserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setActive(false);
 
-        UserRole userRole = UserRole.valueOf(request.getRole());
-        Role role = roleRepository.findByName(userRole)
+        Role role = roleRepository.findByName(UserRole.CUSTOMER)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 
         user.setRole(role);
