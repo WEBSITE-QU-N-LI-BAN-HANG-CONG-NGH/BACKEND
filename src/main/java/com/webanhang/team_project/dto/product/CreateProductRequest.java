@@ -1,4 +1,4 @@
-package com.webanhang.team_project.dto.product.request;
+package com.webanhang.team_project.dto.product;
 
 import com.webanhang.team_project.model.ProductSize;
 import jakarta.validation.constraints.*;

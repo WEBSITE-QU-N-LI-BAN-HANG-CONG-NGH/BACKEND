@@ -1,4 +1,4 @@
-package com.webanhang.team_project.dto;
+package com.webanhang.team_project.dto.review;
 import lombok.Data;
 
 @Data

@@ -1,4 +1,4 @@
-import com.webanhang.team_project.dto.product.request.CreateProductRequest;
+import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.repository.CategoryRepository;

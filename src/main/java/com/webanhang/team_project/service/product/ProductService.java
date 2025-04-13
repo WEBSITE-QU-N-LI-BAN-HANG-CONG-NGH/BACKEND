@@ -2,18 +2,13 @@ package com.webanhang.team_project.service.product;
 
 
 import com.webanhang.team_project.dto.product.ProductDTO;
-import com.webanhang.team_project.dto.product.request.AddProductRequest;
-import com.webanhang.team_project.dto.product.request.CreateProductRequest;
-import com.webanhang.team_project.dto.product.request.UpdateProductRequest;
-import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
+import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.model.*;
 import com.webanhang.team_project.repository.CartItemRepository;
 import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.repository.OrderItemRepository;
 import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.service.user.UserService;
-import jakarta.persistence.EntityExistsException;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -23,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.awt.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

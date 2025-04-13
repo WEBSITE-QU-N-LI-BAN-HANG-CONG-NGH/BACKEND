@@ -1,12 +1,12 @@
-package com.webanhang.team_project.dto;
+package com.webanhang.team_project.dto.review;
 
 import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class ReviewDTO {
+public class RatingDTO {
     private Long id;
-    private String review;
+    private int rating;
     private Long productId;
     private String userFirstName;
     private String userLastName;

@@ -1,7 +1,7 @@
 package com.webanhang.team_project.dto.user;
 
 
-import com.webanhang.team_project.dto.AddressDTO;
+import com.webanhang.team_project.dto.address.AddressDTO;
 import com.webanhang.team_project.dto.cart.CartDTO;
 import com.webanhang.team_project.dto.order.OrderDTO;
 import com.webanhang.team_project.model.PaymentInformation;

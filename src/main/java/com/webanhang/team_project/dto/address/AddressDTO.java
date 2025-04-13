@@ -1,4 +1,4 @@
-package com.webanhang.team_project.dto;
+package com.webanhang.team_project.dto.address;
 
 import com.webanhang.team_project.model.Address;
 import lombok.Data;

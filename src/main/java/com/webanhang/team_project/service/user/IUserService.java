@@ -1,14 +1,14 @@
 package com.webanhang.team_project.service.user;
 
 
-import com.webanhang.team_project.dto.AddAddressRequest;
-import com.webanhang.team_project.dto.AddressDTO;
+import com.webanhang.team_project.dto.address.AddAddressRequest;
+import com.webanhang.team_project.dto.address.AddressDTO;
 import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.model.User;
-import com.webanhang.team_project.dto.user.request.CreateUserRequest;
-import com.webanhang.team_project.dto.auth.request.OtpVerificationRequest;
-import com.webanhang.team_project.dto.auth.request.RegisterRequest;
-import com.webanhang.team_project.dto.user.request.UpdateUserRequest;
+import com.webanhang.team_project.dto.user.CreateUserRequest;
+import com.webanhang.team_project.dto.auth.OtpVerificationRequest;
+import com.webanhang.team_project.dto.auth.RegisterRequest;
+import com.webanhang.team_project.dto.user.UpdateUserRequest;
 
 public interface IUserService {
     User createUser(CreateUserRequest request);

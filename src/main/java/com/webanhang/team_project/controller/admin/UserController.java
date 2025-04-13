@@ -1,8 +1,8 @@
 package com.webanhang.team_project.controller.admin;
 
 
-import com.webanhang.team_project.dto.AddAddressRequest;
-import com.webanhang.team_project.dto.AddressDTO;
+import com.webanhang.team_project.dto.address.AddAddressRequest;
+import com.webanhang.team_project.dto.address.AddressDTO;
 import com.webanhang.team_project.dto.cart.CartDTO;
 import com.webanhang.team_project.dto.order.OrderDTO;
 import com.webanhang.team_project.dto.user.UserDTO;
@@ -10,8 +10,8 @@ import com.webanhang.team_project.dto.user.UserProfileResponse;
 import com.webanhang.team_project.model.Address;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.User;
-import com.webanhang.team_project.dto.user.request.CreateUserRequest;
-import com.webanhang.team_project.dto.user.request.UpdateUserRequest;
+import com.webanhang.team_project.dto.user.CreateUserRequest;
+import com.webanhang.team_project.dto.user.UpdateUserRequest;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.repository.UserRepository;
 import com.webanhang.team_project.service.user.IUserService;

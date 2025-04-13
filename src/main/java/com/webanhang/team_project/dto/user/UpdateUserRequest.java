@@ -1,4 +1,4 @@
-package com.webanhang.team_project.dto.user.request;
+package com.webanhang.team_project.dto.user;
 
 import lombok.Data;
 

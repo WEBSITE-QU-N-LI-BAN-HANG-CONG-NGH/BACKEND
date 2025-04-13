@@ -1,9 +1,8 @@
 package com.webanhang.team_project.controller.customer;
 
 
-import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Rating;
-import com.webanhang.team_project.dto.RatingRequest;
+import com.webanhang.team_project.dto.review.RatingRequest;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.service.RatingService;
 import com.webanhang.team_project.service.user.UserService;

@@ -3,11 +3,8 @@ package com.webanhang.team_project.service.product;
 
 
 import com.webanhang.team_project.dto.product.ProductDTO;
-import com.webanhang.team_project.dto.product.request.CreateProductRequest;
-import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
+import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.model.Product;
-import com.webanhang.team_project.dto.product.request.AddProductRequest;
-import com.webanhang.team_project.dto.product.request.UpdateProductRequest;
 import org.springframework.data.domain.Page;
 
 import java.util.List;

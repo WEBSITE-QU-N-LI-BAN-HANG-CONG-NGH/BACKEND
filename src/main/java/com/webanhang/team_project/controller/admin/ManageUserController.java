@@ -4,7 +4,7 @@ package com.webanhang.team_project.controller.admin;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.dto.role.ChangeRoleRequest;
 import com.webanhang.team_project.dto.user.UserDTO;
-import com.webanhang.team_project.dto.user.request.UpdateUserStatusRequest;
+import com.webanhang.team_project.dto.user.UpdateUserStatusRequest;
 import com.webanhang.team_project.service.admin.IManageUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

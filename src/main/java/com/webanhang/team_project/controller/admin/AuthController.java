@@ -1,8 +1,8 @@
 package com.webanhang.team_project.controller.admin;
 
-import com.webanhang.team_project.dto.auth.request.LoginRequest;
-import com.webanhang.team_project.dto.auth.request.OtpVerificationRequest;
-import com.webanhang.team_project.dto.auth.request.RegisterRequest;
+import com.webanhang.team_project.dto.auth.LoginRequest;
+import com.webanhang.team_project.dto.auth.OtpVerificationRequest;
+import com.webanhang.team_project.dto.auth.RegisterRequest;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.model.User;

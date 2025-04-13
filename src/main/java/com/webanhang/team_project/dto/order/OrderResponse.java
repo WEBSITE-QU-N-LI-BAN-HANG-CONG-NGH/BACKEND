@@ -1,8 +1,8 @@
 package com.webanhang.team_project.dto.order;
 
 
-import com.webanhang.team_project.dto.AddressDTO;
-import com.webanhang.team_project.dto.PaymentDetailDTO;
+import com.webanhang.team_project.dto.address.AddressDTO;
+import com.webanhang.team_project.dto.payment.PaymentDetailDTO;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;

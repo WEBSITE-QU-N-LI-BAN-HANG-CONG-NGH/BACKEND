@@ -2,11 +2,10 @@ package com.webanhang.team_project.controller.customer;
 
 
 
-import com.webanhang.team_project.dto.AddItemRequest;
+import com.webanhang.team_project.dto.cart.AddItemRequest;
 import com.webanhang.team_project.dto.cart.CartDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 
-import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.service.cart.CartService;

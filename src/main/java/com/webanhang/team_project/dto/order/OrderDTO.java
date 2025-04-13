@@ -1,7 +1,7 @@
 package com.webanhang.team_project.dto.order;
 
 import com.webanhang.team_project.enums.PaymentStatus;
-import com.webanhang.team_project.dto.AddressDTO;
+import com.webanhang.team_project.dto.address.AddressDTO;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.model.Order;
 import lombok.Data;

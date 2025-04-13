@@ -3,8 +3,8 @@
 //
 //import com.webanhang.team_project.dto.product.ProductDTO;
 //import com.webanhang.team_project.model.Product;
-//import com.webanhang.team_project.dto.product.request.AddProductRequest;
-//import com.webanhang.team_project.dto.product.request.UpdateProductRequest;
+//import com.webanhang.team_project.dto.product.AddProductRequest;
+//import com.webanhang.team_project.dto.product.UpdateProductRequest;
 //import com.webanhang.team_project.dto.response.ApiResponse;
 //import com.webanhang.team_project.service.product.IProductService;
 //import lombok.RequiredArgsConstructor;

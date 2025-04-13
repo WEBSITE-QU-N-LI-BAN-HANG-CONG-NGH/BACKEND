@@ -1,12 +1,11 @@
 package com.webanhang.team_project.service;
 
 
-import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.model.Rating;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.repository.RatingRepository;
-import com.webanhang.team_project.dto.RatingRequest;
+import com.webanhang.team_project.dto.review.RatingRequest;
 import com.webanhang.team_project.service.product.ProductService;
 import org.springframework.stereotype.Service;
 

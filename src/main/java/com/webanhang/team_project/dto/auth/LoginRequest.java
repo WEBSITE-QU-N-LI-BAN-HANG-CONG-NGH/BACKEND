@@ -1,4 +1,4 @@
-package com.webanhang.team_project.dto.auth.request;
+package com.webanhang.team_project.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import lombok.Data;

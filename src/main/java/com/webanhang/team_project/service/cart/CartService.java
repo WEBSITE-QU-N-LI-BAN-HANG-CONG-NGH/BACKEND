@@ -1,8 +1,7 @@
 package com.webanhang.team_project.service.cart;
 
 
-import com.webanhang.team_project.dto.AddItemRequest;
-import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
+import com.webanhang.team_project.dto.cart.AddItemRequest;
 import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.CartItem;
 import com.webanhang.team_project.model.Product;
@@ -11,14 +10,10 @@ import com.webanhang.team_project.repository.CartItemRepository;
 import com.webanhang.team_project.repository.CartRepository;
 import com.webanhang.team_project.service.product.IProductService;
 import com.webanhang.team_project.service.user.UserService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
