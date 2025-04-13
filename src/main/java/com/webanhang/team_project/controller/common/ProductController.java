@@ -1,6 +1,5 @@
 package com.webanhang.team_project.controller.common;
 
-
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.dto.product.AddProductRequest;
@@ -8,6 +7,7 @@ import com.webanhang.team_project.dto.product.UpdateProductRequest;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.service.product.IProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +17,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("${api.prefix}/products")
 public class ProductController {
+
+    @Autowired
     private final IProductService productService;
 
     @GetMapping("/getAll")

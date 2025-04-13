@@ -9,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -52,5 +54,17 @@ public class AdminOrderController {
     public ResponseEntity<ApiResponse> deleteOrder(@PathVariable Long orderId) {
         orderService.deleteOrder(orderId);
         return ResponseEntity.ok(ApiResponse.success(null, "Xóa đơn hàng thành công"));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse> getOrderStats(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+
+        LocalDate start = startDate != null ? LocalDate.parse(startDate) : LocalDate.now().minusMonths(1);
+        LocalDate end = endDate != null ? LocalDate.parse(endDate) : LocalDate.now();
+
+        Map<String, Object> stats = orderService.getOrderStatistics(start, end);
+        return ResponseEntity.ok(ApiResponse.success(stats, "Get order statistics success"));
     }
 }

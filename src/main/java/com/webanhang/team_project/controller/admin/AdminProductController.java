@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -54,5 +55,17 @@ public class AdminProductController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(null, "Tạo nhiều sản phẩm thành công"));
+    }
+
+    @GetMapping("/top-selling")
+    public ResponseEntity<ApiResponse> getTopSellingProducts(@RequestParam(defaultValue = "10") int limit) {
+        List<Map<String, Object>> topProducts = productService.getTopSellingProducts(limit);
+        return ResponseEntity.ok(ApiResponse.success(topProducts, "Get top selling products success"));
+    }
+
+    @GetMapping("/revenue-by-category")
+    public ResponseEntity<ApiResponse> getRevenueByCateogry() {
+        Map<String, Object> categoryRevenue = productService.getRevenueByCateogry();
+        return ResponseEntity.ok(ApiResponse.success(categoryRevenue, "Get revenue by category success"));
     }
 }
