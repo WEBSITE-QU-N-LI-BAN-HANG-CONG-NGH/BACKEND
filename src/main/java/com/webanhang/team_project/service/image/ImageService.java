@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -63,5 +64,29 @@ public class ImageService implements IImageService{
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public List<Image> getProductImages(Long productId) {
+        return imageRepository.findByProductId(productId);
+    }
+
+    public void deleteAllProductImages(Long productId) {
+        List<Image> images = imageRepository.findByProductId(productId);
+
+        // Xóa từng ảnh trên Cloudinary
+        for (Image image : images) {
+            String publicId = extractPublicIdFromUrl(image.getDownloadUrl());
+            if (publicId != null) {
+                try {
+                    cloudinaryService.deleteImage(publicId);
+                } catch (Exception e) {
+                    // Log lỗi nhưng vẫn tiếp tục xóa các ảnh khác
+                    System.err.println("Không thể xóa hình ảnh từ Cloudinary: " + e.getMessage());
+                }
+            }
+        }
+
+        // Xóa tất cả ảnh từ database
+        imageRepository.deleteByProductId(productId);
     }
 }
