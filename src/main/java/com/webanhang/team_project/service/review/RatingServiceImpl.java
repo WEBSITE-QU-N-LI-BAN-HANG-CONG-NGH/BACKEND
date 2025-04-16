@@ -1,4 +1,4 @@
-package com.webanhang.team_project.service;
+package com.webanhang.team_project.service.review;
 
 
 import com.webanhang.team_project.model.Product;

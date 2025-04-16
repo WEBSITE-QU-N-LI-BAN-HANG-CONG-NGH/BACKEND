@@ -1,4 +1,4 @@
-package com.webanhang.team_project.service;
+package com.webanhang.team_project.service.payment;
 
 import com.webanhang.team_project.model.PaymentDetail;
 

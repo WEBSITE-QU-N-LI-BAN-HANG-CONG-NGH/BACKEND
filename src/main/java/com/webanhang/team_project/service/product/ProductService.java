@@ -11,6 +11,7 @@ import com.webanhang.team_project.repository.CartItemRepository;
 import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.repository.OrderItemRepository;
 import com.webanhang.team_project.repository.ProductRepository;
+import com.webanhang.team_project.service.image.ImageService;
 import com.webanhang.team_project.service.user.UserService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -40,6 +41,7 @@ public class ProductService implements IProductService {
     private final OrderItemRepository orderItemRepository;
     private final ModelMapper modelMapper;
     private final UserService userService;
+    private final ImageService imageService;
 
     @Override
     @Transactional
@@ -103,6 +105,9 @@ public class ProductService implements IProductService {
         if(product == null) {
             throw new EntityNotFoundException("Product not found with id: " + id);
         }
+        // Xóa tất cả hình ảnh của sản phẩm
+        imageService.deleteAllProductImages(id);
+
         productRepository.delete(product);
         return "Product deleted successfully";
     }
@@ -260,5 +265,18 @@ public class ProductService implements IProductService {
         }
         result.put("categoryRevenue", categoryRevenue);
         return result;
+    }
+
+    public Product addImageToProduct(Long productId, Image image) {
+        Product product = findProductById(productId);
+        image.setProduct(product);
+        product.getImages().add(image);
+        return productRepository.save(product);
+    }
+
+    public Product removeImageFromProduct(Long productId, Long imageId) {
+        Product product = findProductById(productId);
+        product.getImages().removeIf(image -> image.getId().equals(imageId));
+        return productRepository.save(product);
     }
 }    

@@ -4,7 +4,7 @@ package com.webanhang.team_project.controller.customer;
 import com.webanhang.team_project.model.Rating;
 import com.webanhang.team_project.dto.review.RatingRequest;
 import com.webanhang.team_project.model.User;
-import com.webanhang.team_project.service.RatingService;
+import com.webanhang.team_project.service.review.RatingService;
 import com.webanhang.team_project.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
