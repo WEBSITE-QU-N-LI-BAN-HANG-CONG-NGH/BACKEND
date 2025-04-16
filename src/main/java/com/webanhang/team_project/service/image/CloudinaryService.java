@@ -1,4 +1,4 @@
-package com.webanhang.team_project.service;
+package com.webanhang.team_project.service.image;
 
 import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
@@ -20,5 +20,9 @@ public class CloudinaryService {
         params.put("folder", "tech_shop");
 
         return cloudinary.uploader().upload(file.getBytes(), params);
+    }
+
+    public Map deleteImage(String publicId) throws IOException {
+        return cloudinary.uploader().destroy(publicId, Map.of());
     }
 }

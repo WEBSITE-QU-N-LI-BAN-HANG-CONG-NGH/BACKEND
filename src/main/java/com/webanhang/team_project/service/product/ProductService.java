@@ -261,4 +261,17 @@ public class ProductService implements IProductService {
         result.put("categoryRevenue", categoryRevenue);
         return result;
     }
+
+    public Product addImageToProduct(Long productId, Image image) {
+        Product product = findProductById(productId);
+        image.setProduct(product);
+        product.getImages().add(image);
+        return productRepository.save(product);
+    }
+
+    public Product removeImageFromProduct(Long productId, Long imageId) {
+        Product product = findProductById(productId);
+        product.getImages().removeIf(image -> image.getId().equals(imageId));
+        return productRepository.save(product);
+    }
 }    
