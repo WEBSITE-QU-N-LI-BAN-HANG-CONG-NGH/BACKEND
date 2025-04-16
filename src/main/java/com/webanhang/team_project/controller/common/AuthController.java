@@ -1,5 +1,6 @@
 package com.webanhang.team_project.controller.common;
 
+import com.webanhang.team_project.dto.auth.ForgotPasswordRequest;
 import com.webanhang.team_project.dto.auth.LoginRequest;
 import com.webanhang.team_project.dto.auth.OtpVerificationRequest;
 import com.webanhang.team_project.dto.auth.RegisterRequest;
@@ -8,6 +9,7 @@ import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.repository.UserRepository;
 import com.webanhang.team_project.security.jwt.JwtUtils;
+import com.webanhang.team_project.security.otp.OtpService;
 import com.webanhang.team_project.security.userdetails.AppUserDetails;
 import com.webanhang.team_project.security.userdetails.AppUserDetailsService;
 import com.webanhang.team_project.service.user.UserService;
@@ -30,16 +32,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequiredArgsConstructor
+@RequiredArgsConstructor   //Annotation của Lombok để tự động tạo constructor với các tham số là các trường final
 @Slf4j
 @RequestMapping("${api.prefix}/auth")
 public class AuthController {
     private final JwtUtils jwtUtils;
     private final CookieUtils cookieUtils;
-    private final AppUserDetailsService userDetailsService;
+    private final AppUserDetailsService userDetailsService;  // Service để tải thông tin người dùng
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final OtpService otpService;
 
     @Value("${auth.token.refreshExpirationInMils}")
     private Long refreshTokenExpirationTime;
@@ -64,6 +67,7 @@ public class AuthController {
 
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("accessToken", accessToken);
+            responseData.put("refreshToken", refreshToken);
 
             Map<String, Object> userMap = new HashMap<>();
             userMap.put("id", user.getId());
@@ -181,5 +185,71 @@ public class AuthController {
         UserDTO userDto = userService.convertUserToDto(user);
 
         return ResponseEntity.ok(ApiResponse.success(userDto, "Current user info retrieved successfully"));
+    }
+
+
+
+
+    /**
+     * Gửi lại OTP nếu người dùng không nhận được
+     */
+    @PostMapping("/register/resend-otp")
+    public ResponseEntity<ApiResponse> resendOtp(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Email không được để trống."));
+        }
+
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Email chưa được đăng ký."));
+        }
+
+        if (user.isActive()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Tài khoản đã được kích hoạt."));
+        }
+
+        try {
+            String otp = otpService.generateOtp(email);
+            otpService.sendOtpEmail(email, otp);
+            return ResponseEntity.ok(ApiResponse.success(null, "Mã OTP mới đã được gửi tới email."));
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi lại OTP: ", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Lỗi khi gửi OTP: " + e.getMessage()));
+        }
+    }
+
+
+    @PostMapping("/register/forgot-password")
+    public ResponseEntity<ApiResponse> forgotPass(@RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        try {
+            OtpVerificationRequest tmp =new OtpVerificationRequest();
+            tmp.setEmail(forgotPasswordRequest.getEmail());
+            tmp.setOtp(forgotPasswordRequest.getOtp());
+
+            boolean isVerified = userService.verifyOtp(tmp);
+
+            if (isVerified) {
+                userService.forgotPassword(forgotPasswordRequest.getEmail(), forgotPasswordRequest.getNewPassword());
+                return ResponseEntity.ok(ApiResponse.success(null, "Mật khẩu đã được thay đổi thành công!"));
+            } else {
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Mã OTP không hợp lệ hoặc đã hết hạn."));
+            }
+        } catch (Exception e) {
+            log.error("Lỗi xác thực OTP: ", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Lỗi xác thực OTP: " + e.getMessage()));
+        }
     }
 }

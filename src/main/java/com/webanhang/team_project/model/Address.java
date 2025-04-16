@@ -1,15 +1,19 @@
 package com.webanhang.team_project.model;
 
-
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.List;
-
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "address")
 public class Address {
@@ -63,18 +67,4 @@ public class Address {
     @JsonIgnore
     private List<Order> orders;
 
-    public Address() {
-    }
-
-    public Address(String firstName, String lastName, String streetAddress,
-                   String city, String state, String zipCode, User user, String mobile) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.streetAddress = streetAddress;
-        this.city = city;
-        this.state = state;
-        this.zipCode = zipCode;
-        this.user = user;
-        this.mobile = mobile;
-    }
 }

@@ -23,7 +23,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler { ///  Lớp cơ sở để xử lý xác thực thành công.
     private static final Logger log = LoggerFactory.getLogger(OAuth2SuccessHandler.class);
     private final JwtUtils jwtUtils;
     private final CookieUtils cookieUtils;

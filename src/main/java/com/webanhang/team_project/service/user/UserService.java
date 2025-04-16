@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -99,11 +100,13 @@ public class UserService implements IUserService {
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
+        user.setCreatedAt(LocalDateTime.now());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setActive(false);
 
+// Gán vai trò CUSTOMER
         Role role = roleRepository.findByName(UserRole.CUSTOMER)
-                .orElseThrow(() -> new RuntimeException("Role not found"));
+                .orElseGet(() -> roleRepository.save(new Role(UserRole.CUSTOMER)));
 
         user.setRole(role);
         userRepository.save(user);
@@ -166,5 +169,14 @@ public class UserService implements IUserService {
         address.add(newAddress);
         addressRepository.save(newAddress);
         return new AddressDTO(newAddress);
+    }
+
+    public void forgotPassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new EntityNotFoundException("User not found");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

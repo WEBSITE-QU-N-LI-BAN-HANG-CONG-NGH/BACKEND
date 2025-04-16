@@ -16,6 +16,7 @@ public class RegisterRequest {
 
     @NotBlank(message = "Last name không được để trống")
     private String lastName;
+
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không hợp lệ")
     private String email;
@@ -24,7 +25,4 @@ public class RegisterRequest {
     @Size(min = 6, message = "Password phải có ít nhất 6 ký tự")
     private String password;
 
-    // Không được sử dụng - tất cả người dùng mới đều được gán role CUSTOMER
-    @Deprecated
-    private String role;
 }

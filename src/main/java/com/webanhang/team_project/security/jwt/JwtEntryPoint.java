@@ -23,6 +23,7 @@ public class JwtEntryPoint implements AuthenticationEntryPoint {
     * Xử lý request không có jwt hoặc jwt hợp lệ
      */
     @Override
+//    Xử lý khi yêu cầu bị từ chối do thiếu hoặc token không hợp lệ.
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
         errorResponseUtils.sendAuthenticationError(response,

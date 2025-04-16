@@ -42,6 +42,19 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         }
     }
 
+
+    /**
+     * Lấy tên nhà cung cấp (google hoặc github).
+     * Trích xuất email bằng extractEmail.
+     * Nếu email rỗng, ném ngoại lệ.
+     * Tìm người dùng trong cơ sở dữ liệu bằng email:
+     * Nếu không tồn tại, tạo người dùng mới (createUser).
+     * Nếu tồn tại nhưng chưa kích hoạt, kích hoạt tài khoản.
+     * Trả về OAuth2User gốc để Spring Security tiếp tục xử lý.
+     * @param userRequest
+     * @param oauth2User
+     * @return
+     */
     private OAuth2User processOAuth2User(OAuth2UserRequest userRequest, OAuth2User oauth2User) {
         // Lấy provider name (google hoặc github)
         String provider = userRequest.getClientRegistration().getRegistrationId();

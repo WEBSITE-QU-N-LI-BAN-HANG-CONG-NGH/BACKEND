@@ -13,7 +13,7 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class ErrorResponseUtils {
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;  //Để chuyển đổi đối tượng thành JSON.
 
     public void sendAuthenticationError(HttpServletResponse response, String message) throws IOException {
         sendError(response, "Authentication Error", message, HttpServletResponse.SC_UNAUTHORIZED);

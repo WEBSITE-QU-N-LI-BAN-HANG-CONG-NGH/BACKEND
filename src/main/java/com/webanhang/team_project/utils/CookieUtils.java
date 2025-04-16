@@ -10,6 +10,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
+
+/*
+ Cookie là một phần nhỏ dữ liệu được web server gửi đến trình duyệt của người dùng,
+ sau đó được lưu trữ trên máy của người dùng. Mỗi khi người dùng truy cập lại trang
+ web, trình duyệt sẽ gửi cookie đó kèm theo request.
+
+
+ */
 @Component
 public class CookieUtils {
     private static final Logger log = LoggerFactory.getLogger(CookieUtils.class);
@@ -28,6 +36,7 @@ public class CookieUtils {
             throw new IllegalArgumentException("HttpServletResponse cannot be null");
         }
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+//        Ngăn JavaScript truy cập.
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) (maxAge / 1000));
@@ -93,3 +102,11 @@ public class CookieUtils {
         }
     }
 }
+
+
+
+/*
+Quản lý refresh token cho xác thực JWT, cho phép làm mới token mà không cần đăng nhập lại.
+Tập trung bảo mật với HttpOnly, Secure, và SameSite.
+Hữu ích trong hệ thống xác thực không trạng thái.
+ */
