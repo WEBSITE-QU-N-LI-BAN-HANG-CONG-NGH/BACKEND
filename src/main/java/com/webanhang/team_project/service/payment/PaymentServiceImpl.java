@@ -1,9 +1,8 @@
-package com.webanhang.team_project.service;
+package com.webanhang.team_project.service.payment;
 
 
 import com.webanhang.team_project.enums.PaymentMethod;
 import com.webanhang.team_project.enums.PaymentStatus;
-import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.PaymentDetail;
 import com.webanhang.team_project.repository.PaymentRepository;
@@ -12,7 +11,6 @@ import com.webanhang.team_project.service.cart.ICartService;
 import com.webanhang.team_project.service.order.IOrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -24,7 +24,7 @@ public class AppUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         if (!user.isActive()) {
-            throw new RuntimeException("Account is not activated. Please verify your email");
+            throw new DisabledException("Account is not activated. Please verify your email");
         }
 
         return AppUserDetails.buildUserDetails(user);
