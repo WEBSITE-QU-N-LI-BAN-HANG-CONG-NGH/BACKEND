@@ -20,42 +20,84 @@ public class AdminOrderController {
 
     private final IOrderService orderService;
 
+    /**
+     * Lấy tất cả đơn hàng trong hệ thống
+     *
+     * @return Danh sách đơn hàng
+     */
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllOrders() {
         List<Order> orders = orderService.getAllOrders();
         return ResponseEntity.ok(ApiResponse.success(orders, "Lấy tất cả đơn hàng thành công"));
     }
 
+    /**
+     * Xác nhận đơn hàng
+     *
+     * @param orderId ID của đơn hàng cần xác nhận
+     * @return Thông tin đơn hàng sau khi xác nhận
+     */
     @PutMapping("/{orderId}/confirm")
     public ResponseEntity<ApiResponse> confirmOrder(@PathVariable Long orderId) {
         Order order = orderService.confirmedOrder(orderId);
         return ResponseEntity.ok(ApiResponse.success(order, "Xác nhận đơn hàng thành công"));
     }
 
+    /**
+     * Chuyển đơn hàng sang trạng thái đang giao
+     *
+     * @param orderId ID của đơn hàng
+     * @return Thông tin đơn hàng sau khi cập nhật
+     */
     @PutMapping("/{orderId}/ship")
     public ResponseEntity<ApiResponse> shipOrder(@PathVariable Long orderId) {
         Order order = orderService.shippedOrder(orderId);
         return ResponseEntity.ok(ApiResponse.success(order, "Chuyển trạng thái vận chuyển thành công"));
     }
 
+    /**
+     * Chuyển đơn hàng sang trạng thái đã giao
+     *
+     * @param orderId ID của đơn hàng
+     * @return Thông tin đơn hàng sau khi cập nhật
+     */
     @PutMapping("/{orderId}/deliver")
     public ResponseEntity<ApiResponse> deliverOrder(@PathVariable Long orderId) {
         Order order = orderService.deliveredOrder(orderId);
         return ResponseEntity.ok(ApiResponse.success(order, "Đánh dấu đã giao hàng thành công"));
     }
 
+    /**
+     * Hủy đơn hàng
+     *
+     * @param orderId ID của đơn hàng cần hủy
+     * @return Thông tin đơn hàng sau khi hủy
+     */
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<ApiResponse> cancelOrder(@PathVariable Long orderId) {
         Order order = orderService.cancelOrder(orderId);
         return ResponseEntity.ok(ApiResponse.success(order, "Hủy đơn hàng thành công"));
     }
 
+    /**
+     * Xóa đơn hàng
+     *
+     * @param orderId ID của đơn hàng cần xóa
+     * @return Thông báo kết quả
+     */
     @DeleteMapping("/{orderId}")
     public ResponseEntity<ApiResponse> deleteOrder(@PathVariable Long orderId) {
         orderService.deleteOrder(orderId);
         return ResponseEntity.ok(ApiResponse.success(null, "Xóa đơn hàng thành công"));
     }
 
+    /**
+     * Lấy thống kê đơn hàng trong khoảng thời gian
+     *
+     * @param startDate Ngày bắt đầu (định dạng: yyyy-MM-dd)
+     * @param endDate Ngày kết thúc (định dạng: yyyy-MM-dd)
+     * @return Thống kê đơn hàng
+     */
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse> getOrderStats(
             @RequestParam(required = false) String startDate,

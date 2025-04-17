@@ -20,6 +20,12 @@ public class SellerDashboardController {
     private final ISellerDashboardService sellerDashboardService;
     private final UserService userService;
 
+    /**
+     * Lấy dữ liệu tổng quan cho bảng điều khiển
+     *
+     * @param jwt Token xác thực người dùng
+     * @return Dữ liệu tổng quan (doanh thu, đơn hàng, sản phẩm, ...)
+     */
     @GetMapping("/overview")
     public ResponseEntity<ApiResponse> getDashboardOverview(@RequestHeader("Authorization") String jwt) {
         User seller = userService.findUserByJwt(jwt);
@@ -27,6 +33,12 @@ public class SellerDashboardController {
         return ResponseEntity.ok(ApiResponse.success(dashboardData, "Lấy dữ liệu tổng quan thành công"));
     }
 
+    /**
+     * Lấy dữ liệu doanh thu theo tháng
+     *
+     * @param jwt Token xác thực người dùng
+     * @return Dữ liệu doanh thu theo tháng
+     */
     @GetMapping("/revenue")
     public ResponseEntity<ApiResponse> getMonthlyRevenue(@RequestHeader("Authorization") String jwt) {
         User seller = userService.findUserByJwt(jwt);
@@ -34,6 +46,12 @@ public class SellerDashboardController {
         return ResponseEntity.ok(ApiResponse.success(revenueData, "Lấy dữ liệu doanh thu thành công"));
     }
 
+    /**
+     * Lấy thống kê đơn hàng
+     *
+     * @param jwt Token xác thực người dùng
+     * @return Thống kê đơn hàng theo trạng thái
+     */
     @GetMapping("/orders/stats")
     public ResponseEntity<ApiResponse> getOrderStats(@RequestHeader("Authorization") String jwt) {
         User seller = userService.findUserByJwt(jwt);
@@ -41,6 +59,12 @@ public class SellerDashboardController {
         return ResponseEntity.ok(ApiResponse.success(orderStats, "Lấy thống kê đơn hàng thành công"));
     }
 
+    /**
+     * Lấy thống kê sản phẩm
+     *
+     * @param jwt Token xác thực người dùng
+     * @return Thống kê sản phẩm (còn hàng, hết hàng, sắp hết)
+     */
     @GetMapping("/products/stats")
     public ResponseEntity<ApiResponse> getProductStats(@RequestHeader("Authorization") String jwt) {
         User seller = userService.findUserByJwt(jwt);

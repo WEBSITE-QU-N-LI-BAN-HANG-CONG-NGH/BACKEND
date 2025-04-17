@@ -1,6 +1,6 @@
 package com.webanhang.team_project.controller.admin;
 
-import com.webanhang.team_project.dto.dashboard.SellerRevenueDTO;
+import com.webanhang.team_project.dto.seller.SellerRevenueDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.service.admin.IAdminDashboardService;
 import lombok.RequiredArgsConstructor;

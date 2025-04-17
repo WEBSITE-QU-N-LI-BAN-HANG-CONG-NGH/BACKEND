@@ -30,6 +30,13 @@ public class AdminReportController {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
+    /**
+     * Lấy báo cáo về sản phẩm trong khoảng thời gian
+     *
+     * @param startDate Ngày bắt đầu khoảng thời gian (định dạng: yyyy-MM-dd)
+     * @param endDate Ngày kết thúc khoảng thời gian (định dạng: yyyy-MM-dd)
+     * @return Báo cáo về sản phẩm trong khoảng thời gian
+     */
     @GetMapping("/products")
     public ResponseEntity<ApiResponse> getProductReports(
             @RequestParam(required = false) String startDate,
@@ -42,12 +49,24 @@ public class AdminReportController {
         return ResponseEntity.ok(ApiResponse.success(reports, "Get product reports success"));
     }
 
+    /**
+     * Lấy thống kê tổng quan về sản phẩm
+     *
+     * @return Thống kê về sản phẩm (tổng số, theo danh mục, đánh giá cao, hết hàng)
+     */
     @GetMapping("/products/stats")
     public ResponseEntity<ApiResponse> getProductStats() {
         Map<String, Object> stats = getProductStatistics();
         return ResponseEntity.ok(ApiResponse.success(stats, "Get product statistics success"));
     }
 
+    /**
+     * Tạo báo cáo sản phẩm trong khoảng thời gian
+     *
+     * @param startDate Ngày bắt đầu
+     * @param endDate Ngày kết thúc
+     * @return Danh sách báo cáo sản phẩm
+     */
     private List<Map<String, Object>> generateProductReports(LocalDate startDate, LocalDate endDate) {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.atTime(23, 59, 59);
@@ -96,6 +115,11 @@ public class AdminReportController {
         return new ArrayList<>(productReports.values());
     }
 
+    /**
+     * Lấy thống kê tổng quan về sản phẩm
+     *
+     * @return Map chứa thông tin thống kê
+     */
     private Map<String, Object> getProductStatistics() {
         Map<String, Object> result = new HashMap<>();
 

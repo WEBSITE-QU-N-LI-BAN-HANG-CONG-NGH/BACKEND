@@ -1,6 +1,6 @@
 package com.webanhang.team_project.service.admin;
 
-import com.webanhang.team_project.dto.dashboard.SellerRevenueDTO;
+import com.webanhang.team_project.dto.seller.SellerRevenueDTO;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.repository.OrderRepository;

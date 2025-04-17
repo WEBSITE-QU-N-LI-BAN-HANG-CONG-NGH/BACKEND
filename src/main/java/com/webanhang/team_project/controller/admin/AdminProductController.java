@@ -21,6 +21,12 @@ public class AdminProductController {
     private final IProductService productService;
     private final CategoryRepository categoryRepository;
 
+    /**
+     * Tạo mới sản phẩm
+     *
+     * @param request DTO chứa thông tin sản phẩm cần tạo
+     * @return Thông tin sản phẩm đã được tạo
+     */
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createProduct(@RequestBody CreateProductRequest request) {
         Product product = productService.createProduct(request);
@@ -29,24 +35,48 @@ public class AdminProductController {
                 .body(ApiResponse.success(product, "Tạo sản phẩm thành công"));
     }
 
+    /**
+     * Xóa sản phẩm theo ID
+     *
+     * @param productId ID của sản phẩm cần xóa
+     * @return Thông báo kết quả xóa
+     */
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) {
         String result = productService.deleteProduct(productId);
         return ResponseEntity.ok(ApiResponse.success(null, result));
     }
 
+    /**
+     * Lấy danh sách tất cả sản phẩm
+     *
+     * @return Danh sách sản phẩm trong hệ thống
+     */
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> findAllProducts() {
         List<Product> products = productService.findAllProducts();
         return ResponseEntity.ok(ApiResponse.success(products, "Lấy tất cả sản phẩm thành công"));
     }
 
+    /**
+     * Cập nhật thông tin sản phẩm
+     *
+     * @param productId ID sản phẩm cần cập nhật
+     * @param product Thông tin mới của sản phẩm
+     * @return Thông tin sản phẩm sau khi cập nhật
+     */
     @PutMapping("/{productId}/update")
     public ResponseEntity<ApiResponse> updateProduct(@PathVariable Long productId, @RequestBody Product product) {
         Product updatedProduct = productService.updateProduct(productId, product);
         return ResponseEntity.ok(ApiResponse.success(updatedProduct, "Cập nhật sản phẩm thành công"));
     }
 
+    /**
+     * Tạo nhiều sản phẩm cùng lúc
+     *
+     * @param requests Mảng chứa thông tin các sản phẩm cần tạo
+     * @return Thông báo kết quả thực hiện
+     */
     @PostMapping("/create-multiple")
     public ResponseEntity<ApiResponse> createMultipleProducts(@RequestBody CreateProductRequest[] requests) {
         for (CreateProductRequest request : requests) {
@@ -57,12 +87,23 @@ public class AdminProductController {
                 .body(ApiResponse.success(null, "Tạo nhiều sản phẩm thành công"));
     }
 
+    /**
+     * Lấy danh sách sản phẩm bán chạy nhất
+     *
+     * @param limit Số lượng sản phẩm tối đa cần lấy (mặc định: 10)
+     * @return Danh sách sản phẩm bán chạy
+     */
     @GetMapping("/top-selling")
     public ResponseEntity<ApiResponse> getTopSellingProducts(@RequestParam(defaultValue = "10") int limit) {
         List<Map<String, Object>> topProducts = productService.getTopSellingProducts(limit);
         return ResponseEntity.ok(ApiResponse.success(topProducts, "Get top selling products success"));
     }
 
+    /**
+     * Lấy thống kê doanh thu theo danh mục
+     *
+     * @return Dữ liệu doanh thu theo từng danh mục
+     */
     @GetMapping("/revenue-by-category")
     public ResponseEntity<ApiResponse> getRevenueByCateogry() {
         Map<String, Object> categoryRevenue = productService.getRevenueByCateogry();

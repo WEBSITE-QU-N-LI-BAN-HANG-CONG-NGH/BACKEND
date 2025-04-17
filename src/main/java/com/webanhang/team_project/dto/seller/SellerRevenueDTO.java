@@ -1,4 +1,4 @@
-package com.webanhang.team_project.dto.dashboard;
+package com.webanhang.team_project.dto.seller;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

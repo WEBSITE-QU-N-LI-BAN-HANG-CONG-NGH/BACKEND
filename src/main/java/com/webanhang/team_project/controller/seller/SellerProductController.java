@@ -25,6 +25,15 @@ public class SellerProductController {
     private final IProductService productService;
     private final UserService userService;
 
+    /**
+     * Lấy danh sách sản phẩm của người bán với phân trang và tìm kiếm
+     *
+     * @param jwt Token xác thực người dùng
+     * @param page Số trang (bắt đầu từ 0)
+     * @param size Kích thước trang
+     * @param search Từ khóa tìm kiếm
+     * @return Danh sách sản phẩm đã phân trang và lọc
+     */
     @GetMapping
     public ResponseEntity<ApiResponse> getSellerProducts(
             @RequestHeader("Authorization") String jwt,
@@ -44,6 +53,13 @@ public class SellerProductController {
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách sản phẩm thành công"));
     }
 
+    /**
+     * Tạo sản phẩm mới
+     *
+     * @param jwt Token xác thực người dùng
+     * @param request Thông tin sản phẩm cần tạo
+     * @return Thông tin sản phẩm đã tạo
+     */
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createProduct(
             @RequestHeader("Authorization") String jwt,
@@ -57,6 +73,13 @@ public class SellerProductController {
                 .body(ApiResponse.success(product, "Tạo sản phẩm thành công"));
     }
 
+    /**
+     * Lấy chi tiết sản phẩm
+     *
+     * @param jwt Token xác thực người dùng
+     * @param productId ID của sản phẩm cần xem
+     * @return Thông tin chi tiết sản phẩm
+     */
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse> getProductDetails(
             @RequestHeader("Authorization") String jwt,
@@ -68,6 +91,14 @@ public class SellerProductController {
         return ResponseEntity.ok(ApiResponse.success(product, "Lấy thông tin sản phẩm thành công"));
     }
 
+    /**
+     * Cập nhật thông tin sản phẩm
+     *
+     * @param jwt Token xác thực người dùng
+     * @param productId ID của sản phẩm cần cập nhật
+     * @param productRequest Thông tin mới của sản phẩm
+     * @return Thông tin sản phẩm sau khi cập nhật
+     */
     @PutMapping("/{productId}")
     public ResponseEntity<ApiResponse> updateProduct(
             @RequestHeader("Authorization") String jwt,
@@ -80,6 +111,13 @@ public class SellerProductController {
         return ResponseEntity.ok(ApiResponse.success(updatedProduct, "Cập nhật sản phẩm thành công"));
     }
 
+    /**
+     * Xóa sản phẩm
+     *
+     * @param jwt Token xác thực người dùng
+     * @param productId ID của sản phẩm cần xóa
+     * @return Thông báo kết quả
+     */
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse> deleteProduct(
             @RequestHeader("Authorization") String jwt,
@@ -91,6 +129,14 @@ public class SellerProductController {
         return ResponseEntity.ok(ApiResponse.success(null, "Xóa sản phẩm thành công"));
     }
 
+    /**
+     * Cập nhật số lượng tồn kho của sản phẩm
+     *
+     * @param jwt Token xác thực người dùng
+     * @param productId ID của sản phẩm cần cập nhật
+     * @param quantity Số lượng mới
+     * @return Thông tin sản phẩm sau khi cập nhật
+     */
     @GetMapping("/inventory/{productId}")
     public ResponseEntity<ApiResponse> updateInventory(
             @RequestHeader("Authorization") String jwt,

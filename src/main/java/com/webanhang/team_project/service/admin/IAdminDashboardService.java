@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
-import com.webanhang.team_project.dto.dashboard.SellerRevenueDTO;
+import com.webanhang.team_project.dto.seller.SellerRevenueDTO;
 
 public interface IAdminDashboardService {
     // Phần 1: Tổng quan doanh thu

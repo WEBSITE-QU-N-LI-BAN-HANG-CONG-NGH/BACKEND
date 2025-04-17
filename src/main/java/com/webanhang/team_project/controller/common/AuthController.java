@@ -49,8 +49,10 @@ public class AuthController {
 
     /**
      * Xử lý đăng nhập và tạo cặp access token + refresh token
-     * Access token trả về trong response body
-     * Refresh token được lưu trong cookie
+     *
+     * @param request Yêu cầu đăng nhập chứa email và mật khẩu
+     * @param response HTTP response để lưu refresh token vào cookie
+     * @return Thông tin đăng nhập thành công bao gồm access token và thông tin người dùng
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> authenticateUser(@RequestBody LoginRequest request,
@@ -87,8 +89,10 @@ public class AuthController {
     }
 
     /**
-     * Đăng ký tài khoản mới
-     * Gửi OTP qua email để xác thực
+     * Đăng ký tài khoản mới và gửi OTP qua email để xác thực
+     *
+     * @param request Yêu cầu đăng ký chứa thông tin người dùng
+     * @return Thông báo OTP đã được gửi
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> registerUser(@RequestBody RegisterRequest request) {
@@ -98,6 +102,9 @@ public class AuthController {
 
     /**
      * Xác thực OTP khi đăng ký
+     *
+     * @param request Yêu cầu xác thực OTP chứa email và mã OTP
+     * @return Thông báo xác thực thành công hoặc thất bại
      */
     @PostMapping("/register/verify")
     public ResponseEntity<ApiResponse> verifyOtp(@RequestBody OtpVerificationRequest request) {
@@ -119,7 +126,9 @@ public class AuthController {
 
     /**
      * Tạo access token mới từ refresh token
-     * Kiểm tra tính hợp lệ của refresh token trong cookie
+     *
+     * @param request HTTP request chứa refresh token trong cookie
+     * @return Access token mới nếu refresh token hợp lệ
      */
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse> refreshAccessToken(HttpServletRequest request) {
@@ -148,6 +157,9 @@ public class AuthController {
 
     /**
      * Đăng xuất - xóa refresh token cookie
+     *
+     * @param response HTTP response để xóa cookie
+     * @return Thông báo đăng xuất thành công
      */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse> logout(HttpServletResponse response) {
@@ -157,8 +169,10 @@ public class AuthController {
 
     /**
      * Kiểm tra trạng thái xác thực hiện tại
+     *
+     * @param authentication Đối tượng Authentication từ SecurityContext
+     * @return Thông tin trạng thái xác thực
      */
-
     @GetMapping("/status")
     public ResponseEntity<ApiResponse> checkAuthStatus(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated()) {
@@ -170,9 +184,14 @@ public class AuthController {
         }
         return ResponseEntity.ok(ApiResponse.success(Map.of("authenticated", false), "Chưa xác thực."));
     }
-
-    @GetMapping("/current-user")
-    public ResponseEntity<ApiResponse> getCurrentUser(Authentication authentication) {
+    /**
+     * Lấy thông tin người dùng hiện tại
+     *
+     * @param authentication Đối tượng Authentication từ SecurityContext
+     * @return Thông tin người dùng hiện tại
+     */
+    @GetMapping("/current-user-info")
+    public ResponseEntity<ApiResponse> getCurrentUserInfo(Authentication authentication) {
         log.info("Authentication: {}", authentication);
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity
@@ -192,6 +211,9 @@ public class AuthController {
 
     /**
      * Gửi lại OTP nếu người dùng không nhận được
+     *
+     * @param request Map chứa email cần gửi lại OTP
+     * @return Thông báo OTP đã được gửi lại
      */
     @PostMapping("/register/resend-otp")
     public ResponseEntity<ApiResponse> resendOtp(@RequestBody Map<String, String> request) {
@@ -227,7 +249,12 @@ public class AuthController {
         }
     }
 
-
+    /**
+     * Xử lý quên mật khẩu với xác thực OTP
+     *
+     * @param forgotPasswordRequest Yêu cầu đặt lại mật khẩu chứa email, OTP và mật khẩu mới
+     * @return Thông báo thay đổi mật khẩu thành công
+     */
     @PostMapping("/register/forgot-password")
     public ResponseEntity<ApiResponse> forgotPass(@RequestBody ForgotPasswordRequest forgotPasswordRequest) {
         try {

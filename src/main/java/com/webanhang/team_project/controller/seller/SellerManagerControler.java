@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 /**
  * Controller quản lý các endpoint chung cho người bán
  * Bao gồm các chức năng xác thực vai trò, kiểm tra quyền,...
@@ -17,12 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("${api.prefix}/seller")
-public class SellerManager {
+public class SellerManagerControler {
 
     private final UserService userService;
 
     /**
      * Kiểm tra vai trò người bán
+     * Xác thực xem người dùng hiện tại có vai trò SELLER hay không
+     *
+     * @param jwt JWT token từ request header
+     * @return Thông tin xác thực vai trò
      */
     @GetMapping("/verify-role")
     public ResponseEntity<?> verifySellerRole(@RequestHeader("Authorization") String jwt) {
@@ -31,7 +37,7 @@ public class SellerManager {
             boolean isSeller = user.getRole() != null && user.getRole().getName() == UserRole.SELLER;
 
             return ResponseEntity.ok(
-                    java.util.Map.of(
+                    Map.of(
                             "success", true,
                             "isSeller", isSeller,
                             "message", isSeller ? "Người dùng có vai trò SELLER" : "Người dùng không có vai trò SELLER"
@@ -39,7 +45,7 @@ public class SellerManager {
             );
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
-                    java.util.Map.of(
+                    Map.of(
                             "success", false,
                             "message", e.getMessage()
                     )
@@ -49,6 +55,10 @@ public class SellerManager {
 
     /**
      * Kiểm tra trạng thái người bán
+     * Xác thực vai trò và trạng thái hoạt động của người bán
+     *
+     * @param jwt JWT token từ request header
+     * @return Thông tin trạng thái người bán
      */
     @GetMapping("/status")
     public ResponseEntity<?> getSellerStatus(@RequestHeader("Authorization") String jwt) {
@@ -58,7 +68,7 @@ public class SellerManager {
             // Kiểm tra vai trò
             if (user.getRole() == null || user.getRole().getName() != UserRole.SELLER) {
                 return ResponseEntity.badRequest().body(
-                        java.util.Map.of(
+                        Map.of(
                                 "success", false,
                                 "message", "Người dùng không có vai trò SELLER"
                         )
@@ -67,7 +77,7 @@ public class SellerManager {
 
             // Trả về trạng thái
             return ResponseEntity.ok(
-                    java.util.Map.of(
+                    Map.of(
                             "success", true,
                             "isActive", user.isActive(),
                             "status", user.isActive() ? "ACTIVE" : "INACTIVE",
@@ -78,7 +88,7 @@ public class SellerManager {
             );
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
-                    java.util.Map.of(
+                    Map.of(
                             "success", false,
                             "message", e.getMessage()
                     )

@@ -4,6 +4,7 @@ import com.webanhang.team_project.model.Image;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.repository.ImageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,21 +15,27 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ImageService implements IImageService{
     private final ImageRepository imageRepository;
     private final CloudinaryService cloudinaryService;
 
     @Override
     public Image uploadImageForProduct(MultipartFile file, Product product) throws IOException {
-        Map uploadResult = cloudinaryService.uploadImage(file);
+        try {
+            Map<String, Object> uploadResult = cloudinaryService.uploadImage(file);
 
-        Image image = new Image();
-        image.setProduct(product);
-        image.setFileName(file.getOriginalFilename());
-        image.setFileType(file.getContentType());
-        image.setDownloadUrl((String) uploadResult.get("url"));
+            Image image = new Image();
+            image.setProduct(product);
+            image.setFileName(file.getOriginalFilename());
+            image.setFileType(file.getContentType());
+            image.setDownloadUrl((String) uploadResult.get("url"));
 
-        return imageRepository.save(image);
+            return imageRepository.save(image);
+        } catch (IOException e) {
+            log.error("Lỗi khi tải hình ảnh lên cho sản phẩm: {}", product.getId(), e);
+            throw new IOException("Không thể tải lên hình ảnh: " + e.getMessage());
+        }
     }
 
     @Override
@@ -38,55 +45,41 @@ public class ImageService implements IImageService{
                 .orElseThrow(() -> new RuntimeException("Hình ảnh không tồn tại"));
 
         // Xóa khỏi Cloudinary
-        String publicId = extractPublicIdFromUrl(image.getDownloadUrl());
+        String publicId = cloudinaryService.extractPublicIdFromUrl(image.getDownloadUrl());
         if (publicId != null) {
             try {
                 cloudinaryService.deleteImage(publicId);
             } catch (Exception e) {
-                System.err.println("Không thể xóa hình ảnh từ Cloudinary: " + e.getMessage());
+                log.error("Không thể xóa hình ảnh từ Cloudinary: {}", publicId, e);
             }
         }
         imageRepository.delete(image);
     }
 
-    public String extractPublicIdFromUrl(String imageUrl) {
-        // URL Cloudinary có dạng: https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/folder/filename.jpg
-        try {
-            if (imageUrl == null || !imageUrl.contains("/upload/")) {
-                return null;
-            }
-
-            String afterUpload = imageUrl.split("/upload/")[1];
-            // Loại bỏ phần mở rộng tệp (.jpg, .png, ...)
-            String publicId = afterUpload.substring(0, afterUpload.lastIndexOf('.'));
-
-            return publicId;
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     public List<Image> getProductImages(Long productId) {
         return imageRepository.findByProductId(productId);
     }
 
+    @Transactional
     public void deleteAllProductImages(Long productId) {
         List<Image> images = imageRepository.findByProductId(productId);
 
         // Xóa từng ảnh trên Cloudinary
         for (Image image : images) {
-            String publicId = extractPublicIdFromUrl(image.getDownloadUrl());
+            String publicId = cloudinaryService.extractPublicIdFromUrl(image.getDownloadUrl());
             if (publicId != null) {
                 try {
                     cloudinaryService.deleteImage(publicId);
                 } catch (Exception e) {
                     // Log lỗi nhưng vẫn tiếp tục xóa các ảnh khác
-                    System.err.println("Không thể xóa hình ảnh từ Cloudinary: " + e.getMessage());
+                    log.error("Không thể xóa hình ảnh từ Cloudinary: {}", publicId, e);
                 }
             }
         }
 
         // Xóa tất cả ảnh từ database
         imageRepository.deleteByProductId(productId);
+        log.info("Đã xóa thành công tất cả hình ảnh của sản phẩm {}", productId);
     }
 }
