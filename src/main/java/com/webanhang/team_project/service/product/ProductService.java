@@ -88,7 +88,6 @@ public class ProductService implements IProductService {
         product.setDiscountPersent(req.getDiscountPersent());
         product.setBrand(req.getBrand());
         product.setColor(req.getColor());
-        product.setImageUrl(req.getImageUrl());
         product.setCreatedAt(LocalDateTime.now());
         product.setQuantity(req.getQuantity());
 
@@ -138,8 +137,17 @@ public class ProductService implements IProductService {
         if (product.getColor() != null) {
             existingProduct.setColor(product.getColor());
         }
-        if (product.getImageUrl() != null) {
-            existingProduct.setImageUrl(product.getImageUrl());
+
+        // Xử lý danh sách hình ảnh mới
+        if (product.getImages() != null && !product.getImages().isEmpty()) {
+            // Xóa tất cả hình ảnh cũ
+            existingProduct.getImages().clear();
+
+            // Thêm hình ảnh mới
+            for (Image image : product.getImages()) {
+                image.setProduct(existingProduct);
+                existingProduct.getImages().add(image);
+            }
         }
 
         // Cập nhật giá và giảm giá

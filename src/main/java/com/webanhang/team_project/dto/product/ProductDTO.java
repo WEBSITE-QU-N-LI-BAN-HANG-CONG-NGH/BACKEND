@@ -1,9 +1,11 @@
 package com.webanhang.team_project.dto.product;
 
 import com.webanhang.team_project.model.Category;
+import com.webanhang.team_project.model.Image;
 import com.webanhang.team_project.model.Product;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,7 +56,16 @@ public class ProductDTO {
             this.sizes = Collections.emptyList(); // Trả về list rỗng nếu null
         }
 
-        this.imageUrl = product.getImageUrl();
+//        this.imageUrls = product.getImageUrl();
+        // Xử lý danh sách hình ảnh
+        this.imageUrls = new ArrayList<>();
+
+        // Ưu tiên lấy từ quan hệ mới (images)
+        if (product.getImages() != null && !product.getImages().isEmpty()) {
+            this.imageUrls = product.getImages().stream()
+                    .map(Image::getDownloadUrl)
+                    .collect(Collectors.toList());
+        }
 
         // --- SỬA LỖI AVERAGE RATING ---
         // Tính toán averageRating từ list ratings.

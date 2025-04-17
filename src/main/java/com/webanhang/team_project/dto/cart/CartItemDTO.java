@@ -27,7 +27,10 @@ public class CartItemDTO {
         this.price = cartItem.getPrice();
         this.discountedPrice = cartItem.getDiscountedPrice();
         this.productName = cartItem.getProduct().getTitle();
-        this.imageUrl = cartItem.getProduct().getImageUrl();
+        // Lấy URL ảnh đầu tiên trong danh sách ảnh hoặc null nếu không có ảnh
+        this.imageUrl = cartItem.getProduct().getImages() != null && !cartItem.getProduct().getImages().isEmpty()
+                ? cartItem.getProduct().getImages().get(0).getDownloadUrl()
+                : null;
         this.discountPercent = cartItem.getDiscountPercent();
     }
 }

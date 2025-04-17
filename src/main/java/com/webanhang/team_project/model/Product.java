@@ -64,8 +64,10 @@ public class Product {
     private int discountedPrice;
 
     @Size(max = 255, message = "Image URL must be less than 255 characters")
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Column(name = "image_urls")
+//    private String imageUrl;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Image> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductSize> sizes = new ArrayList<>();

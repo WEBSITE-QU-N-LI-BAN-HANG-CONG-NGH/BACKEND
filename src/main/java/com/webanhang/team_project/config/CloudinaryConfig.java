@@ -22,15 +22,15 @@ public class CloudinaryConfig {
     private String apiSecret;
 
     @Value("${cloudinary.apiSecure}")
-    private boolean secureCloudinary;
+    private boolean apiSecure;
 
     @Bean
     public Cloudinary cloudinary() {
-        Map<String, String> config = new HashMap<>();
-        config.put("cloud_name", "cloudName");
-        config.put("api_key", "apiKey");
-        config.put("api_secret", "apiSecret");
-        config.put("secure", "secureCloudinary");
+        Map<String, Object> config = new HashMap<>();
+        config.put("cloud_name", cloudName);
+        config.put("api_key", apiKey);
+        config.put("api_secret", apiSecret);
+        config.put("secure", apiSecure);
         return new Cloudinary(config);
     }
 }

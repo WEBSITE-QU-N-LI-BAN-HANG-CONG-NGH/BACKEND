@@ -4,10 +4,7 @@ import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.model.*;
-import com.webanhang.team_project.repository.CategoryRepository;
-import com.webanhang.team_project.repository.OrderRepository;
-import com.webanhang.team_project.repository.ProductRepository;
-import com.webanhang.team_project.repository.UserRepository;
+import com.webanhang.team_project.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -19,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +29,7 @@ public class SellerProductService implements ISellerProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final ImageRepository imageRepository;
 
     @Override
     public Page<Product> getSellerProducts(Long sellerId, int page, int size, String search) {
@@ -109,7 +108,6 @@ public class SellerProductService implements ISellerProductService {
         product.setQuantity(request.getQuantity());
         product.setBrand(request.getBrand());
         product.setColor(request.getColor());
-        product.setImageUrl(request.getImageUrl());
         product.setCategory(secondLevel);
         product.setCreatedAt(LocalDateTime.now());
 
@@ -119,6 +117,36 @@ public class SellerProductService implements ISellerProductService {
                 size.setProduct(product);
             }
             product.setSizes(request.getSizes());
+        }
+
+        // Lưu sản phẩm trước để có ID
+        product =  productRepository.save(product);
+        // Xử lý danh sách hình ảnh
+        List<Image> images = new ArrayList<>();
+
+        // Ưu tiên sử dụng danh sách hình ảnh mới
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            for (String imageUrl : request.getImageUrls()) {
+                Image image = new Image();
+                image.setProduct(product);
+                image.setDownloadUrl(imageUrl);
+                image.setFileName(extractFilenameFromUrl(imageUrl));
+                image.setFileType(determineFileTypeFromUrl(imageUrl));
+                images.add(image);
+            }
+        }
+        // Fallback vào imageUrl cũ nếu không có danh sách
+        else if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
+            Image image = new Image();
+            image.setProduct(product);
+            image.setDownloadUrl(request.getImageUrl());
+            image.setFileName(extractFilenameFromUrl(request.getImageUrl()));
+            image.setFileType(determineFileTypeFromUrl(request.getImageUrl()));
+            images.add(image);
+        }
+
+        if (!images.isEmpty()) {
+            product.setImages(images);
         }
 
         return productRepository.save(product);
@@ -177,8 +205,16 @@ public class SellerProductService implements ISellerProductService {
         if (productRequest.getColor() != null) {
             existingProduct.setColor(productRequest.getColor());
         }
-        if (productRequest.getImageUrl() != null) {
-            existingProduct.setImageUrl(productRequest.getImageUrl());
+        // Cập nhật danh sách hình ảnh nếu có
+        if (productRequest.getImages() != null && !productRequest.getImages().isEmpty()) {
+            // Xóa hình ảnh cũ
+            existingProduct.getImages().clear();
+
+            // Thêm hình ảnh mới
+            for (Image image : productRequest.getImages()) {
+                image.setProduct(existingProduct);
+                existingProduct.getImages().add(image);
+            }
         }
 
         // Cập nhật sizes nếu có
@@ -216,6 +252,47 @@ public class SellerProductService implements ISellerProductService {
         product.setQuantity(quantity);
 
         return productRepository.save(product);
+    }
+
+    private String extractFilenameFromUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return "unknown";
+        }
+
+        // Lấy tên file từ URL
+        String[] parts = url.split("/");
+        if (parts.length > 0) {
+            String fileName = parts[parts.length - 1];
+            // Xử lý trường hợp có query parameters
+            if (fileName.contains("?")) {
+                fileName = fileName.substring(0, fileName.indexOf("?"));
+            }
+            return fileName;
+        }
+
+        return "image_" + System.currentTimeMillis();
+    }
+
+    private String determineFileTypeFromUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return "image/jpeg"; // Mặc định
+        }
+
+        String fileName = extractFilenameFromUrl(url).toLowerCase();
+
+        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+            return "image/jpeg";
+        } else if (fileName.endsWith(".png")) {
+            return "image/png";
+        } else if (fileName.endsWith(".gif")) {
+            return "image/gif";
+        } else if (fileName.endsWith(".webp")) {
+            return "image/webp";
+        } else if (fileName.endsWith(".svg")) {
+            return "image/svg+xml";
+        }
+
+        return "image/jpeg"; // Mặc định nếu không xác định được
     }
 }
 

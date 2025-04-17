@@ -17,7 +17,6 @@ import java.util.Map;
 public class SellerProfileService implements ISellerProfileService {
 
     private final UserRepository userRepository;
-
     @Override
     public SellerProfileDTO getSellerProfile(Long sellerId) {
         // Đảm bảo người bán tồn tại
@@ -26,6 +25,7 @@ public class SellerProfileService implements ISellerProfileService {
 
         return convertToProfileDTO(seller);
     }
+
 
     @Override
     @Transactional
