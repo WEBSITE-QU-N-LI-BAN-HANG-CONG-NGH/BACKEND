@@ -26,9 +26,12 @@ public class AdminDashboardService implements IAdminDashboardService {
     @Override
     public BigDecimal totalMonthInCome() {
         LocalDate now = LocalDate.now();
+        LocalDateTime startDate = now.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime endDate = now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59);
+
         List<Order> monthOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
-                now.withDayOfMonth(1).atStartOfDay(),
-                now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59),
+                startDate,
+                endDate,
                 OrderStatus.DELIVERED);
 
         return monthOrders.stream()
@@ -46,7 +49,8 @@ public class AdminDashboardService implements IAdminDashboardService {
             return BigDecimal.ZERO;
         }
 
-        return currentMonthIncome.subtract(lastMonthIncome)
+        return currentMonthIncome
+                .subtract(lastMonthIncome)
                 .multiply(new BigDecimal(100))
                 .divide(lastMonthIncome, 2, RoundingMode.HALF_UP);
     }
@@ -111,19 +115,6 @@ public class AdminDashboardService implements IAdminDashboardService {
         return distribution;
     }
 
-    private BigDecimal getLastMonthIncome() {
-        LocalDate lastMonth = LocalDate.now().minusMonths(1);
-        List<Order> lastMonthOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
-                lastMonth.withDayOfMonth(1).atStartOfDay(),
-                lastMonth.withDayOfMonth(lastMonth.lengthOfMonth()).atTime(23, 59, 59),
-                OrderStatus.DELIVERED);
-
-        return lastMonthOrders.stream()
-                .map(Order::getTotalAmount)
-                .map(BigDecimal::valueOf)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
     @Override
     public Map<String, Object> getMonthlyRevenue() {
         Map<String, Object> result = new HashMap<>();
@@ -159,5 +150,21 @@ public class AdminDashboardService implements IAdminDashboardService {
 
         result.put("monthlyData", monthlyData);
         return result;
+    }
+
+    private BigDecimal getLastMonthIncome() {
+        LocalDate lastMonth = LocalDate.now().minusMonths(1);
+        LocalDateTime startDate = lastMonth.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime endDate = lastMonth.withDayOfMonth(lastMonth.lengthOfMonth()).atTime(23, 59, 59);
+
+        List<Order> lastMonthOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
+                startDate,
+                endDate,
+                OrderStatus.DELIVERED);
+
+        return lastMonthOrders.stream()
+                .map(Order::getTotalAmount)
+                .map(BigDecimal::valueOf)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

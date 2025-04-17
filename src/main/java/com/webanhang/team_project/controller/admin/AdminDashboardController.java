@@ -21,6 +21,11 @@ public class AdminDashboardController {
 
     private final IAdminDashboardService adminDashboardService;
 
+    /**
+     * Lấy tổng quan bảng điều khiển
+     *
+     * @return Dữ liệu tổng quan bảng điều khiển bao gồm doanh thu, người bán hàng đầu và phân phối
+     */
     @GetMapping("/overview")
     public ResponseEntity<ApiResponse> getDashboardOverview() {
         Map<String, Object> response = new HashMap<>();
@@ -30,6 +35,11 @@ public class AdminDashboardController {
         return ResponseEntity.ok(ApiResponse.success(response, "Get dashboard overview success"));
     }
 
+    /**
+     * Lấy tổng quan doanh thu
+     *
+     * @return Thông tin tổng quan về doanh thu hiện tại, so sánh với tháng trước
+     */
     @GetMapping("/revenue")
     public ResponseEntity<ApiResponse> getRevenueOverview() {
         Map<String, Object> revenue = new HashMap<>();
@@ -39,18 +49,33 @@ public class AdminDashboardController {
         return ResponseEntity.ok(ApiResponse.success(revenue, "Get revenue overview success"));
     }
 
+    /**
+     * Lấy doanh thu theo tháng
+     *
+     * @return Dữ liệu doanh thu theo từng tháng
+     */
     @GetMapping("/revenue/monthly")
     public ResponseEntity<ApiResponse> getMonthlyRevenue() {
         Map<String, Object> monthlyData = adminDashboardService.getMonthlyRevenue();
         return ResponseEntity.ok(ApiResponse.success(monthlyData, "Get monthly revenue success"));
     }
 
+    /**
+     * Lấy danh sách người bán hàng đầu
+     *
+     * @return Danh sách người bán có doanh thu cao nhất
+     */
     @GetMapping("/top-sellers")
     public ResponseEntity<ApiResponse> getTopSellers() {
         List<SellerRevenueDTO> topSellers = adminDashboardService.getTopSellers(5);
         return ResponseEntity.ok(ApiResponse.success(topSellers, "Get top sellers success"));
     }
 
+    /**
+     * Lấy phân phối doanh thu
+     *
+     * @return Thông tin phân phối doanh thu theo các phân loại
+     */
     @GetMapping("/revenue-distribution")
     public ResponseEntity<ApiResponse> getRevenueDistribution() {
         Map<String, BigDecimal> distribution = adminDashboardService.getRevenueDistribution();
