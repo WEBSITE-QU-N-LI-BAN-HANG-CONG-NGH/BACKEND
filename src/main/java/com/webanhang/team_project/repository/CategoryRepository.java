@@ -12,11 +12,11 @@ import java.util.Optional;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
-    
+
     Category findByName(String name);
-    
+
     boolean existsByName(String name);
-    
+
     @Query("SELECT c FROM Category c WHERE c.parentCategory.id = :parentId")
     List<Category> findByParentCategory(@Param("parentId") Long parentId);
 
@@ -25,4 +25,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Category findByNameAndParent(@Param("name") String name, @Param("parentCategory") String parentCategoryName);
 
     Optional<Category> findByNameAndParentCategory(String name, Category parentCategory);
+
+    List<Category> findByLevel(int level);
+    List<Category> findByParentCategoryId(Long parentId);
 }

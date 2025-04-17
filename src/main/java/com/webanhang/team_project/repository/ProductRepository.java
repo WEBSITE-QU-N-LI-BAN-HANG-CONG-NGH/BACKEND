@@ -45,4 +45,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                  @Param("brand") String brand,
                                  @Param("sort") String sort);
 
+
+    // Fixed to return List of Products instead of single Product
+    List<Product> findByCategoryIdIn(List<Long> categoryIds);
+
+    // Added for direct product lookup by category ID
+    List<Product> findByCategoryId(Long categoryId);
+
 }

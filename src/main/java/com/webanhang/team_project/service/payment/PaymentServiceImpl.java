@@ -104,11 +104,12 @@ public class PaymentServiceImpl implements PaymentService {
 
             // Thông tin khách hàng
             if (order.getShippingAddress() != null) {
-                vnp_Params.put("vnp_Bill_Mobile", order.getShippingAddress().getMobile());
-                vnp_Params.put("vnp_Bill_FirstName", order.getShippingAddress().getFirstName());
-                vnp_Params.put("vnp_Bill_LastName", order.getShippingAddress().getLastName());
-                vnp_Params.put("vnp_Bill_Address", order.getShippingAddress().getStreetAddress());
-                vnp_Params.put("vnp_Bill_City", order.getShippingAddress().getCity());
+                vnp_Params.put("vnp_Bill_Mobile", order.getShippingAddress().getPhoneNumber());
+                vnp_Params.put("vnp_Bill_FullName", order.getShippingAddress().getFullName());
+                vnp_Params.put("vnp_Bill_Province", order.getShippingAddress().getProvince());
+                vnp_Params.put("vnp_Bill_District", order.getShippingAddress().getDistrict());
+                vnp_Params.put("vnp_Bill_Ward", order.getShippingAddress().getWard());
+                vnp_Params.put("vnp_Bill_Street", order.getShippingAddress().getStreet());
                 vnp_Params.put("vnp_Bill_Country", "VN");
             }
 

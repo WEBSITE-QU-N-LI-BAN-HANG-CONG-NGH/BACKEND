@@ -65,6 +65,7 @@ public class UserService implements IUserService {
         return userRepository.findById(userId).map(existingUser -> {
             existingUser.setFirstName(request.getFirstName());
             existingUser.setLastName(request.getLastName());
+            existingUser.setPhone(request.getPhoneNumber());
             return userRepository.save(existingUser);
         }).orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
@@ -85,7 +86,17 @@ public class UserService implements IUserService {
     @Transactional
     @Override
     public UserDTO convertUserToDto(User user) {
-        return modelMapper.map(user, UserDTO.class);
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(user.getId());
+        userDTO.setFirstName(user.getFirstName());
+        userDTO.setLastName(user.getLastName());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setRole(user.getRole() != null && user.getRole().getName() != null ? user.getRole().getName().name() : "UNKNOWN");
+        userDTO.setMobile(user.getPhone());
+        userDTO.setActive(user.isActive());
+        userDTO.setAddresses(user.getAddress());
+        userDTO.setCreatedAt(user.getCreatedAt());
+        return userDTO;
     }
 
     @Transactional
@@ -158,13 +169,13 @@ public class UserService implements IUserService {
             address=new ArrayList<>();
         }
         Address newAddress=new Address();
-        newAddress.setFirstName(request.getFirstName());
-        newAddress.setLastName(request.getLastName());
-        newAddress.setStreetAddress(request.getStreetAddress());
-        newAddress.setCity(request.getCity());
-        newAddress.setState(request.getState());
-        newAddress.setZipCode(request.getZipCode());
-        newAddress.setMobile(request.getMobile());
+        newAddress.setFullName(request.getFullName());
+        newAddress.setProvince(request.getProvince());
+        newAddress.setDistrict(request.getDistrict());
+        newAddress.setWard(request.getWard());
+        newAddress.setStreet(request.getStreet());
+        newAddress.setNote(request.getNote());
+        newAddress.setPhoneNumber(request.getPhoneNumber());
         newAddress.setUser(user);
         address.add(newAddress);
         addressRepository.save(newAddress);

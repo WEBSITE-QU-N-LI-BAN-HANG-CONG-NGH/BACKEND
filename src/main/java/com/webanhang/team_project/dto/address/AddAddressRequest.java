@@ -4,12 +4,11 @@ import lombok.Data;
 
 @Data
 public class AddAddressRequest {
-    private String firstName;
-    private String lastName;
-    private String streetAddress;
-    private String city;
-    private String state;
-    private String zipCode;
-    private String mobile;
-
+    private String fullName;
+    private String phoneNumber;
+    private String province;
+    private String district;
+    private String ward;
+    private String street;
+    private String note;
 }

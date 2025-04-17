@@ -20,6 +20,7 @@ public class UserProfileResponse {
     private String lastName;
     private String mobile;
     private String role;
+    private Boolean status;
     private List<AddressDTO> address = new ArrayList<>();
     private List<Rating> ratings = new ArrayList<>();
     private List<OrderDTO> orders = new ArrayList<>();

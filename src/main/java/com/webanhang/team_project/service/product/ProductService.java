@@ -11,7 +11,6 @@ import com.webanhang.team_project.repository.CartItemRepository;
 import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.repository.OrderItemRepository;
 import com.webanhang.team_project.repository.ProductRepository;
-import com.webanhang.team_project.service.image.ImageService;
 import com.webanhang.team_project.service.user.UserService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -41,36 +40,44 @@ public class ProductService implements IProductService {
     private final OrderItemRepository orderItemRepository;
     private final ModelMapper modelMapper;
     private final UserService userService;
-    private final ImageService imageService;
 
     @Override
     @Transactional
     public Product createProduct(CreateProductRequest req)  {
-        // Xử lý category theo cấp
-        Category topLevel = categoryRepository.findByName(req.getTopLevelCategory());
-        if(topLevel == null) {
-            topLevel = new Category();
-            topLevel.setName(req.getTopLevelCategory());
-            topLevel.setLevel(1);
-            topLevel = categoryRepository.save(topLevel);
-        }
+        // Xử lý category theo cấp bậc mới (tối đa 2 cấp)
+        Category parentCategory = null;
+        Category category = null;
 
-        Category secondLevel = categoryRepository.findByName(req.getSecondLevelCategory());
-        if(secondLevel == null) {
-            secondLevel = new Category();
-            secondLevel.setName(req.getSecondLevelCategory());
-            secondLevel.setLevel(2);
-            secondLevel.setParentCategory(topLevel);
-            secondLevel = categoryRepository.save(secondLevel);
-        }
+        // Xử lý cấp 1 (parent category)
+        if (req.getTopLevelCategory() != null && !req.getTopLevelCategory().isEmpty()) {
+            parentCategory = categoryRepository.findByName(req.getTopLevelCategory());
+            if (parentCategory == null) {
+                parentCategory = new Category();
+                parentCategory.setName(req.getTopLevelCategory());
+                parentCategory.setLevel(1);
+                parentCategory.setParent(true);
+                parentCategory = categoryRepository.save(parentCategory);
+            } else if (parentCategory.getLevel() != 1) {
+                throw new IllegalArgumentException("Top level category must have level 1");
+            }
 
-        Category thirdLevel = categoryRepository.findByName(req.getThirdLevelCategory());
-        if(thirdLevel == null) {
-            thirdLevel = new Category();
-            thirdLevel.setName(req.getThirdLevelCategory());
-            thirdLevel.setLevel(3);
-            thirdLevel.setParentCategory(secondLevel);
-            thirdLevel = categoryRepository.save(thirdLevel);
+            // Xử lý cấp 2 (nếu có)
+            if (req.getSecondLevelCategory() != null && !req.getSecondLevelCategory().isEmpty()) {
+                category = categoryRepository.findByName(req.getSecondLevelCategory());
+                if (category == null) {
+                    category = new Category();
+                    category.setName(req.getSecondLevelCategory());
+                    category.setLevel(2);
+                    category.setParent(false);
+                    category.setParentCategory(parentCategory);
+                    category = categoryRepository.save(category);
+                } else if (category.getLevel() != 2) {
+                    throw new IllegalArgumentException("Second level category must have level 2");
+                }
+            } else {
+                // Nếu không có cấp 2, sử dụng cấp 1
+                category = parentCategory;
+            }
         }
 
         // Tạo sản phẩm mới
@@ -79,13 +86,17 @@ public class ProductService implements IProductService {
         product.setDescription(req.getDescription());
         product.setPrice(req.getPrice());
         product.setDiscountPersent(req.getDiscountPersent());
-        product.setDiscountedPrice(req.getDiscountedPrice());
-        product.setQuantity(req.getQuantity());
         product.setBrand(req.getBrand());
         product.setColor(req.getColor());
         product.setImageUrl(req.getImageUrl());
-        product.setCategory(thirdLevel);
         product.setCreatedAt(LocalDateTime.now());
+        product.setQuantity(req.getQuantity());
+
+        // Cập nhật discountedPrice dựa vào price và discountPersent
+        product.updateDiscountedPrice();
+
+        // Gán category cho sản phẩm (sẽ là cấp 2 nếu có, nếu không thì là cấp 1)
+        product.setCategory(category);
 
         // Xử lý sizes
         if (req.getSizes() != null) {
@@ -105,9 +116,6 @@ public class ProductService implements IProductService {
         if(product == null) {
             throw new EntityNotFoundException("Product not found with id: " + id);
         }
-        // Xóa tất cả hình ảnh của sản phẩm
-        imageService.deleteAllProductImages(id);
-
         productRepository.delete(product);
         return "Product deleted successfully";
     }
@@ -116,9 +124,47 @@ public class ProductService implements IProductService {
     @Transactional
     public Product updateProduct(Long id, Product product)  {
         Product existingProduct = findProductById(id);
-        if(existingProduct.getQuantity() != 0) {
+
+        // Cập nhật các thuộc tính cơ bản
+        if (product.getTitle() != null) {
+            existingProduct.setTitle(product.getTitle());
+        }
+        if (product.getDescription() != null) {
+            existingProduct.setDescription(product.getDescription());
+        }
+        if (product.getBrand() != null) {
+            existingProduct.setBrand(product.getBrand());
+        }
+        if (product.getColor() != null) {
+            existingProduct.setColor(product.getColor());
+        }
+        if (product.getImageUrl() != null) {
+            existingProduct.setImageUrl(product.getImageUrl());
+        }
+
+        // Cập nhật giá và giảm giá
+        if (product.getPrice() > 0) {
+            existingProduct.setPrice(product.getPrice());
+        }
+        if (product.getDiscountPersent() >= 0) {
+            existingProduct.setDiscountPersent(product.getDiscountPersent());
+        }
+
+        // Cập nhật discountedPrice
+        existingProduct.updateDiscountedPrice();
+
+        // Cập nhật số lượng
+        if (product.getQuantity() >= 0) {
             existingProduct.setQuantity(product.getQuantity());
         }
+
+        // Cập nhật category nếu có thay đổi
+        if (product.getCategory() != null && product.getCategory().getId() != null) {
+            Category category = categoryRepository.findById(product.getCategory().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+            existingProduct.setCategory(category);
+        }
+
         return productRepository.save(existingProduct);
     }
 
@@ -151,7 +197,23 @@ public class ProductService implements IProductService {
             System.out.println("Category is null or empty, fetching all products");
             products = productRepository.findAll();
         } else {
-            products = productRepository.filterProducts(category, minPrice, maxPrice, minDiscount, sort, "");
+            // Kiểm tra xem category là cấp 1 hay cấp 2
+            Category foundCategory = categoryRepository.findByName(category);
+            if (foundCategory != null) {
+                if (foundCategory.getLevel() == 1) {
+                    // Nếu là cấp 1, lấy tất cả sản phẩm có category là cấp 1 này hoặc có parent category là cấp 1 này
+                    List<Category> subCategories = categoryRepository.findByParentCategoryId(foundCategory.getId());
+                    List<Long> categoryIds = new ArrayList<>();
+                    categoryIds.add(foundCategory.getId());
+                    subCategories.forEach(sub -> categoryIds.add(sub.getId()));
+                    products = productRepository.findByCategoryIdIn(categoryIds);
+                } else {
+                    // Nếu là cấp 2, chỉ lấy các sản phẩm thuộc category này
+                    products = productRepository.findByCategoryId(foundCategory.getId());
+                }
+            } else {
+                products = productRepository.filterProducts(category, minPrice, maxPrice, minDiscount, sort, "");
+            }
         }
 
         System.out.println("Found " + products.size() + " products from initial query");
@@ -186,6 +248,30 @@ public class ProductService implements IProductService {
             System.out.println("After size filter: " + products.size() + " products");
         }
 
+        // Xử lý minPrice, maxPrice nếu được chỉ định
+        if (minPrice != null) {
+            products = products.stream()
+                    .filter(p -> p.getDiscountedPrice() >= minPrice)
+                    .collect(Collectors.toList());
+            System.out.println("After minPrice filter: " + products.size() + " products");
+        }
+
+        if (maxPrice != null) {
+            products = products.stream()
+                    .filter(p -> p.getDiscountedPrice() <= maxPrice)
+                    .collect(Collectors.toList());
+            System.out.println("After maxPrice filter: " + products.size() + " products");
+        }
+
+        // Xử lý minDiscount nếu được chỉ định
+        if (minDiscount != null) {
+            products = products.stream()
+                    .filter(p -> p.getDiscountPersent() >= minDiscount)
+                    .collect(Collectors.toList());
+            System.out.println("After minDiscount filter: " + products.size() + " products");
+        }
+
+        // Xử lý stock (in_stock, out_of_stock)
         if(stock != null) {
             if(stock.equals("in_stock")) {
                 products = products.stream().filter(p -> p.getQuantity() > 0).collect(Collectors.toList());
@@ -194,6 +280,27 @@ public class ProductService implements IProductService {
                 products = products.stream().filter(p -> p.getQuantity() == 0).collect(Collectors.toList());
             }
             System.out.println("After stock filter: " + products.size() + " products");
+        }
+
+        // Sắp xếp sản phẩm nếu được chỉ định
+        if (sort != null) {
+            switch (sort) {
+                case "price_low":
+                    products.sort((p1, p2) -> Integer.compare(p1.getDiscountedPrice(), p2.getDiscountedPrice()));
+                    break;
+                case "price_high":
+                    products.sort((p1, p2) -> Integer.compare(p2.getDiscountedPrice(), p1.getDiscountedPrice()));
+                    break;
+                case "discount":
+                    products.sort((p1, p2) -> Integer.compare(p2.getDiscountPersent(), p1.getDiscountPersent()));
+                    break;
+                case "newest":
+                    products.sort((p1, p2) -> p2.getCreatedAt().compareTo(p1.getCreatedAt()));
+                    break;
+                default:
+                    // Không sắp xếp
+                    break;
+            }
         }
 
         int startIndex = (int) pageable.getOffset();
@@ -242,41 +349,44 @@ public class ProductService implements IProductService {
             productMap.put("title", p.getTitle());
             productMap.put("brand", p.getBrand());
             productMap.put("price", p.getPrice());
+            productMap.put("discounted_price", p.getDiscountedPrice());
             productMap.put("quantity", p.getQuantity());
+            productMap.put("category", p.getCategory() != null ? p.getCategory().getName() : "Uncategorized");
             result.add(productMap);
         }
         return result;
     }
-    
+
     @Override
     public Map<String, Object> getRevenueByCateogry() {
         // Triển khai phương thức lấy doanh thu theo danh mục
-        // Đây là triển khai mẫu, cần sửa theo logic thực tế của ứng dụng
         Map<String, Object> result = new HashMap<>();
         List<Product> allProducts = productRepository.findAll();
-        // Nhóm sản phẩm theo danh mục
+
+        // Nhóm sản phẩm theo danh mục cấp 1
         Map<String, Double> categoryRevenue = new HashMap<>();
+
         for (Product product : allProducts) {
-            String category = product.getCategory() != null ? product.getCategory().getName() : "Uncategorized";
-            Double revenue = categoryRevenue.getOrDefault(category, 0.0);
-            // Giả định doanh thu dựa trên giá và số lượng
-            revenue += product.getPrice() * product.getQuantity();
-            categoryRevenue.put(category, revenue);
+            String categoryName;
+            if (product.getCategory() != null) {
+                if (product.getCategory().getLevel() == 2 && product.getCategory().getParentCategory() != null) {
+                    // Nếu sản phẩm thuộc category cấp 2, lấy tên của category cấp 1 (parent)
+                    categoryName = product.getCategory().getParentCategory().getName();
+                } else {
+                    // Nếu sản phẩm thuộc category cấp 1
+                    categoryName = product.getCategory().getName();
+                }
+            } else {
+                categoryName = "Uncategorized";
+            }
+
+            // Tính doanh thu dựa trên giá có giảm giá và số lượng
+            Double revenue = categoryRevenue.getOrDefault(categoryName, 0.0);
+            revenue += product.getDiscountedPrice() * product.getQuantity();
+            categoryRevenue.put(categoryName, revenue);
         }
+
         result.put("categoryRevenue", categoryRevenue);
         return result;
     }
-
-    public Product addImageToProduct(Long productId, Image image) {
-        Product product = findProductById(productId);
-        image.setProduct(product);
-        product.getImages().add(image);
-        return productRepository.save(product);
-    }
-
-    public Product removeImageFromProduct(Long productId, Long imageId) {
-        Product product = findProductById(productId);
-        product.getImages().removeIf(image -> image.getId().equals(imageId));
-        return productRepository.save(product);
-    }
-}    
+}

@@ -56,4 +56,14 @@ public class CategoryService implements ICategoryService {
        return categoryRepository.findById(categoryId)
                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
    }
+
+    @Override
+    public List<Category> getAllParentCategories() {
+        return categoryRepository.findByLevel(1);
+    }
+
+    @Override
+    public List<Category> getSubCategoriesByParentId(Long parentId) {
+        return categoryRepository.findByParentCategoryId(parentId);
+    }
 }

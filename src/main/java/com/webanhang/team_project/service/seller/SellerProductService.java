@@ -98,14 +98,6 @@ public class SellerProductService implements ISellerProductService {
             secondLevel = categoryRepository.save(secondLevel);
         }
 
-        Category thirdLevel = categoryRepository.findByName(request.getThirdLevelCategory());
-        if(thirdLevel == null) {
-            thirdLevel = new Category();
-            thirdLevel.setName(request.getThirdLevelCategory());
-            thirdLevel.setLevel(3);
-            thirdLevel.setParentCategory(secondLevel);
-            thirdLevel = categoryRepository.save(thirdLevel);
-        }
 
         // Tạo sản phẩm mới
         Product product = new Product();
@@ -118,7 +110,7 @@ public class SellerProductService implements ISellerProductService {
         product.setBrand(request.getBrand());
         product.setColor(request.getColor());
         product.setImageUrl(request.getImageUrl());
-        product.setCategory(thirdLevel);
+        product.setCategory(secondLevel);
         product.setCreatedAt(LocalDateTime.now());
 
         // Xử lý sizes

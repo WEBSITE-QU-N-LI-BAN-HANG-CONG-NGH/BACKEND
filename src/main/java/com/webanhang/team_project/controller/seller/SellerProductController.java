@@ -53,25 +53,18 @@ public class SellerProductController {
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách sản phẩm thành công"));
     }
 
-    /**
-     * Tạo sản phẩm mới
-     *
-     * @param jwt Token xác thực người dùng
-     * @param request Thông tin sản phẩm cần tạo
-     * @return Thông tin sản phẩm đã tạo
-     */
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createProduct(
-            @RequestHeader("Authorization") String jwt,
-            @RequestBody CreateProductRequest request) {
-
-        User seller = userService.findUserByJwt(jwt);
-        Product product = sellerProductService.createProduct(seller.getId(), request);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(product, "Tạo sản phẩm thành công"));
-    }
+//    @PostMapping("/create")
+//    public ResponseEntity<ApiResponse> createProduct(
+//            @RequestHeader("Authorization") String jwt,
+//            @RequestBody CreateProductRequest request) {
+//
+//        User seller = userService.findUserByJwt(jwt);
+//        Product product = sellerProductService.createProduct(seller.getId(), request);
+//
+//        return ResponseEntity
+//                .status(HttpStatus.CREATED)
+//                .body(ApiResponse.success(product, "Tạo sản phẩm thành công"));
+//    }
 
     /**
      * Lấy chi tiết sản phẩm

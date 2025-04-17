@@ -1,11 +1,7 @@
 package com.webanhang.team_project.controller.common;
 
 import com.webanhang.team_project.dto.product.ProductDTO;
-import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Product;
-import com.webanhang.team_project.dto.product.AddProductRequest;
-import com.webanhang.team_project.dto.product.UpdateProductRequest;
-import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.service.product.IProductService;
 import lombok.RequiredArgsConstructor;
@@ -63,17 +59,28 @@ public class ProductController {
         return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
     }
 
-    @GetMapping("/products/id/{productId}")
-    public ResponseEntity<Product> findProductById(@PathVariable Long productId) {
+    @GetMapping("/id/{productId}")
+    public ResponseEntity<ProductDTO> findProductById(@PathVariable Long productId) {
         Product res = productService.findProductById(productId);
-        return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
+        ProductDTO productDTO = new ProductDTO(res);
+        return new ResponseEntity<>(productDTO, HttpStatus.OK);
     }
 
-    @GetMapping("/products/category/{category}")
-    public ResponseEntity<List<Product>> findProductsByCategory(@PathVariable String category) {
-        List<Product> products = productService.findAllProductsByFilter(category, new ArrayList<>(), new ArrayList<>(),
-                null, null, null, null, null, 0, Integer.MAX_VALUE).getContent();
-        return new ResponseEntity<>(products, HttpStatus.OK);
+    @GetMapping("/{categoryName}/{subCategoryName}/{productId}")
+    public ResponseEntity<Product> findProductByPath(
+            @PathVariable String categoryName,
+            @PathVariable String subCategoryName,
+            @PathVariable Long productId) {
+        Product product = productService.findProductById(productId);
+        return new ResponseEntity<>(product, HttpStatus.OK);
+    }
+
+    @GetMapping("/{categoryName}/{productId}")
+    public ResponseEntity<Product> findProductByCategory(
+            @PathVariable String categoryName,
+            @PathVariable Long productId) {
+        Product product = productService.findProductById(productId);
+        return new ResponseEntity<>(product, HttpStatus.OK);
     }
 
     @GetMapping("/products/search")

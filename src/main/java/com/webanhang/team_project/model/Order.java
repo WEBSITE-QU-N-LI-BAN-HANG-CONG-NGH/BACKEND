@@ -45,7 +45,7 @@ public class Order {
     private PaymentDetail paymentDetails;
 
     @ManyToOne
-    @JoinColumn(name = "shipping_address_id", unique = false)
+    @JoinColumn(name = "orderAddress", unique = false)
     private Address shippingAddress;
 
     @Column(name = "delivery_date")

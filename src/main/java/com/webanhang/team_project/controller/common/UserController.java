@@ -36,19 +36,19 @@ public class UserController {
     private final UserRepository userRepository;
 
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse> getUserById(@PathVariable Long userId) {
-        User user = userService.getUserById(userId);
-        UserDTO userDto = userService.convertUserToDto(user);
-        return ResponseEntity.ok(ApiResponse.success(userDto, "Found!"));
-    }
+//    @GetMapping("/{userId}")
+//    public ResponseEntity<ApiResponse> getUserById(@PathVariable Long userId) {
+//        User user = userService.getUserById(userId);
+//        UserDTO userDto = userService.convertUserToDto(user);
+//        return ResponseEntity.ok(ApiResponse.success(userDto, "Found!"));
+//    }
 
-    @PostMapping("/add")
-    public ResponseEntity<ApiResponse> createUser(@RequestBody CreateUserRequest request) {
-        User user = userService.createUser(request);
-        UserDTO userDto = userService.convertUserToDto(user);
-        return ResponseEntity.ok(ApiResponse.success(userDto, "Create User Success!"));
-    }
+//    @PostMapping("/add")
+//    public ResponseEntity<ApiResponse> createUser(@RequestBody CreateUserRequest request) {
+//        User user = userService.createUser(request);
+//        UserDTO userDto = userService.convertUserToDto(user);
+//        return ResponseEntity.ok(ApiResponse.success(userDto, "Create User Success!"));
+//    }
 
     @PutMapping("/{userId}/update")
     public ResponseEntity<ApiResponse> updateUser(@RequestBody UpdateUserRequest request, @PathVariable Long userId) {
@@ -101,8 +101,19 @@ public class UserController {
                 }
             }
 
+
             // Xử lý response
             UserProfileResponse profileResponse = new UserProfileResponse();
+
+            ///   check status
+            if (authentication != null && authentication.isAuthenticated()) {
+                log.info("User is authenticated");
+                profileResponse.setStatus(true);
+            } else {
+                log.warn("User is not authenticated");
+                profileResponse.setStatus(false);
+            }
+
             profileResponse.setId(user.getId());
             profileResponse.setEmail(user.getEmail());
             profileResponse.setFirstName(user.getFirstName());

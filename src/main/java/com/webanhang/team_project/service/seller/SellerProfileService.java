@@ -65,13 +65,13 @@ public class SellerProfileService implements ISellerProfileService {
                 "Cửa hàng chuyên cung cấp các sản phẩm chất lượng cao",
                 "",
                 seller.getAddress() != null && !seller.getAddress().isEmpty() ?
-                        seller.getAddress().get(0).getStreetAddress() : "",
+                        seller.getAddress().get(0).getProvince() : "",
                 seller.getAddress() != null && !seller.getAddress().isEmpty() ?
-                        seller.getAddress().get(0).getCity() : "",
+                        seller.getAddress().get(0).getDistrict() : "",
                 seller.getAddress() != null && !seller.getAddress().isEmpty() ?
-                        seller.getAddress().get(0).getState() : "",
+                        seller.getAddress().get(0).getWard() : "",
                 seller.getAddress() != null && !seller.getAddress().isEmpty() ?
-                        seller.getAddress().get(0).getZipCode() : "",
+                        seller.getAddress().get(0).getStreet() : "",
                 seller.getPhone(),
                 "Cá nhân"
         );

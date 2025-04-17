@@ -22,8 +22,29 @@ public class CategoryController {
         return ResponseEntity.ok().body(ApiResponse.success(categories,"Get success"));
     }
 
+    @GetMapping("/parent")
+    public ResponseEntity<ApiResponse> getAllParentCategories() {
+        List<Category> parentCategories = categoryService.getAllParentCategories();
+        return ResponseEntity.ok().body(ApiResponse.success(parentCategories,"Get parent categories success"));
+    }
+
+    @GetMapping("/sub/{parentId}")
+    public ResponseEntity<ApiResponse> getSubCategoriesByParentId(@PathVariable Long parentId) {
+        List<Category> subCategories = categoryService.getSubCategoriesByParentId(parentId);
+        return ResponseEntity.ok().body(ApiResponse.success(subCategories,"Get sub categories success"));
+    }
+
     @PostMapping("/add")
     public ResponseEntity<ApiResponse> addCategory(@RequestBody Category category) {
+        // Đảm bảo level không vượt quá 2
+        if (category.getParentCategory() != null) {
+            category.setLevel(2);
+            category.setParent(false);
+        } else {
+            category.setLevel(1);
+            category.setParent(true);
+        }
+
         Category theCategory = categoryService.addCategory(category);
         return ResponseEntity.ok().body(ApiResponse.success(theCategory, "Add success"));
     }
@@ -36,6 +57,19 @@ public class CategoryController {
 
     @PutMapping("/update/{id}")
     public ResponseEntity<ApiResponse> updateCategory(@PathVariable Long id, @RequestBody Category category) {
+        // Đảm bảo cấp bậc không vượt quá 2
+        if (category.getParentCategory() != null) {
+            Category parentCategory = categoryService.findCategoryById(category.getParentCategory().getId());
+            if (parentCategory.getParentCategory() != null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("Cannot create category with depth > 2"));
+            }
+            category.setLevel(2);
+            category.setParent(false);
+        } else {
+            category.setLevel(1);
+            category.setParent(true);
+        }
+
         Category updatedCategory = categoryService.updateCategory(category, id);
         return ResponseEntity.ok().body(ApiResponse.success(updatedCategory, "Update category id: " + id));
     }
@@ -46,9 +80,4 @@ public class CategoryController {
         return ResponseEntity.ok().body(ApiResponse.success(null, "Delete category id: " + id));
     }
 
-    @GetMapping("/category/{name}")
-    public ResponseEntity<ApiResponse> getCategoryByName(@PathVariable String name) {
-        Category category = categoryService.findCategoryByName(name);
-        return ResponseEntity.ok().body(ApiResponse.success(category, "Found "));
-    }
 }

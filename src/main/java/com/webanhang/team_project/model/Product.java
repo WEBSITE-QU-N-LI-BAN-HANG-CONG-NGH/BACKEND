@@ -90,44 +90,11 @@ public class Product {
     @Column(name = "num_rating")
     private int numRating;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Image> images = new ArrayList<>();
+    @Column(name = "quantity_sold")
+    private long quantitySold;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    public Product(String title, String brand, BigDecimal price, int quantity, String description, Category category) {
-        this.title = title;
-        this.brand = brand;
-        this.price = price.intValue();
-        this.quantity = quantity;
-        this.description = description;
-        this.category = category;
-    }
-
-    public Product(String title, String brand, int price, int quantity, String description, Category category) {
-        this.title = title;
-        this.brand = brand;
-        this.price = price;
-        this.quantity = quantity;
-        this.description = description;
-        this.category = category;
-    }
-
-    public Product(String title, String description, int price, int discountPersent,
-                   String brand, String color, String imageUrl, Category category) {
-        this.title = title;
-        this.description = description;
-        this.price = price;
-        this.discountPersent = discountPersent;
-        this.discountedPrice = price - (price * discountPersent / 100);
-        this.brand = brand;
-        this.imageUrl = imageUrl;
-        this.category = category;
-        this.createdAt = LocalDateTime.now();
-        this.numRating = 0;
-        this.quantity = 0;
-    }
 
     @PrePersist
     protected void onCreate() {

@@ -14,4 +14,7 @@ public interface ICategoryService {
     List<Category> getAllCategories();
     Category findCategoryByName(String name);
     Category findCategoryById(Long categoryId);
+
+    List<Category> getAllParentCategories();
+    List<Category> getSubCategoriesByParentId(Long parentId);
 }

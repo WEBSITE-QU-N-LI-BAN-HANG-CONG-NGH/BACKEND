@@ -23,35 +23,35 @@ public class Address {
     @Column(name = "id")
     private Long id;
 
-    @NotBlank(message = "First name is required")
-    @Size(max = 50, message = "First name must be less than 50 characters")
-    @Column(name = "first_name")
-    private String firstName;
+    @NotBlank(message = "Full name is required")
+    @Size(max = 50, message = "Full name must be less than 50 characters")
+    @Column(name = "full_name")
+    private String fullName;
 
-    @NotBlank(message = "Last name is required")
-    @Size(max = 50, message = "Last name must be less than 50 characters")
-    @Column(name = "last_name")
-    private String lastName;
+    @NotBlank(message = "Province is required")
+    @Size(max = 100, message = "Province must be less than 100 characters")
+    @Column(name = "province")
+    private String province;
 
-    @NotBlank(message = "Street address is required")
-    @Size(max = 100, message = "Street address must be less than 100 characters")
-    @Column(name = "street_address")
-    private String streetAddress;
+    @NotBlank(message = "district is required")
+    @Size(max = 50, message = "district must be less than 50 characters")
+    @Column(name = "district")
+    private String district;
 
-    @NotBlank(message = "City is required")
-    @Size(max = 50, message = "City must be less than 50 characters")
-    @Column(name = "city")
-    private String city;
+    @NotBlank(message = "ward is required")
+    @Size(max = 50, message = "ward must be less than 50 characters")
+    @Column(name = "ward")
+    private String ward;
 
-    @NotBlank(message = "State is required")
-    @Size(max = 50, message = "State must be less than 50 characters")
-    @Column(name = "state")
-    private String state;
+    @NotBlank(message = "street is required")
+    @Size(max = 50, message = "street must be less than 50 characters")
+    @Column(name = "street")
+    private String street;
 
-    @NotBlank(message = "Zip code is required")
-    @Size(max = 10, message = "Zip code must be less than 10 characters")
-    @Column(name = "zip_code")
-    private String zipCode;
+
+    @Size(max = 100, message = "note must be less than 100 characters")
+    @Column(name = "note")
+    private String note;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -60,10 +60,10 @@ public class Address {
 
     @NotBlank(message = "Mobile number is required")
     @Size(max = 15, message = "Mobile number must be less than 15 characters")
-    @Column(name = "mobile")
-    private String mobile;
+    @Column(name = "phoneNumber")
+    private String phoneNumber;
 
-    @OneToMany(mappedBy = "shippingAddress")
+    @OneToMany(mappedBy = "shippingAddress", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Order> orders;
 
