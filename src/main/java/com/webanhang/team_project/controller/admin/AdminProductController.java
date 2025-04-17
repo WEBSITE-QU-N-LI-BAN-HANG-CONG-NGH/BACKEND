@@ -1,6 +1,7 @@
 package com.webanhang.team_project.controller.admin;
 
 import com.webanhang.team_project.dto.product.CreateProductRequest;
+import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.repository.CategoryRepository;
@@ -55,7 +56,10 @@ public class AdminProductController {
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> findAllProducts() {
         List<Product> products = productService.findAllProducts();
-        return ResponseEntity.ok(ApiResponse.success(products, "Lấy tất cả sản phẩm thành công"));
+        List<ProductDTO> productDTOs = products.stream()
+                .map(ProductDTO::new)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(productDTOs, "Lấy tất cả sản phẩm thành công"));
     }
 
     /**
