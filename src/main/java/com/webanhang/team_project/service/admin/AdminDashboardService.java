@@ -3,7 +3,10 @@ package com.webanhang.team_project.service.admin;
 import com.webanhang.team_project.dto.seller.SellerRevenueDTO;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.model.Order;
+import com.webanhang.team_project.model.Product;
+import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.repository.OrderRepository;
+import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,7 @@ public class AdminDashboardService implements IAdminDashboardService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
 
     @Override
     public BigDecimal totalMonthInCome() {
@@ -65,30 +69,46 @@ public class AdminDashboardService implements IAdminDashboardService {
 
     @Override
     public List<SellerRevenueDTO> getTopSellers(int limit) {
-        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
-        List<Order> completedOrders = orderRepository.findByOrderDateGreaterThanEqualAndOrderStatus(
-                startOfMonth.atStartOfDay(),
-                OrderStatus.DELIVERED);
 
-        Map<Long, SellerRevenueDTO> sellerStats = new HashMap<>();
+        // Lấy tất cả người dùng có vai trò SELLER
+        List<User> sellers = userRepository.findAll();
+        List<SellerRevenueDTO> sellerStats = new ArrayList<>();
+        List<Product> allProducts = productRepository.findAll();
 
-        completedOrders.forEach(order -> {
-            Long sellerId = order.getUser().getId();
-            sellerStats.computeIfAbsent(sellerId, k -> new SellerRevenueDTO(
-                    sellerId,
-                    order.getUser().getLastName(),
-                    BigDecimal.ZERO,
-                    0));
+        // Tạo thống kê cho mỗi người bán dựa trên quantitySold
+        for (User seller : sellers) {
+            Long sellerId = seller.getId();
+            BigDecimal totalRevenue = BigDecimal.ZERO;
+            int totalOrders = 0;
 
-            SellerRevenueDTO stats = sellerStats.get(sellerId);
-            stats.setTotalRevenue(stats.getTotalRevenue().add(BigDecimal.valueOf(order.getTotalAmount())));
-            stats.setTotalOrders(stats.getTotalOrders() + 1);
-        });
+            // Tính doanh thu dựa trên số lượng đã bán của sản phẩm
+            for (Product product : allProducts) {
+                if (product.getCategory() != null &&
+                        product.getCategory().getProducts() != null &&
+                        product.getCategory().getProducts().stream()
+                                .anyMatch(p -> p.getId().equals(sellerId))) {
 
-        return sellerStats.values().stream()
+                    long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
+                    BigDecimal productRevenue = BigDecimal.valueOf(product.getDiscountedPrice() * quantitySold);
+                    totalRevenue = totalRevenue.add(productRevenue);
+                    totalOrders += quantitySold;
+                }
+            }
+            if (totalOrders > 0) {
+                SellerRevenueDTO dto = new SellerRevenueDTO(
+                        sellerId,
+                        seller.getLastName(),
+                        totalRevenue,
+                        totalOrders
+                );
+                sellerStats.add(dto);
+            }
+        }
+
+        return sellerStats.stream()
                 .sorted(Comparator.comparing(SellerRevenueDTO::getTotalRevenue).reversed())
                 .limit(limit)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

@@ -111,13 +111,8 @@ public class AdminCategoryService implements IAdminCategoryService {
             int revenue = 0;
             if (category.getProducts() != null) {
                 for (Product product : category.getProducts()) {
-                    List<OrderItem> orderItems = orderItemRepository.findByProductId(product.getId());
-                    for (OrderItem item : orderItems) {
-                        if (item.getOrder() != null &&
-                                item.getOrder().getOrderStatus() == OrderStatus.DELIVERED) {
-                            revenue += item.getPrice() * item.getQuantity();
-                        }
-                    }
+                    Long quantitySold = product.getQuantitySold() != null ? product.getQuantitySold() : 0L;
+                    revenue += product.getDiscountedPrice() * quantitySold;
                 }
             }
             categoryData.put("revenue", revenue);

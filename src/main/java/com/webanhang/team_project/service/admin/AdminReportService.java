@@ -32,51 +32,29 @@ public class AdminReportService implements IAdminReportService {
      */
     @Override
     public List<Map<String, Object>> generateProductReports(LocalDate startDate, LocalDate endDate) {
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = endDate.atTime(23, 59, 59);
+        List<Product> products = productRepository.findAll();
+        List<Map<String, Object>> reports = new ArrayList<>();
 
-        // Lấy các đơn hàng trong khoảng thời gian
-        List<Order> orders = orderRepository.findByOrderDateBetween(start, end);
+        for (Product product : products) {
+            // Tạo báo cáo cho mỗi sản phẩm
+            Map<String, Object> report = new HashMap<>();
+            report.put("id", product.getId());
+            report.put("name", product.getTitle());
+            report.put("category", product.getCategory() != null ? product.getCategory().getName() : "");
+            report.put("price", product.getPrice());
 
-        // Tạo map để theo dõi báo cáo cho mỗi sản phẩm
-        Map<Long, Map<String, Object>> productReports = new HashMap<>();
+            // Sử dụng trường quantitySold thay vì tính toán từ đơn hàng
+            long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
+            report.put("totalSold", quantitySold);
 
-        // Duyệt qua các đơn hàng và cập nhật báo cáo sản phẩm
-        for (Order order : orders) {
-            for (OrderItem item : order.getOrderItems()) {
-                Product product = item.getProduct();
-                if (product != null) {
-                    Long productId = product.getId();
+            // Tính doanh thu từ số lượng đã bán và giá
+            int revenue = (int) (product.getDiscountedPrice() * quantitySold);
+            report.put("revenue", revenue);
 
-                    // Tạo báo cáo mới nếu chưa có
-                    if (!productReports.containsKey(productId)) {
-                        Map<String, Object> report = new HashMap<>();
-                        report.put("id", productId);
-                        report.put("name", product.getTitle());
-                        report.put("category", product.getCategory() != null ? product.getCategory().getName() : "");
-                        report.put("price", product.getPrice());
-                        report.put("totalSold", 0);
-                        report.put("revenue", 0);
-                        report.put("returns", 0);
-
-                        productReports.put(productId, report);
-                    }
-
-                    // Cập nhật thông tin báo cáo
-                    Map<String, Object> report = productReports.get(productId);
-
-                    // Cập nhật số lượng bán và doanh thu
-                    int currentSold = (int) report.get("totalSold");
-                    int currentRevenue = (int) report.get("revenue");
-
-                    report.put("totalSold", currentSold + item.getQuantity());
-                    report.put("revenue", currentRevenue + (item.getPrice() * item.getQuantity()));
-                }
-            }
+            reports.add(report);
         }
 
-        // Chuyển map thành list để trả về
-        return new ArrayList<>(productReports.values());
+        return reports;
     }
 
 

@@ -3,8 +3,10 @@ package com.webanhang.team_project.service.seller;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.model.Order;
+import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.repository.OrderRepository;
+import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +31,7 @@ public class SellerOrderService implements ISellerOrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
 
     @Override
     public Page<Order> getSellerOrders(Long sellerId, int page, int size, String search,
@@ -39,14 +42,13 @@ public class SellerOrderService implements ISellerOrderService {
         User seller = userRepository.findById(sellerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người bán"));
 
-        // Lấy đơn hàng của người bán
         List<Order> sellerOrders = orderRepository.findByUserId(sellerId);
 
         // Lọc theo trạng thái
         if (status != null) {
             sellerOrders = sellerOrders.stream()
                     .filter(order -> order.getOrderStatus() == status)
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         // Lọc theo ngày bắt đầu
@@ -54,7 +56,7 @@ public class SellerOrderService implements ISellerOrderService {
             LocalDateTime startDateTime = startDate.atStartOfDay();
             sellerOrders = sellerOrders.stream()
                     .filter(order -> order.getOrderDate().isAfter(startDateTime) || order.getOrderDate().isEqual(startDateTime))
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         // Lọc theo ngày kết thúc
@@ -62,7 +64,7 @@ public class SellerOrderService implements ISellerOrderService {
             LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
             sellerOrders = sellerOrders.stream()
                     .filter(order -> order.getOrderDate().isBefore(endDateTime) || order.getOrderDate().isEqual(endDateTime))
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         // Tìm kiếm nếu có từ khóa
@@ -77,7 +79,7 @@ public class SellerOrderService implements ISellerOrderService {
                                     (order.getUser().getEmail() != null &&
                                             order.getUser().getEmail().toLowerCase().contains(search.toLowerCase())))
                     )
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         // Phân trang kết quả
@@ -135,6 +137,7 @@ public class SellerOrderService implements ISellerOrderService {
     @Override
     public Map<String, Object> getOrderStatistics(Long sellerId, String period) {
         Map<String, Object> statistics = new HashMap<>();
+        List<Product> sellerProducts = getSellerProducts(sellerId);
 
         // Đảm bảo người bán tồn tại
         User seller = userRepository.findById(sellerId)
@@ -163,7 +166,7 @@ public class SellerOrderService implements ISellerOrderService {
         // Lọc đơn hàng của người bán
         List<Order> sellerOrders = orders.stream()
                 .filter(order -> order.getUser().getId().equals(sellerId))
-                .collect(Collectors.toList());
+                .toList();
 
         // Thống kê theo trạng thái
         long pendingCount = sellerOrders.stream()
@@ -186,11 +189,13 @@ public class SellerOrderService implements ISellerOrderService {
                 .filter(order -> order.getOrderStatus() == OrderStatus.CANCELLED)
                 .count();
 
-        // Thống kê doanh thu
-        BigDecimal totalRevenue = sellerOrders.stream()
-                .filter(order -> order.getOrderStatus() == OrderStatus.DELIVERED)
-                .map(order -> BigDecimal.valueOf(order.getTotalAmount()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Tính tổng doanh thu dựa trên số lượng đã bán của sản phẩm
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        for (Product product : sellerProducts) {
+            long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
+            BigDecimal productRevenue = BigDecimal.valueOf(product.getDiscountedPrice() * quantitySold);
+            totalRevenue = totalRevenue.add(productRevenue);
+        }
 
         // Đưa vào kết quả
         statistics.put("totalOrders", sellerOrders.size());
@@ -203,5 +208,16 @@ public class SellerOrderService implements ISellerOrderService {
         statistics.put("period", period);
 
         return statistics;
+    }
+
+    private List<Product> getSellerProducts(Long sellerId) {
+        List<Product> allProducts = productRepository.findAll();
+
+        return allProducts.stream()
+                .filter(product -> product.getCategory() != null &&
+                        product.getCategory().getProducts() != null &&
+                        product.getCategory().getProducts().stream()
+                                .anyMatch(p -> p.getId().equals(sellerId)))
+                .collect(Collectors.toList());
     }
 }
