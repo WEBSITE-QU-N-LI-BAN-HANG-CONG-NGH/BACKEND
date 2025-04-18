@@ -2,10 +2,8 @@ package com.webanhang.team_project.controller.common;
 
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.model.Product;
-import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.service.product.IProductService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -8,6 +8,7 @@ import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.repository.OrderItemRepository;
 import com.webanhang.team_project.service.admin.AdminCategoryService;
+import com.webanhang.team_project.service.category.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import java.util.Map;
 public class AdminCategoryController {
 
     private final AdminCategoryService adminCategoryService;
+    private final CategoryService categoryService;
 
     /**
      * Lấy tất cả danh mục
@@ -36,41 +38,31 @@ public class AdminCategoryController {
     }
 
     /**
-     * Tạo danh mục mới
-     *
-     * @param category Thông tin danh mục cần tạo
-     * @return Thông tin danh mục đã tạo
-     */
-    @PostMapping
-    public ResponseEntity<ApiResponse> createCategory(@RequestBody Category category) {
-        Category savedCategory = adminCategoryService.createCategory(category);
-        return ResponseEntity.ok(ApiResponse.success(savedCategory, "Create category success"));
-    }
-
-    /**
      * Cập nhật thông tin danh mục
      *
-     * @param id ID của danh mục cần cập nhật
+     *
      * @param category Thông tin mới của danh mục
      * @return Thông tin danh mục sau khi cập nhật
      */
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updateCategory(@PathVariable Long id, @RequestBody Category category) {
-        Category updatedCategory = adminCategoryService.updateCategory(id, category);
-        return ResponseEntity.ok(ApiResponse.success(updatedCategory, "Update category success"));
+    @PutMapping("/update")
+    public ResponseEntity<ApiResponse> updateCategory(@RequestBody Category category) {
+        // Đảm bảo cấp bậc không vượt quá 2
+        if (category.getParentCategory() != null) {
+            Category parentCategory = categoryService.findCategoryById(category.getParentCategory().getId());
+            if (parentCategory.getParentCategory() != null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("Cannot create category with depth > 2"));
+            }
+            category.setLevel(2);
+            category.setParent(false);
+        } else {
+            category.setLevel(1);
+            category.setParent(true);
+        }
+
+        Category updatedCategory = categoryService.updateCategory(category);
+        return ResponseEntity.ok().body(ApiResponse.success(updatedCategory, "Success. Update category id: " + category.getId()));
     }
 
-    /**
-     * Xóa danh mục
-     *
-     * @param id ID của danh mục cần xóa
-     * @return Thông báo kết quả
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> deleteCategory(@PathVariable Long id) {
-        adminCategoryService.deleteCategory(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Delete category success"));
-    }
 
     /**
      * Lấy doanh thu theo danh mục

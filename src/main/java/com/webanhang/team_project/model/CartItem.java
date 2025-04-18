@@ -28,7 +28,7 @@ public class CartItem {
     @JsonIgnore
     private Cart cart;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name="product_id", nullable = false)
     private Product product;
 

@@ -38,5 +38,4 @@ public class ProductSize {
     @JsonIgnore
     private Product product;
 
-
 } 

@@ -1,4 +1,4 @@
-package com.webanhang.team_project.controller.customer;
+package com.webanhang.team_project.controller.common;
 
 
 
@@ -10,19 +10,19 @@ import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.service.cart.CartService;
 import com.webanhang.team_project.service.user.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("${api.prefix}/cart")
 public class CartController {
-    @Autowired
-    private CartService cartService;
+    private final CartService cartService;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     @GetMapping("/")
     public ResponseEntity<CartDTO> findUserCart(@RequestHeader("Authorization") String jwt) {
@@ -40,29 +40,25 @@ public class CartController {
 
         ApiResponse res = new ApiResponse();
         res.setMessage("Item added to cart successfully");
-//        res.setStatus(true);
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
     @PutMapping("/update/{itemId}")
-    public ResponseEntity<CartDTO> updateCartItem(@RequestHeader("Authorization") String jwt,
+    public ResponseEntity<ApiResponse> updateCartItem(@RequestHeader("Authorization") String jwt,
                                                   @PathVariable Long itemId,
                                                   @RequestBody AddItemRequest req) {
         User user = userService.findUserByJwt(jwt);
         Cart cart = cartService.updateCartItem(user.getId(), itemId, req);
         CartDTO cartDTO = new CartDTO(cart);
-        return new ResponseEntity<>(cartDTO, HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.success(cartDTO, "Item updated successfully!"));
     }
 
     @DeleteMapping("/remove/{itemId}")
     public ResponseEntity<ApiResponse> removeCartItem(@RequestHeader("Authorization") String jwt, @PathVariable Long itemId) {
         User user = userService.findUserByJwt(jwt);
         cartService.removeCartItem(user.getId(), itemId);
-        
-        ApiResponse res = new ApiResponse();
-        res.setMessage("Item removed from cart successfully");
-//        res.setStatus(true);
-        return new ResponseEntity<>(res, HttpStatus.OK);
+
+        return ResponseEntity.ok(ApiResponse.success(null, "Item removed from cart successfully"));
     }
 
     @DeleteMapping("/clear")
@@ -72,7 +68,6 @@ public class CartController {
         
         ApiResponse res = new ApiResponse();
         res.setMessage("Cart cleared successfully");
-//        res.setStatus(true);
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 }

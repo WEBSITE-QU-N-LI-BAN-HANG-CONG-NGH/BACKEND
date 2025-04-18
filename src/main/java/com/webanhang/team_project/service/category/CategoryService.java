@@ -25,21 +25,14 @@ public class CategoryService implements ICategoryService {
    }
 
    @Override
-   public Category updateCategory(Category category, Long categoryId) {
-       return Optional.ofNullable(findCategoryById(categoryId))
+   public Category updateCategory(Category category) {
+       return Optional.ofNullable(findCategoryById(category.getId()))
                .map(oldCategory -> {
                    oldCategory.setName(category.getName());
                    return categoryRepository.save(oldCategory);
                }).orElseThrow(() -> new EntityNotFoundException("Category not found"));
    }
 
-   @Override
-   public void deleteCategory(Long categoryId) {
-       categoryRepository.findById(categoryId)
-               .ifPresentOrElse(categoryRepository :: delete, () -> {
-                   throw new EntityNotFoundException("Category not found");
-               });
-   }
 
    @Override
    public List<Category> getAllCategories() {
@@ -62,8 +55,4 @@ public class CategoryService implements ICategoryService {
         return categoryRepository.findByLevel(1);
     }
 
-    @Override
-    public List<Category> getSubCategoriesByParentId(Long parentId) {
-        return categoryRepository.findByParentCategoryId(parentId);
-    }
 }

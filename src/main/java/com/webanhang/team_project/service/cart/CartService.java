@@ -2,10 +2,7 @@ package com.webanhang.team_project.service.cart;
 
 
 import com.webanhang.team_project.dto.cart.AddItemRequest;
-import com.webanhang.team_project.model.Cart;
-import com.webanhang.team_project.model.CartItem;
-import com.webanhang.team_project.model.Product;
-import com.webanhang.team_project.model.User;
+import com.webanhang.team_project.model.*;
 import com.webanhang.team_project.repository.CartItemRepository;
 import com.webanhang.team_project.repository.CartRepository;
 import com.webanhang.team_project.service.product.IProductService;
@@ -77,6 +74,16 @@ public class CartService implements ICartService {
         if (existingItem != null) {
             // Cập nhật số lượng nếu sản phẩm đã tồn tại
             existingItem.setQuantity(existingItem.getQuantity() + req.getQuantity());
+
+            ProductSize productSize = product.getSizes().stream()
+                    .filter(item -> item.getName().equals(req.getSize()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (existingItem.getQuantity() > productSize.getQuantity()) {
+                throw new RuntimeException("Số lượng sản phẩm không đủ trong kho");
+            }
+
             cartItemRepository.save(existingItem);
         } else {
             // Thêm sản phẩm mới vào giỏ hàng
@@ -101,6 +108,17 @@ public class CartService implements ICartService {
         Cart cart = findUserCart(userId);
         CartItem item = cartItemRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Cart item not found"));
+        
+        Product product = productService.findProductById(req.getProductId());
+
+        ProductSize productSize = product.getSizes().stream()
+                .filter(ps -> ps.getName().equals(req.getSize()))
+                .findFirst()
+                .orElse(null);
+
+        if (req.getQuantity() > productSize.getQuantity()) {
+            throw new RuntimeException("Số lượng sản phẩm không đủ trong kho");
+        }
 
         if (!item.getCart().getId().equals(cart.getId())) {
             throw new RuntimeException("Cart item does not belong to user");
