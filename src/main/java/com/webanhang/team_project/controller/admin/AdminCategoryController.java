@@ -7,6 +7,7 @@ import com.webanhang.team_project.model.OrderItem;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.repository.OrderItemRepository;
+import com.webanhang.team_project.service.admin.AdminCategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,7 @@ import java.util.Map;
 @RequestMapping("${api.prefix}/admin/categories")
 public class AdminCategoryController {
 
-    private final CategoryRepository categoryRepository;
-    private final OrderItemRepository orderItemRepository;
+    private final AdminCategoryService adminCategoryService;
 
     /**
      * Lấy tất cả danh mục
@@ -31,7 +31,7 @@ public class AdminCategoryController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse> getAllCategories() {
-        List<Category> categories = categoryRepository.findAll();
+        List<Category> categories = adminCategoryService.getAllCategories();
         return ResponseEntity.ok(ApiResponse.success(categories, "Get all categories success"));
     }
 
@@ -43,12 +43,7 @@ public class AdminCategoryController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse> createCategory(@RequestBody Category category) {
-        // Kiểm tra xem category đã tồn tại chưa
-        if (categoryRepository.findByName(category.getName()) != null) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Category already exists"));
-        }
-
-        Category savedCategory = categoryRepository.save(category);
+        Category savedCategory = adminCategoryService.createCategory(category);
         return ResponseEntity.ok(ApiResponse.success(savedCategory, "Create category success"));
     }
 
@@ -61,16 +56,7 @@ public class AdminCategoryController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateCategory(@PathVariable Long id, @RequestBody Category category) {
-        Category existingCategory = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
-
-        // Cập nhật thông tin
-        existingCategory.setName(category.getName());
-        if (category.getParentCategory() != null) {
-            existingCategory.setParentCategory(category.getParentCategory());
-        }
-
-        Category updatedCategory = categoryRepository.save(existingCategory);
+        Category updatedCategory = adminCategoryService.updateCategory(id, category);
         return ResponseEntity.ok(ApiResponse.success(updatedCategory, "Update category success"));
     }
 
@@ -82,15 +68,7 @@ public class AdminCategoryController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteCategory(@PathVariable Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
-
-        // Kiểm tra xem category có sản phẩm không
-        if (category.getProducts() != null && !category.getProducts().isEmpty()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Cannot delete category with products"));
-        }
-
-        categoryRepository.delete(category);
+        adminCategoryService.deleteCategory(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Delete category success"));
     }
 
@@ -101,36 +79,7 @@ public class AdminCategoryController {
      */
     @GetMapping("/revenue")
     public ResponseEntity<ApiResponse> getCategoryRevenue() {
-        List<Category> categories = categoryRepository.findAll();
-        List<Map<String, Object>> result = new ArrayList<>();
-
-        for (Category category : categories) {
-            Map<String, Object> categoryData = new HashMap<>();
-            categoryData.put("id", category.getId());
-            categoryData.put("name", category.getName());
-
-            // Tính tổng sản phẩm
-            int totalProducts = category.getProducts() != null ? category.getProducts().size() : 0;
-            categoryData.put("totalProducts", totalProducts);
-
-            // Tính doanh thu
-            int revenue = 0;
-            if (category.getProducts() != null) {
-                for (Product product : category.getProducts()) {
-                    List<OrderItem> orderItems = orderItemRepository.findByProductId(product.getId());
-                    for (OrderItem item : orderItems) {
-                        if (item.getOrder() != null &&
-                                item.getOrder().getOrderStatus() == OrderStatus.DELIVERED) {
-                            revenue += item.getPrice() * item.getQuantity();
-                        }
-                    }
-                }
-            }
-            categoryData.put("revenue", revenue);
-
-            result.add(categoryData);
-        }
-
+        List<Map<String, Object>> result = adminCategoryService.getCategoryRevenue();
         return ResponseEntity.ok(ApiResponse.success(result, "Get category revenue success"));
     }
 }

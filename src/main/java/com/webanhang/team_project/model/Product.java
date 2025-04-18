@@ -91,9 +91,9 @@ public class Product {
     @Min(value = 0, message = "Number of ratings must be greater than or equal to 0")
     @Column(name = "num_rating")
     private int numRating;
-
-    @Column(name = "quantity_sold")
-    private long quantitySold;
+//
+//    @Column(name = "quantity_sold")
+//    private long quantitySold;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
