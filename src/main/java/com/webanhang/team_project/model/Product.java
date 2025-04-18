@@ -92,8 +92,8 @@ public class Product {
     @Column(name = "num_rating")
     private int numRating;
 //
-//    @Column(name = "quantity_sold")
-//    private long quantitySold;
+    @Column(name = "quantity_sold")
+    private int quantitySold;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

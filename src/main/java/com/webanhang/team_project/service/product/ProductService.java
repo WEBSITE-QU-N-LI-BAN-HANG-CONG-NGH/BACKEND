@@ -347,7 +347,7 @@ public class ProductService implements IProductService {
         List<Map<String, Object>> result = new ArrayList<>();
         List<Product> products = productRepository.findAll();
         // Sắp xếp theo số lượng đã bán giảm dần (ở đây giả định)
-        products.sort((p1, p2) -> Integer.compare(p2.getQuantity(), p1.getQuantity()));
+        products.sort((p1, p2) -> Integer.compare(p2.getQuantitySold(), p1.getQuantitySold()));
         // Lấy limit sản phẩm đầu tiên
         int count = Math.min(limit, products.size());
         for (int i = 0; i < count; i++) {
@@ -360,6 +360,7 @@ public class ProductService implements IProductService {
             productMap.put("discounted_price", p.getDiscountedPrice());
             productMap.put("quantity", p.getQuantity());
             productMap.put("category", p.getCategory() != null ? p.getCategory().getName() : "Uncategorized");
+            productMap.put("quantity_sold", p.getQuantitySold());
             result.add(productMap);
         }
         return result;
@@ -390,7 +391,7 @@ public class ProductService implements IProductService {
 
             // Tính doanh thu dựa trên giá có giảm giá và số lượng
             Double revenue = categoryRevenue.getOrDefault(categoryName, 0.0);
-            revenue += product.getDiscountedPrice() * product.getQuantity();
+            revenue += product.getDiscountedPrice() * product.getQuantitySold();
             categoryRevenue.put(categoryName, revenue);
         }
 

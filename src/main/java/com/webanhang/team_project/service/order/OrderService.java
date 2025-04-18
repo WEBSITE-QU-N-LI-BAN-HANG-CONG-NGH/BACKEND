@@ -219,8 +219,16 @@ public class OrderService implements IOrderService {
         if (order.getOrderStatus() != OrderStatus.SHIPPED) {
             throw new RuntimeException("Đơn hàng phải được gửi trước khi giao");
         }
+        // Cập nhật trạng thái đơn hàng
         order.setOrderStatus(OrderStatus.DELIVERED);
         order.setPaymentStatus(PaymentStatus.COMPLETED);
+
+        // Cập nhật số lượng đã bán cho các sản phẩm
+        for (OrderItem item : order.getOrderItems()) {
+            Product product = item.getProduct();
+            product.setQuantitySold(product.getQuantitySold() + item.getQuantity());
+            productRepository.save(product);
+        }
         return orderRepository.save(order);
     }
 
