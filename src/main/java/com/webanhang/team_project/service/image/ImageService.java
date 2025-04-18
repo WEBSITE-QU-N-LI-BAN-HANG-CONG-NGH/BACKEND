@@ -1,5 +1,6 @@
 package com.webanhang.team_project.service.image;
 
+import com.webanhang.team_project.dto.image.ImageDTO;
 import com.webanhang.team_project.model.Image;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.repository.ImageRepository;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,8 +59,14 @@ public class ImageService implements IImageService{
     }
 
 
-    public List<Image> getProductImages(Long productId) {
-        return imageRepository.findByProductId(productId);
+    @Override
+    @Transactional(readOnly = true)
+    public List<ImageDTO> getProductImages(Long productId) {
+        List<Image> images = imageRepository.findByProductId(productId);
+        List<ImageDTO> imagesDTO = images.stream()
+                .map(ImageDTO::new)
+                .toList();
+        return imagesDTO;
     }
 
     @Transactional

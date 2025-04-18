@@ -57,7 +57,7 @@ public class AdminProductController {
      *
      * @return Danh sách sản phẩm trong hệ thống
      */
-//    @Transactional
+    @Transactional
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> findAllProducts() {
         List<Product> products = productService.findAllProducts();

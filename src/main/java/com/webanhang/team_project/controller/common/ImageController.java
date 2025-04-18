@@ -1,5 +1,6 @@
 package com.webanhang.team_project.controller.common;
 
+import com.webanhang.team_project.dto.image.ImageDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Image;
 import com.webanhang.team_project.model.Product;
@@ -34,7 +35,7 @@ public class ImageController {
      * @return Thông tin hình ảnh đã tải lên
      * @throws IOException Khi có lỗi xử lý file
      */
-    @PostMapping("{productId}")
+    @PostMapping("/upload/{productId}")
     public ResponseEntity<?> uploadImage(
             @PathVariable Long productId,
             @RequestParam("image") MultipartFile file) throws IOException {
@@ -60,7 +61,7 @@ public class ImageController {
      * @param imageId ID của hình ảnh cần xóa
      * @return Thông báo kết quả xóa
      */
-    @DeleteMapping("/{imageId}")
+    @DeleteMapping("/delete/{imageId}")
     public ResponseEntity<?> deleteImage(@PathVariable Long imageId) {
         try {
             log.info("Nhận yêu cầu xóa hình ảnh ID: {}", imageId);
@@ -90,10 +91,10 @@ public class ImageController {
     @GetMapping("/product/{productId}")
     public ResponseEntity<ApiResponse> getProductImages(@PathVariable Long productId) {
         productService.findProductById(productId);
-        List<Image> images = imageService.getProductImages(productId);
+        List<ImageDTO> imagesDTO = imageService.getProductImages(productId);
 
-        log.info("Tìm thấy {} hình ảnh cho sản phẩm ID: {}", images.size(), productId);
+        log.info("Tìm thấy {} hình ảnh cho sản phẩm ID: {}", imagesDTO.size(), productId);
 
-        return ResponseEntity.ok(ApiResponse.success(images, "Lấy danh sách hình ảnh thành công"));
+        return ResponseEntity.ok(ApiResponse.success(imagesDTO, "Lấy danh sách hình ảnh thành công"));
     }
 }
