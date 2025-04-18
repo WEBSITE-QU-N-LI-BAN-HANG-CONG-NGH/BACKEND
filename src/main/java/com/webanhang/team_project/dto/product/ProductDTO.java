@@ -42,7 +42,7 @@ public class ProductDTO {
         this.quantity = product.getQuantity();
         this.brand = product.getBrand();
         this.color = product.getColor();
-        this.quantitySold = product.getQuantitySold();
+//        this.quantitySold = product.getQuantitySold();
 
         // --- SỬA LỖI SIZES ---
         // Lấy danh sách tên size từ List<ProductSize>
@@ -64,7 +64,7 @@ public class ProductDTO {
         if (product.getImages() != null && !product.getImages().isEmpty()) {
             this.imageUrls = product.getImages().stream()
                     .map(Image::getDownloadUrl)
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         // --- SỬA LỖI AVERAGE RATING ---

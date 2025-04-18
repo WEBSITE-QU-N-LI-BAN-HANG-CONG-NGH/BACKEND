@@ -46,7 +46,7 @@ public class AdminProductController {
      * @param productId ID của sản phẩm cần xóa
      * @return Thông báo kết quả xóa
      */
-    @DeleteMapping("/{productId}")
+    @DeleteMapping("/{productId}/delete")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) {
         String result = productService.deleteProduct(productId);
         return ResponseEntity.ok(ApiResponse.success(null, result));
@@ -75,9 +75,11 @@ public class AdminProductController {
      * @return Thông tin sản phẩm sau khi cập nhật
      */
     @PutMapping("/{productId}/update")
+    @Transactional
     public ResponseEntity<ApiResponse> updateProduct(@PathVariable Long productId, @RequestBody Product product) {
         Product updatedProduct = productService.updateProduct(productId, product);
-        return ResponseEntity.ok(ApiResponse.success(updatedProduct, "Cập nhật sản phẩm thành công"));
+        ProductDTO productDTO = new ProductDTO(updatedProduct);
+        return ResponseEntity.ok(ApiResponse.success(productDTO, "Cập nhật sản phẩm thành công"));
     }
 
     /**
