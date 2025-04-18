@@ -58,40 +58,60 @@ public class CloudinaryService {
             if (parts.length < 2) return null;
 
             String afterUpload = parts[1];
-            // Lấy phần trước dấu chấm cuối cùng (loại bỏ định dạng file như .jpg, .png)
-            int lastDotIndex = afterUpload.lastIndexOf('.');
-            String publicId = lastDotIndex > 0 ? afterUpload.substring(0, lastDotIndex) : afterUpload;
 
-            return publicId;
+            // Lọc bỏ các tham số query nếu có
+            if (afterUpload.contains("?")) {
+                afterUpload = afterUpload.substring(0, afterUpload.indexOf("?"));
+            }
+
+            // Lọc bỏ phần định dạng file (.jpg, .png, etc.)
+            int lastDotIndex = afterUpload.lastIndexOf('.');
+            if (lastDotIndex > 0) {
+                afterUpload = afterUpload.substring(0, lastDotIndex);
+            }
+
+            // URL Cloudinary thường có format như: /v1234567890/folder/filename
+            // Nếu có phiên bản (v1234567890), cần loại bỏ
+            if (afterUpload.startsWith("/")) {
+                afterUpload = afterUpload.substring(1);
+            }
+
+            String[] segments = afterUpload.split("/");
+            if (segments.length > 0 && segments[0].startsWith("v") && segments[0].substring(1).matches("\\d+")) {
+                // Loại bỏ phần phiên bản
+                afterUpload = afterUpload.substring(afterUpload.indexOf("/") + 1);
+            }
+
+            return afterUpload ;
         } catch (Exception e) {
             log.error("Lỗi khi trích xuất publicId từ URL: " + imageUrl, e);
             return null;
         }
     }
-
-    /**
-     * Tạo URL hình ảnh từ Cloudinary với các tùy chọn biến đổi kích thước, crop, chất lượng,...
-     *
-     * @param publicId ID công khai của ảnh trên Cloudinary
-     * @param width    Chiều rộng mong muốn của ảnh
-     * @param height   Chiều cao mong muốn của ảnh
-     * @param crop     Kiểu cắt ảnh (ví dụ: "fill", "crop", "scale", "fit", v.v.)
-     * @return URL ảnh đã được biến đổi, hoặc null nếu xảy ra lỗi
-     */
-    public String generateUrl(String publicId, int width, int height, String crop) {
-        try {
-            Map<String, String> options = new HashMap<>();
-            options.put("width", String.valueOf(width));
-            options.put("height", String.valueOf(height));
-            options.put("crop", crop); // fill, crop, scale, etc.
-            options.put("quality", "auto");
-            options.put("fetch_format", "auto");
-
-            return cloudinary.url().transformation(new Transformation().params(options)).generate(publicId);
-        } catch (Exception e) {
-            log.error("Lỗi khi tạo URL hình ảnh từ Cloudinary", e);
-            return null;
-        }
-    }
+//
+//    /**
+//     * Tạo URL hình ảnh từ Cloudinary với các tùy chọn biến đổi kích thước, crop, chất lượng,...
+//     *
+//     * @param publicId ID công khai của ảnh trên Cloudinary
+//     * @param width    Chiều rộng mong muốn của ảnh
+//     * @param height   Chiều cao mong muốn của ảnh
+//     * @param crop     Kiểu cắt ảnh (ví dụ: "fill", "crop", "scale", "fit", v.v.)
+//     * @return URL ảnh đã được biến đổi, hoặc null nếu xảy ra lỗi
+//     */
+//    public String generateUrl(String publicId, int width, int height, String crop) {
+//        try {
+//            Map<String, String> options = new HashMap<>();
+//            options.put("width", String.valueOf(width));
+//            options.put("height", String.valueOf(height));
+//            options.put("crop", crop); // fill, crop, scale, etc.
+//            options.put("quality", "auto");
+//            options.put("fetch_format", "auto");
+//
+//            return cloudinary.url().transformation(new Transformation().params(options)).generate(publicId);
+//        } catch (Exception e) {
+//            log.error("Lỗi khi tạo URL hình ảnh từ Cloudinary", e);
+//            return null;
+//        }
+//    }
 
 }
