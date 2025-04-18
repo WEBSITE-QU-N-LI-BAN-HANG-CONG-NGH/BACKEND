@@ -30,7 +30,7 @@ public class ProductDTO {
     private int numRatings;
     private String topLevelCategory;
     private String secondLevelCategory;
-    private long quantitySold;
+    private Long quantitySold;
 
     // Constructor để chuyển đổi từ Product entity
     public ProductDTO(Product product) {
@@ -42,7 +42,7 @@ public class ProductDTO {
         this.quantity = product.getQuantity();
         this.brand = product.getBrand();
         this.color = product.getColor();
-//        this.quantitySold = product.getQuantitySold();
+        this.quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
 
         // --- SỬA LỖI SIZES ---
         // Lấy danh sách tên size từ List<ProductSize>

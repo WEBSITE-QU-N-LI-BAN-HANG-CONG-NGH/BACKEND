@@ -20,22 +20,16 @@ import java.util.List;
 @RequestMapping("${api.prefix}/products")
 public class ProductController {
 
-    @Autowired
     private final IProductService productService;
+//    private CategoryRepository categoryRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @GetMapping("/products")
+    @GetMapping("/")
     public ResponseEntity<Page<Product>> findProductsByCategory(
-            @RequestParam(required = false) String category,
             @RequestParam(required = false) String colorsStr,
-            @RequestParam(required = false) String sizesStr,
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false) Integer minDiscount,
             @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String stock,
             @RequestParam(defaultValue = "0") Integer pageNumber,
             @RequestParam(defaultValue = "8") Integer pageSize
     ) {
@@ -45,17 +39,15 @@ public class ProductController {
             colors = Arrays.asList(colorsStr.split(","));
         }
 
-        // Chuyển đổi sizesStr thành List<String>
-        List<String> sizes = new ArrayList<>();
-        if (sizesStr != null && !sizesStr.isEmpty()) {
-            sizes = Arrays.asList(sizesStr.split(","));
-        }
+        Page<Product> res = productService.findAllProductsByFilter(
+                colors,
+                minPrice,
+                maxPrice,
+                minDiscount,
+                sort,
+                pageNumber,
+                pageSize);
 
-        // Ghi log nhận được request
-        System.out.println("Request received: category=" + category + ", colors=" + colors + ", sizes=" + sizes);
-
-        Page<Product> res = productService.findAllProductsByFilter(category, colors, sizes,
-                minPrice, maxPrice, minDiscount, sort, stock, pageNumber, pageSize);
         return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
     }
 
@@ -66,51 +58,30 @@ public class ProductController {
         return new ResponseEntity<>(productDTO, HttpStatus.OK);
     }
 
-    @GetMapping("/{categoryName}/{subCategoryName}/{productId}")
-    public ResponseEntity<Product> findProductByPath(
-            @PathVariable String categoryName,
-            @PathVariable String subCategoryName,
-            @PathVariable Long productId) {
-        Product product = productService.findProductById(productId);
-        return new ResponseEntity<>(product, HttpStatus.OK);
+    @GetMapping("/{topCategoryName}/{secondCategoryName}")
+    public ResponseEntity<List<Product>> findProductByPath(
+            @PathVariable String topCategoryName,
+            @PathVariable String secondCategoryName) {
+        List<Product> res = productService.findByCategoryTopAndSecond(topCategoryName,secondCategoryName);
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
-    @GetMapping("/{categoryName}/{productId}")
-    public ResponseEntity<Product> findProductByCategory(
-            @PathVariable String categoryName,
-            @PathVariable Long productId) {
-        Product product = productService.findProductById(productId);
-        return new ResponseEntity<>(product, HttpStatus.OK);
-    }
-
-    @GetMapping("/products/search")
-    public ResponseEntity<List<Product>> searchProducts(@RequestParam String keyword) {
-        List<Product> products = productService.searchProducts(keyword);
+    @GetMapping("/{categoryName}")
+    public ResponseEntity<List<Product>> findProductByCategory(
+            @PathVariable String categoryName) {
+        List<Product> products = productService.findProductByCategory(categoryName);
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
-    @GetMapping("/products/featured")
-    public ResponseEntity<List<Product>> getFeaturedProducts() {
-        List<Product> products = productService.getFeaturedProducts();
+    @GetMapping("/search/{productName}")
+    public ResponseEntity<List<Product>> searchProducts(@PathVariable String productName) {
+        List<Product> products = productService.searchProducts(productName);
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
-    @GetMapping("/products/all-products")
+    @GetMapping("/all")
     public ResponseEntity<List<Product>> getAllProductsWithoutFilter() {
         List<Product> products = productService.findAllProducts();
-        System.out.println("Tìm thấy " + products.size() + " sản phẩm trong tổng số không có bộ lọc nào");
-
-        // In ra thông tin về 5 sản phẩm đầu tiên để debug
-        if (!products.isEmpty()) {
-            int count = Math.min(5, products.size());
-            for (int i = 0; i < count; i++) {
-                Product p = products.get(i);
-                System.out.println("Sản phẩm " + (i+1) + ": Id=" + p.getId() + ", Tên=" + p.getTitle() +
-                        ", Thương hiệu=" + p.getBrand() + ", Danh mục=" +
-                        (p.getCategory() != null ? p.getCategory().getName() : "null"));
-            }
-        }
-
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 }

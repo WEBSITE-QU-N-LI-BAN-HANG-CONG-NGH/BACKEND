@@ -29,7 +29,7 @@ public class AdminCategoryController {
      *
      * @return Danh sách tất cả danh mục
      */
-    @GetMapping
+    @GetMapping("/")
     public ResponseEntity<ApiResponse> getAllCategories() {
         List<Category> categories = adminCategoryService.getAllCategories();
         return ResponseEntity.ok(ApiResponse.success(categories, "Get all categories success"));

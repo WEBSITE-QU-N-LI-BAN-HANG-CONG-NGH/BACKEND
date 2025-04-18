@@ -93,7 +93,7 @@ public class Product {
     private int numRating;
 //
     @Column(name = "quantity_sold")
-    private int quantitySold;
+    private Long quantitySold;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

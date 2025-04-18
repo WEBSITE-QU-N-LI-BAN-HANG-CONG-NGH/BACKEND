@@ -21,17 +21,22 @@ public interface IProductService {
 
     public List<Product> findProductByCategory(String category) ;
 
-    public Page<Product> findAllProductsByFilter(String category, List<String> colors, List<String> sizes,
-                                                 Integer minPrice, Integer maxPrice, Integer minDiscount, String sort,
-                                                 String stock, Integer pageNumber, Integer pageSize) ;
+    Page<Product> findAllProductsByFilter(
+            List<String> colors,
+            Integer minPrice,
+            Integer maxPrice,
+            Integer minDiscount,
+            String sort,
+            Integer pageNumber,
+            Integer pageSize);
 
     public List<Product> findAllProducts() ;
 
     public List<Product> searchProducts(String keyword);
 
-    public List<Product> getFeaturedProducts();
-    
     public List<Map<String, Object>> getTopSellingProducts(int limit);
     
     public Map<String, Object> getRevenueByCateogry();
+
+    public List<Product> findByCategoryTopAndSecond(String topCategory, String secondCategory);
 }

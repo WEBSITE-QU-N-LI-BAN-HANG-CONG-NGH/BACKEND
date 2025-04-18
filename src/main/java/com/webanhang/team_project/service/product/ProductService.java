@@ -186,49 +186,52 @@ public class ProductService implements IProductService {
     }
 
     @Override
-    public List<Product> findProductByCategory(String category) {
-        return productRepository.findByCategoryName(category);
+    public List<Product> findProductByCategory(String categoryName) {
+        // 1. Tìm category theo tên (có thể cần kiểm tra null)
+        Category category = categoryRepository.findByName(categoryName); // Giả sử findByName tồn tại và trả về đúng category
+
+        if (category == null) {
+            return new ArrayList<>(); // Hoặc ném lỗi NotFound
+        }
+
+        List<Long> categoryIdsToSearch = new ArrayList<>();
+        if (category.getLevel() == 1) {
+            // Nếu là cấp 1, lấy ID của nó và ID của tất cả con cấp 2
+            categoryIdsToSearch.add(category.getId());
+            List<Category> subCategories = categoryRepository.findByParentCategoryId(category.getId());
+            subCategories.forEach(sub -> categoryIdsToSearch.add(sub.getId()));
+        } else if (category.getLevel() == 2) {
+            // Nếu là cấp 2, chỉ lấy ID của chính nó
+            categoryIdsToSearch.add(category.getId());
+        } else {
+            // Trường hợp không mong muốn (level khác 1 hoặc 2)
+            return new ArrayList<>();
+        }
+
+        if (categoryIdsToSearch.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 2. Gọi repository để tìm sản phẩm theo danh sách ID
+        return productRepository.findByCategoryIdIn(categoryIdsToSearch);
     }
 
     @Override
-    public Page<Product> findAllProductsByFilter(String category, List<String> colors, List<String> sizes,
-                                                 Integer minPrice, Integer maxPrice, Integer minDiscount, String sort, String stock,
-                                                 Integer pageNumber, Integer pageSize){
-
-        System.out.println("Filtering products with: category=" + category + ", colors=" + colors + ", sizes=" + sizes);
+    public Page<Product> findAllProductsByFilter(
+            List<String> colors,
+            Integer minPrice, Integer maxPrice, Integer minDiscount,
+            String sort,
+            Integer pageNumber,
+            Integer pageSize) {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
 
-        // Nếu category là null, lấy tất cả sản phẩm
-        List<Product> products;
-        if (category == null || category.isEmpty()) {
-            System.out.println("Category is null or empty, fetching all products");
-            products = productRepository.findAll();
-        } else {
-            // Kiểm tra xem category là cấp 1 hay cấp 2
-            Category foundCategory = categoryRepository.findByName(category);
-            if (foundCategory != null) {
-                if (foundCategory.getLevel() == 1) {
-                    // Nếu là cấp 1, lấy tất cả sản phẩm có category là cấp 1 này hoặc có parent category là cấp 1 này
-                    List<Category> subCategories = categoryRepository.findByParentCategoryId(foundCategory.getId());
-                    List<Long> categoryIds = new ArrayList<>();
-                    categoryIds.add(foundCategory.getId());
-                    subCategories.forEach(sub -> categoryIds.add(sub.getId()));
-                    products = productRepository.findByCategoryIdIn(categoryIds);
-                } else {
-                    // Nếu là cấp 2, chỉ lấy các sản phẩm thuộc category này
-                    products = productRepository.findByCategoryId(foundCategory.getId());
-                }
-            } else {
-                products = productRepository.filterProducts(category, minPrice, maxPrice, minDiscount, sort, "");
-            }
-        }
+        List<Product> products = productRepository.findAll();
+        System.out.println("Found " + products.size() + " total products initially");
 
-        System.out.println("Found " + products.size() + " products from initial query");
-
-        // Xử lý colors nếu không null và không trống
+        // Lọc theo colors (giữ nguyên)
         if(colors != null && !colors.isEmpty()) {
-            List<String> finalColors = colors;
+            List<String> finalColors = colors; // Biến final hoặc effectively final cho lambda
             products = products.stream()
                     .filter(product -> product.getColor() != null && finalColors.stream()
                             .anyMatch(c -> c.equalsIgnoreCase(product.getColor())))
@@ -236,34 +239,13 @@ public class ProductService implements IProductService {
             System.out.println("After color filter: " + products.size() + " products");
         }
 
-        // Xử lý sizes nếu không null và không trống
-        if(sizes != null && !sizes.isEmpty()) {
-            products = products.stream()
-                    .filter(product -> {
-                        // Nếu sản phẩm không có danh sách size hoặc danh sách rỗng thì bỏ qua
-                        if(product.getSizes() == null || product.getSizes().isEmpty()) {
-                            return false;
-                        }
 
-                        // Kiểm tra xem có size nào khớp với yêu cầu không
-                        return product.getSizes().stream()
-                                .anyMatch(size -> size != null && size.getName() != null &&
-                                        sizes.stream().anyMatch(s ->
-                                                s.equalsIgnoreCase(size.getName()) ||
-                                                        size.getName().toLowerCase().contains(s.toLowerCase())));
-                    })
-                    .collect(Collectors.toList());
-            System.out.println("After size filter: " + products.size() + " products");
-        }
-
-        // Xử lý minPrice, maxPrice nếu được chỉ định
         if (minPrice != null) {
             products = products.stream()
                     .filter(p -> p.getDiscountedPrice() >= minPrice)
                     .collect(Collectors.toList());
             System.out.println("After minPrice filter: " + products.size() + " products");
         }
-
         if (maxPrice != null) {
             products = products.stream()
                     .filter(p -> p.getDiscountedPrice() <= maxPrice)
@@ -271,7 +253,6 @@ public class ProductService implements IProductService {
             System.out.println("After maxPrice filter: " + products.size() + " products");
         }
 
-        // Xử lý minDiscount nếu được chỉ định
         if (minDiscount != null) {
             products = products.stream()
                     .filter(p -> p.getDiscountPersent() >= minDiscount)
@@ -279,18 +260,7 @@ public class ProductService implements IProductService {
             System.out.println("After minDiscount filter: " + products.size() + " products");
         }
 
-        // Xử lý stock (in_stock, out_of_stock)
-        if(stock != null) {
-            if(stock.equals("in_stock")) {
-                products = products.stream().filter(p -> p.getQuantity() > 0).collect(Collectors.toList());
-            }
-            else if(stock.equals("out_of_stock")) {
-                products = products.stream().filter(p -> p.getQuantity() == 0).collect(Collectors.toList());
-            }
-            System.out.println("After stock filter: " + products.size() + " products");
-        }
 
-        // Sắp xếp sản phẩm nếu được chỉ định
         if (sort != null) {
             switch (sort) {
                 case "price_low":
@@ -299,29 +269,33 @@ public class ProductService implements IProductService {
                 case "price_high":
                     products.sort((p1, p2) -> Integer.compare(p2.getDiscountedPrice(), p1.getDiscountedPrice()));
                     break;
-                case "discount":
+                case "discount": // Giả sử muốn sắp xếp giảm dần theo % giảm giá
                     products.sort((p1, p2) -> Integer.compare(p2.getDiscountPersent(), p1.getDiscountPersent()));
                     break;
                 case "newest":
                     products.sort((p1, p2) -> p2.getCreatedAt().compareTo(p1.getCreatedAt()));
                     break;
                 default:
-                    // Không sắp xếp
+                    // Không sắp xếp hoặc sắp xếp mặc định (ví dụ theo ID)
+                    // products.sort((p1, p2) -> p1.getId().compareTo(p2.getId()));
                     break;
             }
+            System.out.println("After sorting by " + sort);
         }
 
         int startIndex = (int) pageable.getOffset();
         int endIndex = Math.min((startIndex + pageable.getPageSize()), products.size());
 
+        List<Product> pageProducts;
         if (startIndex >= products.size()) {
-            System.out.println("Returning empty page because startIndex >= products.size()");
-            return new PageImpl<>(new ArrayList<>(), pageable, products.size());
+            System.out.println("Returning empty page because startIndex >= filtered products size");
+            pageProducts = new ArrayList<>();
+        } else {
+            pageProducts = products.subList(startIndex, endIndex);
         }
+        System.out.println("Returning " + pageProducts.size() + " products on page " + pageNumber + " (Total filtered: " + products.size() + ")");
 
-        List<Product> pageProducts = products.subList(startIndex, endIndex);
-        System.out.println("Returning " + pageProducts.size() + " products on page " + pageNumber);
-
+        // Trả về đối tượng PageImpl chứa dữ liệu trang hiện tại và tổng số phần tử sau khi lọc
         return new PageImpl<>(pageProducts, pageable, products.size());
     }
 
@@ -335,19 +309,23 @@ public class ProductService implements IProductService {
         return productRepository.findByTitleContainingIgnoreCase(keyword);
     }
 
-    @Override
-    public List<Product> getFeaturedProducts() {
-        return productRepository.findByDiscountPersentGreaterThan(0);
-    }
 
     @Override
     public List<Map<String, Object>> getTopSellingProducts(int limit) {
-        // Triển khai phương thức lấy các sản phẩm bán chạy nhất
-        // Đây là triển khai mẫu, cần sửa theo logic thực tế của ứng dụng
         List<Map<String, Object>> result = new ArrayList<>();
         List<Product> products = productRepository.findAll();
-        // Sắp xếp theo số lượng đã bán giảm dần (ở đây giả định)
-        products.sort((p1, p2) -> Integer.compare(p2.getQuantitySold(), p1.getQuantitySold()));
+
+        // --- SỬA LỖI SẮP XẾP Ở ĐÂY ---
+        products.sort((p1, p2) -> {
+            // Lấy giá trị quantitySold, gán mặc định là 0 nếu null
+            Long sold1 = (p1.getQuantitySold() != null) ? p1.getQuantitySold() : 0L;
+            Long sold2 = (p2.getQuantitySold() != null) ? p2.getQuantitySold() : 0L;
+
+            // So sánh giá trị đã xử lý null (sắp xếp giảm dần nên so sánh sold2 với sold1)
+            return Long.compare(sold2, sold1);
+        });
+        // --- KẾT THÚC SỬA LỖI ---
+
         // Lấy limit sản phẩm đầu tiên
         int count = Math.min(limit, products.size());
         for (int i = 0; i < count; i++) {
@@ -358,10 +336,17 @@ public class ProductService implements IProductService {
             productMap.put("brand", p.getBrand());
             productMap.put("price", p.getPrice());
             productMap.put("discounted_price", p.getDiscountedPrice());
-            productMap.put("quantity", p.getQuantity());
-            productMap.put("product_link", p.getImages().getFirst() != null ? p.getImages().getFirst() : null);
+            productMap.put("quantity", p.getQuantity()); // Số lượng tồn kho (từ @Formula)
+
+            // Lấy ảnh đầu tiên làm link (cần kiểm tra null và list rỗng)
+            String productLink = null;
+            if (p.getImages() != null && !p.getImages().isEmpty() && p.getImages().getFirst() != null) {
+                productLink = p.getImages().getFirst().getDownloadUrl();
+            }
+            productMap.put("product_link", productLink);
+
             productMap.put("category", p.getCategory() != null ? p.getCategory().getName() : "Uncategorized");
-            productMap.put("quantity_sold", p.getQuantitySold());
+            productMap.put("quantity_sold", p.getQuantitySold()); // Số lượng đã bán
             result.add(productMap);
         }
         return result;
@@ -369,34 +354,42 @@ public class ProductService implements IProductService {
 
     @Override
     public Map<String, Object> getRevenueByCateogry() {
-        // Triển khai phương thức lấy doanh thu theo danh mục
         Map<String, Object> result = new HashMap<>();
         List<Product> allProducts = productRepository.findAll();
-
-        // Nhóm sản phẩm theo danh mục cấp 1
         Map<String, Double> categoryRevenue = new HashMap<>();
 
         for (Product product : allProducts) {
             String categoryName;
             if (product.getCategory() != null) {
                 if (product.getCategory().getLevel() == 2 && product.getCategory().getParentCategory() != null) {
-                    // Nếu sản phẩm thuộc category cấp 2, lấy tên của category cấp 1 (parent)
                     categoryName = product.getCategory().getParentCategory().getName();
                 } else {
-                    // Nếu sản phẩm thuộc category cấp 1
                     categoryName = product.getCategory().getName();
                 }
             } else {
                 categoryName = "Uncategorized";
             }
 
-            // Tính doanh thu dựa trên giá có giảm giá và số lượng
             Double revenue = categoryRevenue.getOrDefault(categoryName, 0.0);
-            revenue += product.getDiscountedPrice() * product.getQuantitySold();
+
+            // --- SỬA LỖI Ở ĐÂY ---
+            // 1. Lấy giá trị quantitySold và kiểm tra null
+            long quantitySoldValue = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L; // Gán 0 nếu là null
+
+            // 2. Thực hiện phép nhân với giá trị đã được kiểm tra null
+            //    (Nên ép kiểu sang double để đảm bảo tính toán doanh thu chính xác)
+            revenue += (double) product.getDiscountedPrice() * quantitySoldValue;
+            // --- KẾT THÚC SỬA LỖI ---
+
             categoryRevenue.put(categoryName, revenue);
         }
 
         result.put("categoryRevenue", categoryRevenue);
         return result;
+    }
+
+    @Override
+    public List<Product> findByCategoryTopAndSecond(String topCategory, String secondCategory) {
+        return productRepository.findProductsByTopAndSecondCategoryNames(topCategory, secondCategory);
     }
 }
