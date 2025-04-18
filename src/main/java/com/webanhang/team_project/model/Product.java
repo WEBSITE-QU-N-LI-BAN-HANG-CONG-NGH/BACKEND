@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Formula;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -42,9 +43,8 @@ public class Product {
     @Column(precision = 19, scale = 2)
     private int price;
 
-    @Min(value = 0, message = "Quantity must be greater than or equal to 0")
-    @Column(name = "quantity")
-    private int quantity;
+    @Formula("(SELECT COALESCE(SUM(s.quantity), 0) FROM sizes s WHERE s.product_id = id)")
+    private int quantity; // Vẫn giữ trường này để lấy giá trị tính toán
 
     @Size(max = 500, message = "Description must be less than 500 characters")
     @Column(columnDefinition = "TEXT")
@@ -69,7 +69,7 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images = new ArrayList<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY) // Quan trọng: FetchType.LAZY
     private List<ProductSize> sizes = new ArrayList<>();
 
     @OneToMany(mappedBy = "product")

@@ -25,7 +25,6 @@ public class AdminProductController {
 
     private final IProductService productService;
     private final CategoryRepository categoryRepository;
-    private final ModelMapper modelMapper;
 
     /**
      * Tạo mới sản phẩm
@@ -47,7 +46,7 @@ public class AdminProductController {
      * @param productId ID của sản phẩm cần xóa
      * @return Thông báo kết quả xóa
      */
-    @DeleteMapping("/delete/{productId}")
+    @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) {
         String result = productService.deleteProduct(productId);
         return ResponseEntity.ok(ApiResponse.success(null, result));
@@ -58,14 +57,14 @@ public class AdminProductController {
      *
      * @return Danh sách sản phẩm trong hệ thống
      */
-    @Transactional
+//    @Transactional
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> findAllProducts() {
         List<Product> products = productService.findAllProducts();
         List<ProductDTO> productDTOs = products.stream()
-                .map(product -> modelMapper.map(product, ProductDTO.class))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success(products, "Lấy tất cả sản phẩm thành công"));
+                .map(ProductDTO::new)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(productDTOs, "Lấy tất cả sản phẩm thành công"));
     }
 
     /**
