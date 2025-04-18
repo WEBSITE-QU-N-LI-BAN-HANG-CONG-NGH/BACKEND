@@ -359,6 +359,7 @@ public class ProductService implements IProductService {
             productMap.put("price", p.getPrice());
             productMap.put("discounted_price", p.getDiscountedPrice());
             productMap.put("quantity", p.getQuantity());
+            productMap.put("product_link", p.getImages().getFirst() != null ? p.getImages().getFirst() : null);
             productMap.put("category", p.getCategory() != null ? p.getCategory().getName() : "Uncategorized");
             productMap.put("quantity_sold", p.getQuantitySold());
             result.add(productMap);

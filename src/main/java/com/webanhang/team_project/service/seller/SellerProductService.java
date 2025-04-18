@@ -135,15 +135,15 @@ public class SellerProductService implements ISellerProductService {
                 images.add(image);
             }
         }
-        // Fallback vào imageUrl cũ nếu không có danh sách
-        else if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
-            Image image = new Image();
-            image.setProduct(product);
-            image.setDownloadUrl(request.getImageUrl());
-            image.setFileName(extractFilenameFromUrl(request.getImageUrl()));
-            image.setFileType(determineFileTypeFromUrl(request.getImageUrl()));
-            images.add(image);
-        }
+//        // Fallback vào imageUrl cũ nếu không có danh sách
+//        else if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
+//            Image image = new Image();
+//            image.setProduct(product);
+//            image.setDownloadUrl(request.getImageUrl());
+//            image.setFileName(extractFilenameFromUrl(request.getImageUrl()));
+//            image.setFileType(determineFileTypeFromUrl(request.getImageUrl()));
+//            images.add(image);
+//        }
 
         if (!images.isEmpty()) {
             product.setImages(images);

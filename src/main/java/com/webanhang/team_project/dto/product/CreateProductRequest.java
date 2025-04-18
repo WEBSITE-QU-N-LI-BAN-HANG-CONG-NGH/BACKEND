@@ -41,7 +41,7 @@ public class CreateProductRequest {
     private List<ProductSize> sizes = new ArrayList<>();
 
     @Size(max = 255, message = "Image URL must be less than 255 characters")
-    private String imageUrl;
+//    private String imageUrl;
     private List<String> imageUrls = new ArrayList<>();
 
     @NotBlank(message = "Top level category is required")
