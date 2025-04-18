@@ -67,7 +67,7 @@ public class AuthController {
 
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("accessToken", accessToken);
-            responseData.put("refreshToken", refreshToken);
+//            responseData.put("refreshToken", refreshToken);
 
             Map<String, Object> userMap = new HashMap<>();
             userMap.put("id", user.getId());

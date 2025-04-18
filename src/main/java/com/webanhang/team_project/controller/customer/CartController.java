@@ -40,7 +40,7 @@ public class CartController {
 
         ApiResponse res = new ApiResponse();
         res.setMessage("Item added to cart successfully");
-        res.setStatus(true);
+//        res.setStatus(true);
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
@@ -61,7 +61,7 @@ public class CartController {
         
         ApiResponse res = new ApiResponse();
         res.setMessage("Item removed from cart successfully");
-        res.setStatus(true);
+//        res.setStatus(true);
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
@@ -72,7 +72,7 @@ public class CartController {
         
         ApiResponse res = new ApiResponse();
         res.setMessage("Cart cleared successfully");
-        res.setStatus(true);
+//        res.setStatus(true);
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 }

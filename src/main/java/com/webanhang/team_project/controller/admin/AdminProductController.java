@@ -1,17 +1,22 @@
 package com.webanhang.team_project.controller.admin;
 
 import com.webanhang.team_project.dto.product.CreateProductRequest;
+import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.repository.CategoryRepository;
+import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.service.product.IProductService;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,6 +25,7 @@ public class AdminProductController {
 
     private final IProductService productService;
     private final CategoryRepository categoryRepository;
+    private final ModelMapper modelMapper;
 
     /**
      * Tạo mới sản phẩm
@@ -41,7 +47,7 @@ public class AdminProductController {
      * @param productId ID của sản phẩm cần xóa
      * @return Thông báo kết quả xóa
      */
-    @DeleteMapping("/{productId}")
+    @DeleteMapping("/delete/{productId}")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) {
         String result = productService.deleteProduct(productId);
         return ResponseEntity.ok(ApiResponse.success(null, result));
@@ -52,9 +58,13 @@ public class AdminProductController {
      *
      * @return Danh sách sản phẩm trong hệ thống
      */
+    @Transactional
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> findAllProducts() {
         List<Product> products = productService.findAllProducts();
+        List<ProductDTO> productDTOs = products.stream()
+                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success(products, "Lấy tất cả sản phẩm thành công"));
     }
 
