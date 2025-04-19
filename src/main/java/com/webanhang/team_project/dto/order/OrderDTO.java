@@ -1,5 +1,6 @@
 package com.webanhang.team_project.dto.order;
 
+import com.webanhang.team_project.enums.PaymentMethod;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.dto.address.AddressDTO;
 import com.webanhang.team_project.enums.OrderStatus;
@@ -23,6 +24,7 @@ public class OrderDTO {
     private AddressDTO shippingAddress;
     private PaymentStatus paymentStatus;
     private List<OrderItemDTO> orderItems;
+    private PaymentMethod paymentMethod; // Thêm paymentMethod
 
     public OrderDTO(Order order) {
         this.id = order.getId();
@@ -36,6 +38,7 @@ public class OrderDTO {
         this.shippingAddress = new AddressDTO(order.getShippingAddress());
         this.paymentStatus = order.getPaymentStatus();
         this.orderItems = new ArrayList<>();
+        this.paymentMethod = order.getPaymentMethod(); // Thêm paymentMethod
         order.getOrderItems().forEach(item -> this.orderItems.add(new OrderItemDTO(item)));
     }
 }

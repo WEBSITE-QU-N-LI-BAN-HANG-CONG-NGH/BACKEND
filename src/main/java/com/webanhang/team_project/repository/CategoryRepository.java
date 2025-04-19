@@ -28,4 +28,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     List<Category> findByLevel(int level);
     List<Category> findByParentCategoryId(Long parentId);
+
+    // Tìm kiếm danh mục con có tên là danh mục cha đã cho
+    @Query("SELECT c FROM Category c WHERE LOWER(c.parentCategory.name) = LOWER(:parentCategoryName)")
+    List<Category> findByParentCategoryName(@Param("parentCategoryName") String parentCategoryName);
+
 }

@@ -55,4 +55,8 @@ public class CategoryService implements ICategoryService {
         return categoryRepository.findByLevel(1);
     }
 
+    @Override
+    public List<Category> getChildTopCategories(String topCategory) {
+        return categoryRepository.findByParentCategoryName(topCategory);
+    }
 }

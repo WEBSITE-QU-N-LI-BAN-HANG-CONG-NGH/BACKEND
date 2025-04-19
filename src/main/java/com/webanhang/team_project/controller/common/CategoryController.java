@@ -27,4 +27,10 @@ public class CategoryController {
         List<Category> parentCategories = categoryService.getAllParentCategories();
         return ResponseEntity.ok().body(ApiResponse.success(parentCategories,"Get parent categories success"));
     }
+
+    @GetMapping("/{topCategory}")
+    public ResponseEntity<ApiResponse> getChildTopCategories(@PathVariable("topCategory") String topCategory) {
+        List<Category> childCategories = categoryService.getChildTopCategories(topCategory);
+        return ResponseEntity.ok().body(ApiResponse.success(childCategories,"Get child categories success"));
+    }
 }

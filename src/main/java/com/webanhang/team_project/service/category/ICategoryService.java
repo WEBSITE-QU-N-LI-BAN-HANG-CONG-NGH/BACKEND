@@ -15,4 +15,6 @@ public interface ICategoryService {
     Category findCategoryById(Long categoryId);
 
     List<Category> getAllParentCategories();
+
+    List<Category> getChildTopCategories(String topCategory);
 }
