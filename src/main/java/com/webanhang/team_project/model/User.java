@@ -1,6 +1,7 @@
 package com.webanhang.team_project.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
@@ -51,6 +52,7 @@ public class User {
         private LocalDateTime createdAt;;
 
         @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+        @JsonManagedReference
         private Cart cart;
 
         @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

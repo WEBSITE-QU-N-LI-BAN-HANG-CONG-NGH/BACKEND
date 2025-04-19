@@ -1,5 +1,8 @@
 package com.webanhang.team_project.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,6 +31,7 @@ public class Cart {
 
     @OneToOne
     @JoinColumn(name="user_id")
+    @JsonBackReference
     private User user;
 
     @Column(name = "total_price")

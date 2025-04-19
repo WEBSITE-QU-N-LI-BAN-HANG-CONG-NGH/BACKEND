@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface IOrderService {
-    Order placeOrder(int userId);
-    List<OrderDTO> getUserOrders(int userId);
     OrderDTO convertToDto(Order order);
 
     public Order findOrderById(Long orderId);

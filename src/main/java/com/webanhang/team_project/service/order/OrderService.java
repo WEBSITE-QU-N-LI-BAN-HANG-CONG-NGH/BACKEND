@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+
 @Service
 @RequiredArgsConstructor
 public class OrderService implements IOrderService {
@@ -42,59 +43,6 @@ public class OrderService implements IOrderService {
     private final CartRepository cartRepository;
     private final ProductService productService;
     private final UserService userService;
-
-    @Transactional
-    @Override
-    public Order placeOrder(int userId) {
-        Cart cart = cartService.getCartByUserId((long) userId);
-        Order order = createOrder(cart);
-        List<OrderItem> orderItemList = createOrderItems(order, cart);
-        order.setOrderItems(new ArrayList<>(orderItemList));
-        Order savedOrder = orderRepository.save(order);
-        cartService.clearCart((long) userId);
-        return savedOrder;
-    }
-
-    private Order createOrder(Cart cart) {
-        Order order = new Order();
-        order.setUser(cart.getUser());
-        order.setOrderStatus(OrderStatus.PENDING);
-        order.setOrderDate(LocalDateTime.now());
-        order.setTotalAmount(cart.getTotalDiscountedPrice());
-        order.setTotalItems(cart.getTotalItems());
-        order.setDiscount(cart.getDiscount());
-        order.setTotalDiscountedPrice(cart.getTotalDiscountedPrice());
-        order.setPaymentStatus(PaymentStatus.PENDING);
-        return order;
-    }
-
-    private List<OrderItem> createOrderItems(Order order, Cart cart) {
-        List<OrderItem> orderItems = new ArrayList<>();
-        for (CartItem cartItem : cart.getCartItems()) {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
-            orderItem.setProduct(cartItem.getProduct());
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPrice(cartItem.getPrice());
-            orderItem.setDiscountedPrice(cartItem.getDiscountedPrice());
-            orderItem.setSize(cartItem.getSize());
-            orderItem.setDiscountPercent(cartItem.getDiscountPercent());
-            orderItem.setDeliveryDate(LocalDateTime.now().plusDays(7));
-            orderItems.add(orderItem);
-            
-            // Cập nhật số lượng sản phẩm
-            Product product = cartItem.getProduct();
-            product.setQuantity(product.getQuantity() - cartItem.getQuantity());
-            productRepository.save(product);
-        }
-        return orderItems;
-    }
-
-    @Override
-    public List<OrderDTO> getUserOrders(int userId) {
-        List<Order> orders = orderRepository.findByUserId((long) userId);
-        return orders.stream().map(this::convertToDto).toList();
-    }
 
     @Override
     public OrderDTO convertToDto(Order order) {
@@ -110,87 +58,93 @@ public class OrderService implements IOrderService {
     @Override
     public List<Order> userOrderHistory(Long userId) {
         List<Order> orders = orderRepository.findByUserId(userId);
-        if (orders.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy lịch sử đơn hàng cho người dùng: " + userId);
-        }
         return orders;
     }
 
     @Override
-    @Transactional
+    @Transactional // Rất quan trọng để đảm bảo tất cả các thay đổi được commit hoặc rollback cùng nhau
     public Order placeOrder(Long addressId, User user) {
-        try {
-            Cart cart = cartRepository.findByUserId(user.getId());
-            if (cart == null || cart.getCartItems().isEmpty()) {
-                throw new RuntimeException("Giỏ hàng trống");
-            }
-
-            // Tìm địa chỉ gốc
-            Address address = user.getAddress().stream()
-                    .filter(a -> Objects.equals(a.getId(), addressId))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
-
-            // Tính toán lại tổng giá trị giỏ hàng
-            cart = cartService.findUserCart(user.getId());
-
-            Order order = new Order();
-            order.setUser(user);
-            order.setOrderDate(LocalDateTime.now());
-
-            // Sử dụng trực tiếp địa chỉ đã tồn tại
-            order.setShippingAddress(address);
-            order.setOrderStatus(OrderStatus.PENDING);
-            order.setTotalAmount(cart.getTotalAmount());
-            order.setTotalItems(cart.getTotalItems());
-            order.setPaymentStatus(PaymentStatus.PENDING);
-            order.setDiscount(cart.getDiscount());
-            order.setTotalDiscountedPrice(cart.getTotalDiscountedPrice());
-
-            // Lưu order trước để có ID
-            order = orderRepository.save(order);
-
-            // Tạo danh sách OrderItem từ CartItem
-            List<OrderItem> orderItems = new ArrayList<>();
-
-            for (CartItem cartItem : cart.getCartItems()) {
-                OrderItem orderItem = new OrderItem();
-                orderItem.setOrder(order);
-                orderItem.setProduct(cartItem.getProduct());
-                orderItem.setQuantity(cartItem.getQuantity());
-                orderItem.setPrice(cartItem.getPrice());
-                orderItem.setSize(cartItem.getSize());
-                orderItem.setDiscountPercent(cartItem.getDiscountPercent());
-                orderItem.setDiscountedPrice(cartItem.getDiscountedPrice());
-                // Dự kiến thời gian giao hàng là 7 ngày sau
-                orderItem.setDeliveryDate(LocalDateTime.now().plusDays(7));
-
-                orderItems.add(orderItem);
-
-                // Cập nhật số lượng sản phẩm trong kho
-                Product product = cartItem.getProduct();
-                if (product.getQuantity() < cartItem.getQuantity()) {
-                    throw new RuntimeException("Sản phẩm " + product.getTitle() + " không đủ số lượng trong kho");
-                }
-                product.setQuantity(product.getQuantity() - cartItem.getQuantity());
-                productService.updateProduct(product.getId(), product);
-            }
-
-            // Thêm danh sách OrderItem vào Order
-            order.setOrderItems(orderItems);
-
-            // Xóa giỏ hàng sau khi đặt hàng thành công
-            cart.getCartItems().clear();
-            cartRepository.save(cart);
-
-            // Lưu lại order với đầy đủ thông tin orderItems
-            return orderRepository.save(order);
-        } catch (RuntimeException e) {
-            if (e instanceof RuntimeException) {
-                throw e;
-            }
-            throw new RuntimeException("Lỗi khi tạo đơn hàng: " + e.getMessage());
+        Cart cart = cartRepository.findByUserId(user.getId());
+        if (cart == null || cart.getCartItems().isEmpty()) {
+            throw new RuntimeException("Giỏ hàng trống");
         }
+
+        // Tìm địa chỉ gốc của người dùng
+        Address address = user.getAddress().stream()
+                .filter(a -> Objects.equals(a.getId(), addressId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ với ID: " + addressId));
+
+        // Tính toán lại tổng giá trị giỏ hàng (đảm bảo thông tin mới nhất)
+        // Lưu ý: findUserCart cũng có thể tạo cart mới nếu chưa có, nhưng ở đây ta đã kiểm tra cart != null
+        cart = cartService.findUserCart(user.getId()); // Lấy lại thông tin cart với các tổng đã được tính toán
+
+        Order order = new Order();
+        order.setUser(user);
+        order.setOrderDate(LocalDateTime.now());
+        order.setShippingAddress(address); // Gán địa chỉ tìm được
+        order.setOrderStatus(OrderStatus.PENDING);
+        order.setPaymentStatus(PaymentStatus.PENDING);
+
+        // Lấy tổng tiền từ Cart đã được tính toán (bao gồm cả discount)
+        order.setTotalAmount(cart.getTotalPrice()); // Tổng giá gốc
+        order.setTotalItems(cart.getTotalItems());
+        order.setDiscount(cart.getDiscount());
+        order.setTotalDiscountedPrice(cart.getTotalDiscountedPrice()); // Tổng giá sau khi giảm
+
+        // Lưu order trước để có ID cho OrderItems (cần thiết cho mối quan hệ)
+        order = orderRepository.save(order);
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (CartItem cartItem : cart.getCartItems()) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order); // Liên kết với Order vừa lưu
+            orderItem.setProduct(cartItem.getProduct());
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setPrice(cartItem.getPrice());
+            orderItem.setSize(cartItem.getSize()); // Lấy size từ cart item
+            orderItem.setDiscountPercent(cartItem.getDiscountPercent());
+            orderItem.setDiscountedPrice(cartItem.getDiscountedPrice());
+            orderItem.setDeliveryDate(LocalDateTime.now().plusDays(7)); // Dự kiến ngày giao
+
+            orderItems.add(orderItem);
+
+            // --- CẬP NHẬT SỐ LƯỢNG TRONG PRODUCT SIZE ---
+            Product product = cartItem.getProduct(); // Lấy Product từ CartItem
+            String sizeName = cartItem.getSize();
+            int orderedQuantity = cartItem.getQuantity();
+
+            // Tìm ProductSize tương ứng trong danh sách sizes của Product
+            ProductSize targetSize = product.getSizes().stream()
+                    .filter(ps -> ps.getName().equals(sizeName))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Lỗi đặt hàng: Không tìm thấy size '" + sizeName +
+                            "' cho sản phẩm '" + product.getTitle() + "' (ID: " + product.getId() + "). Vui lòng kiểm tra lại giỏ hàng."));
+
+            if (targetSize.getQuantity() < orderedQuantity) {
+                throw new RuntimeException("Lỗi đặt hàng: Số lượng yêu cầu lớn hơn số lượng có sẵn cho size '" + sizeName +
+                        "' của sản phẩm '" + product.getTitle() + "' (ID: " + product.getId() + "). Vui lòng kiểm tra lại giỏ hàng.");
+            }
+
+            targetSize.setQuantity(targetSize.getQuantity() - orderedQuantity);
+
+            Long quantitySold = product.getQuantitySold() != null ? product.getQuantitySold() : 0L;
+            product.setQuantitySold(quantitySold + orderedQuantity);
+
+        }
+
+        // Thêm danh sách OrderItem vào Order (sau khi đã xử lý hết cart items)
+        order.setOrderItems(orderItems); // JPA sẽ quản lý việc lưu các OrderItem này do cascade
+
+        // Xóa các mục trong giỏ hàng sau khi đã tạo OrderItems thành công
+        // Sử dụng clear() và save() để kích hoạt orphanRemoval nếu có cấu hình
+        cartService.clearCart(user.getId());
+
+        // Lưu lại Order lần cuối với danh sách OrderItems đã được thêm vào
+        // Thực ra, do order là managed entity và ta đã thêm orderItems vào list của nó,
+        // bước save này có thể không hoàn toàn cần thiết nếu cascade được thiết lập đúng,
+        // nhưng để chắc chắn thì gọi save() cũng không sao.
+        return orderRepository.save(order);
     }
 
     @Override

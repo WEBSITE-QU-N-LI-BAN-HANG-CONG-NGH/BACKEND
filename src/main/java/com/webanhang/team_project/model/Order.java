@@ -1,5 +1,6 @@
 package com.webanhang.team_project.model;
 
+import com.webanhang.team_project.enums.PaymentMethod;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.enums.OrderStatus;
 import jakarta.persistence.*;
@@ -7,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -17,6 +20,7 @@ import java.util.HashSet;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@DynamicInsert
 @Table(name="orders")
 public class Order {
 
@@ -59,6 +63,11 @@ public class Order {
 
     @Column(name = "total_items")
     private int totalItems;
+
+    @Enumerated(EnumType.STRING) // Vẫn cần thiết
+    @Column(name = "payment_method")
+    @ColumnDefault("'COD'") // <-- Đặt giá trị mặc định dạng chuỗi SQL
+    private PaymentMethod paymentMethod;
 
     @Column(name = "payment_status")
     @Enumerated(EnumType.STRING)

@@ -61,10 +61,10 @@ public class AdminProductController {
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> findAllProducts() {
         List<Product> products = productService.findAllProducts();
-        List<ProductDTO> productDTOs = products.stream()
-                .map(ProductDTO::new)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(productDTOs, "Lấy tất cả sản phẩm thành công"));
+//        List<ProductDTO> productDTOs = products.stream()
+//                .map(ProductDTO::new)
+//                .toList();
+        return ResponseEntity.ok(ApiResponse.success(products, "Lấy tất cả sản phẩm thành công"));
     }
 
     /**

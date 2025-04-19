@@ -96,6 +96,9 @@ public class AdminCategoryService implements IAdminCategoryService {
     @Override
     public List<Map<String, Object>> getCategoryRevenue() {
         List<Category> categories = categoryRepository.findAll();
+
+        // find level = 1
+        categories.removeIf(category -> category.getLevel() != 1);
         List<Map<String, Object>> result = new ArrayList<>();
 
         for (Category category : categories) {
