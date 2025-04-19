@@ -48,4 +48,36 @@ public class ReviewServiceImpl implements ReviewService{
     public List<Review> getReviewsByProductId(Long productId){
         return reviewRepository.findAllByProductId(productId);
     }
+
+    @Override
+    public Review updateReview(Long reviewId, ReviewRequest reviewRequest) {
+        try {
+            Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new RuntimeException("Review not found"));
+
+            review.setContent(reviewRequest.getContent());
+
+            return reviewRepository.save(review);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteReview(Long reviewId) {
+        try {
+            Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new RuntimeException("Review not found"));
+            reviewRepository.delete(review);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Override
+    public Review getReviewById(Long reviewId) {
+        try {
+            return reviewRepository.findById(reviewId).orElseThrow(() -> new RuntimeException("Review not found"));
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
 }

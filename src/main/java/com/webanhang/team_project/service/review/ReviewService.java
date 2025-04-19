@@ -10,4 +10,7 @@ import java.util.List;
 public interface ReviewService {
     public Review createReview(User user, ReviewRequest reviewRequest);
     public List<Review> getReviewsByProductId(Long productId);
+    public Review updateReview(Long reviewId, ReviewRequest reviewRequest);
+    public void deleteReview(Long reviewId);
+    public Review getReviewById(Long reviewId);
 }

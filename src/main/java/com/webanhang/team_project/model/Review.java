@@ -24,7 +24,7 @@ public class Review {
     private Long id;
 
     @NotBlank
-    @Size(max = 500)
+    @Size(max = 500, message = "Content must be less than 500 characters")
     @Column(name = "review_content")
     private String content;
 
