@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -63,6 +64,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null, "Delete User Success!"));
     }
 
+    @Transactional
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile() {
         try {
@@ -89,7 +91,9 @@ public class UserController {
             List<AddressDTO> addressDTOS = new ArrayList<>();
             if (user.getAddress() != null) {
                 for (Address address : user.getAddress()) {
-                    addressDTOS.add(new AddressDTO(address));
+                    if (address != null) {
+                        addressDTOS.add(new AddressDTO(address));
+                    }
                 }
             }
 
@@ -97,10 +101,17 @@ public class UserController {
             List<OrderDTO> orderDTOS = new ArrayList<>();
             if (user.getOrders() != null) {
                 for (Order order : user.getOrders()) {
-                    orderDTOS.add(new OrderDTO(order));
+                    if (order != null) {
+                        try {
+                            OrderDTO orderDTO = new OrderDTO(order);
+                            orderDTOS.add(orderDTO);
+                        } catch (Exception ex) {
+                            log.warn("Error converting order to DTO: " + ex.getMessage());
+                            // Tiếp tục với đơn hàng tiếp theo thay vì dừng toàn bộ quá trình
+                        }
+                    }
                 }
             }
-
 
             // Xử lý response
             UserProfileResponse profileResponse = new UserProfileResponse();
@@ -119,8 +130,10 @@ public class UserController {
             profileResponse.setFirstName(user.getFirstName());
             profileResponse.setLastName(user.getLastName());
             profileResponse.setMobile(user.getPhone());
-            profileResponse.setRole(user.getRole().getName().name());
+            profileResponse.setRole(user.getRole() != null && user.getRole().getName() != null ?
+                    user.getRole().getName().name() : "UNKNOWN");
             profileResponse.setAddress(addressDTOS);
+            // Kiểm tra cart null
             profileResponse.setCart(user.getCart() != null ? new CartDTO(user.getCart()) : null);
             profileResponse.setCreatedAt(user.getCreatedAt());
             profileResponse.setOrders(orderDTOS);

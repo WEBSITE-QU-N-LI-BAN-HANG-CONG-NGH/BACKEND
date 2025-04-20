@@ -4,6 +4,7 @@ import com.webanhang.team_project.dto.response.ApiResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error("Error: " + ex.getMessage()));
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<ApiResponse> handleNullPointerException(NullPointerException ex) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Null pointer exception: " + ex.getMessage()));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

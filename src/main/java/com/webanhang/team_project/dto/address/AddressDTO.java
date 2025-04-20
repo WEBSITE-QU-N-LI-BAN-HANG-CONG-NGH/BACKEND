@@ -15,13 +15,15 @@ public class AddressDTO {
     private String note;
 
     public AddressDTO(Address address) {
-        this.id = address.getId();
-        this.fullName = address.getFullName();
-        this.phoneNumber = address.getPhoneNumber();
-        this.province = address.getProvince();
-        this.district = address.getDistrict();
-        this.ward = address.getWard();
-        this.street = address.getStreet();
-        this.note = address.getNote();
+        if (address != null) {
+            this.id = address.getId();
+            this.fullName = address.getFullName();
+            this.phoneNumber = address.getPhoneNumber();
+            this.province = address.getProvince();
+            this.district = address.getDistrict();
+            this.ward = address.getWard();
+            this.street = address.getStreet();
+            this.note = address.getNote();
+        }
     }
 }

@@ -35,10 +35,17 @@ public class OrderDTO {
         this.totalItems = order.getTotalItems();
         this.orderDate = order.getOrderDate();
         this.deliveryDate = order.getDeliveryDate();
-        this.shippingAddress = new AddressDTO(order.getShippingAddress());
+        // Kiểm tra null trước khi tạo đối tượng AddressDTO
+        this.shippingAddress = order.getShippingAddress() != null ? new AddressDTO(order.getShippingAddress()) : null;
         this.paymentStatus = order.getPaymentStatus();
         this.orderItems = new ArrayList<>();
         this.paymentMethod = order.getPaymentMethod(); // Thêm paymentMethod
-        order.getOrderItems().forEach(item -> this.orderItems.add(new OrderItemDTO(item)));
+        if (order.getOrderItems() != null) {
+            order.getOrderItems().forEach(item -> {
+                if (item != null) {
+                    this.orderItems.add(new OrderItemDTO(item));
+                }
+            });
+        }
     }
 }
