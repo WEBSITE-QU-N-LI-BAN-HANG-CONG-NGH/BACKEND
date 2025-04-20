@@ -65,7 +65,6 @@ public class Product {
 
     @Size(max = 255, message = "Image URL must be less than 255 characters")
     @Column(name = "image_urls")
-//    private String imageUrl;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images = new ArrayList<>();
 
@@ -82,15 +81,16 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Rating> ratings = new ArrayList<>();
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
     private List<Review> reviews = new ArrayList<>();
 
-    @Min(value = 0, message = "Number of ratings must be greater than or equal to 0")
-    @Column(name = "num_rating")
+    // so luong danh gia
+    @Formula("(SELECT COUNT(r.id) FROM review r WHERE r.product_id = id)")
     private int numRating;
+
+    // average rating
+    @Formula("(SELECT COALESCE(AVG(r.rating), 0.0) FROM review r WHERE r.product_id = id)") // Dùng 0.0 cho double
+    private double averageRating;
+
 //
     @Column(name = "quantity_sold")
     private Long quantitySold;

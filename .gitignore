@@ -36,3 +36,7 @@ src/main/resources/application.properties
 
 /src/main/resources/application.properties
 src/main/java/com/webanhang/team_project/config/initializer
+
+/target
+/ecommerce.iml
+/HELP.md

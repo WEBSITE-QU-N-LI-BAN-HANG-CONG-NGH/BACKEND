@@ -2,8 +2,7 @@ package com.webanhang.team_project.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -23,7 +22,11 @@ public class Review {
     @Column(name = "id")
     private Long id;
 
-    @NotBlank
+    @Column(name = "rating")
+    @Max(value = 5, message = "Rating must be at most 5")
+    @NotNull(message = "Rating is required")
+    private Integer rating;
+
     @Size(max = 500, message = "Content must be less than 500 characters")
     @Column(name = "review_content")
     private String content;

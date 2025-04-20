@@ -36,6 +36,7 @@ public class ReviewServiceImpl implements ReviewService{
             review.setContent(reviewRequest.getContent());
             review.setProduct(product);
             review.setUser(user);
+            review.setRating(reviewRequest.getRating());
             review.setCreatedAt(LocalDateTime.now());
 
             return reviewRepository.save(review);
@@ -54,6 +55,7 @@ public class ReviewServiceImpl implements ReviewService{
         try {
             Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new RuntimeException("Review not found"));
 
+            review.setRating(reviewRequest.getRating());
             review.setContent(reviewRequest.getContent());
 
             return reviewRepository.save(review);

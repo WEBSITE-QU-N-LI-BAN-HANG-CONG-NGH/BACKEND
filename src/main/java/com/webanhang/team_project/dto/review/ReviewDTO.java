@@ -12,6 +12,7 @@ public class ReviewDTO {
     private String userFirstName;
     private String userLastName;
     private LocalDateTime createdAt;
+    private Integer rating;
 
     public ReviewDTO(Review review) {
         this.id = review.getId();
@@ -20,5 +21,6 @@ public class ReviewDTO {
         this.userFirstName = review.getUser().getFirstName();
         this.userLastName = review.getUser().getLastName();
         this.createdAt = review.getCreatedAt();
+        this.rating = review.getRating();
     }
 } 

@@ -55,7 +55,7 @@ public class ReviewController {
         List<ReviewDTO> reviewDTOs = res.stream()
                 .map(review -> new ReviewDTO(review))
                 .toList();
-        return ResponseEntity.ok(ApiResponse.success(reviewDTOs, "Create Review By Product Success!"));
+        return ResponseEntity.ok(ApiResponse.success(reviewDTOs, "Find Review By Product Success!"));
     }
 
     @PutMapping("/update/{reviewId}")

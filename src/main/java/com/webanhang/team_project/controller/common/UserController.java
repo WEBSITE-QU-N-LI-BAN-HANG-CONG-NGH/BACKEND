@@ -121,7 +121,6 @@ public class UserController {
             profileResponse.setMobile(user.getPhone());
             profileResponse.setRole(user.getRole().getName().name());
             profileResponse.setAddress(addressDTOS);
-            profileResponse.setRatings(user.getRatings() != null ? user.getRatings() : new ArrayList<>());
             profileResponse.setCart(user.getCart() != null ? new CartDTO(user.getCart()) : null);
             profileResponse.setCreatedAt(user.getCreatedAt());
             profileResponse.setOrders(orderDTOS);
