@@ -51,6 +51,11 @@ public class User {
         @Column(name = "created_at")
         private LocalDateTime createdAt;;
 
+        @PrePersist
+        protected void onCreate() {
+                this.createdAt = LocalDateTime.now();
+        }
+
         @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
         @JsonManagedReference
         private Cart cart;

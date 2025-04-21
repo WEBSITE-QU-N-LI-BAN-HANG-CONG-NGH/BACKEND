@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.client.RestTemplate;
 
 
 // Cấu hình chung của ứng dụng, chứa các bean và thông tin cấu hình toàn cục.
@@ -30,5 +31,11 @@ public class AppConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean // Đánh dấu phương thức này sẽ tạo ra một Bean được quản lý bởi Spring
+    public RestTemplate restTemplate() {
+        // Tạo và trả về một đối tượng RestTemplate mới
+        return new RestTemplate();
     }
 }
