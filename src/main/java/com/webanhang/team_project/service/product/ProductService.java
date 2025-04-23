@@ -307,41 +307,14 @@ public class ProductService implements IProductService {
     @Override
     public List<Map<String, Object>> getTopSellingProducts(int limit) {
         List<Map<String, Object>> result = new ArrayList<>();
-        List<Product> products = productRepository.findAll();
 
-        // --- SỬA LỖI SẮP XẾP Ở ĐÂY ---
-        products.sort((p1, p2) -> {
-            // Lấy giá trị quantitySold, gán mặc định là 0 nếu null
-            Long sold1 = (p1.getQuantitySold() != null) ? p1.getQuantitySold() : 0L;
-            Long sold2 = (p2.getQuantitySold() != null) ? p2.getQuantitySold() : 0L;
-
-            // So sánh giá trị đã xử lý null (sắp xếp giảm dần nên so sánh sold2 với sold1)
-            return Long.compare(sold2, sold1);
-        });
-        // --- KẾT THÚC SỬA LỖI ---
+        Pageable pageable = PageRequest.of(0, limit);
+        List<Product> products = productRepository.findTopSellingProducts(pageable);
 
         // Lấy limit sản phẩm đầu tiên
         int count = Math.min(limit, products.size());
-        for (int i = 0; i < count; i++) {
-            Product p = products.get(i);
-            Map<String, Object> productMap = new HashMap<>();
-            productMap.put("id", p.getId());
-            productMap.put("title", p.getTitle());
-            productMap.put("brand", p.getBrand());
-            productMap.put("price", p.getPrice());
-            productMap.put("discounted_price", p.getDiscountedPrice());
-            productMap.put("quantity", p.getQuantity()); // Số lượng tồn kho (từ @Formula)
-
-            // Lấy ảnh đầu tiên làm link (cần kiểm tra null và list rỗng)
-            String productLink = null;
-            if (p.getImages() != null && !p.getImages().isEmpty() && p.getImages().getFirst() != null) {
-                productLink = p.getImages().getFirst().getDownloadUrl();
-            }
-            productMap.put("product_link", productLink);
-
-            productMap.put("category", p.getCategory() != null ? p.getCategory().getName() : "Uncategorized");
-            productMap.put("quantity_sold", p.getQuantitySold()); // Số lượng đã bán
-            result.add(productMap);
+        for (Product p : products) {
+            result.add(mapProductToMap(p));
         }
         return result;
     }
@@ -385,5 +358,19 @@ public class ProductService implements IProductService {
     @Override
     public List<Product> findByCategoryTopAndSecond(String topCategory, String secondCategory) {
         return productRepository.findProductsByTopAndSecondCategoryNames(topCategory, secondCategory);
+    }
+
+    private Map<String, Object> mapProductToMap(Product p) {
+        Map<String, Object> productMap = new HashMap<>();
+        productMap.put("id", p.getId());
+        productMap.put("title", p.getTitle());
+        productMap.put("brand", p.getBrand());
+        productMap.put("price", p.getPrice());
+        productMap.put("discounted_price", p.getDiscountedPrice());
+        productMap.put("quantity", p.getQuantity());
+        productMap.put("product_link", null);
+        productMap.put("category", p.getCategory() != null ? p.getCategory().getName() : "Uncategorized");
+        productMap.put("quantity_sold", p.getQuantitySold());
+        return productMap;
     }
 }

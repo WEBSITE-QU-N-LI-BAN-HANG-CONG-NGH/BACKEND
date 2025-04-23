@@ -2,6 +2,7 @@ package com.webanhang.team_project.repository;
 
 
 import com.webanhang.team_project.model.Product;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,4 +28,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findProductsByTopAndSecondCategoryNames(
             @Param("topCategoryName") String topCategoryName,
             @Param("secondCategoryName") String secondCategoryName);
+
+    @Query("SELECT p FROM Product p ORDER BY p.quantitySold DESC")
+    List<Product> findTopSellingProducts(Pageable pageable);
 }

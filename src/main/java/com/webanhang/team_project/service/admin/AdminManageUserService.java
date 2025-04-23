@@ -42,6 +42,8 @@ public class AdminManageUserService implements IAdminManageUserService {
 
         // Filter logic
         List<User> users;
+
+        // Thêm điều kiện không bao gồm ADMIN trong kết quả
         if (StringUtils.hasText(search) && StringUtils.hasText(role)) {
             UserRole userRole = UserRole.valueOf(role.toUpperCase());
             // Search by name/email and filter by role
@@ -49,20 +51,20 @@ public class AdminManageUserService implements IAdminManageUserService {
                     search, search, search, userRole, pageable);
         } else if (StringUtils.hasText(search)) {
             // Only search
-            users = userRepository.findByEmailContainingOrFirstNameContainingOrLastNameContaining(
-                    search, search, search, pageable);
+            users = userRepository.findByEmailContainingOrFirstNameContainingOrLastNameContainingAndRoleNameNot(
+                    search, search, search, UserRole.ADMIN, pageable);
         } else if (StringUtils.hasText(role)) {
             UserRole userRole = UserRole.valueOf(role.toUpperCase());
             // Only filter by role
             users = userRepository.findByRoleName(userRole, pageable);
         } else {
-            // No filters
-            users = userRepository.findAll(pageable).getContent();
+            // No filters - nhưng vẫn loại trừ ADMIN
+            users = userRepository.findByRoleNameNot(UserRole.ADMIN, pageable);
         }
 
         List<UserDTO> userDTOS = users.stream()
                 .map(this::convertToDto)
-                .collect(Collectors.toList());
+                .toList();
 
         return new PageImpl<>(userDTOS, pageable, userRepository.count());
     }

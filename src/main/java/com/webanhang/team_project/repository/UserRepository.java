@@ -12,6 +12,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     User findByEmail(String email);
+    List<User> findByRoleNameNot(UserRole roleName, Pageable pageable);
+    List<User> findByEmailContainingOrFirstNameContainingOrLastNameContainingAndRoleNameNot(
+            String email, String firstName, String lastName, UserRole roleName, Pageable pageable);
 
     // Tìm kiếm người dùng theo email hoặc tên
     List<User> findByEmailContainingOrFirstNameContainingOrLastNameContaining(

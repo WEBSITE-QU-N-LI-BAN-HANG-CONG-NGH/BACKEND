@@ -1,6 +1,7 @@
 package com.webanhang.team_project.controller.common;
 
 
+import com.webanhang.team_project.dto.category.CategoryDTO;
 import com.webanhang.team_project.model.Category;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.service.category.ICategoryService;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,5 +34,25 @@ public class CategoryController {
     public ResponseEntity<ApiResponse> getChildTopCategories(@PathVariable("topCategory") String topCategory) {
         List<Category> childCategories = categoryService.getChildTopCategories(topCategory);
         return ResponseEntity.ok().body(ApiResponse.success(childCategories,"Get child categories success"));
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<ApiResponse> getCategories() {
+        List<Category> categories = categoryService.getAllCategories();
+        List<CategoryDTO> categoryDTOs = categories.stream()
+                .map(this::convertToDTO)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success(categoryDTOs, "Get categories successfully"));
+    }
+
+    private CategoryDTO convertToDTO(Category category) {
+        CategoryDTO dto = new CategoryDTO();
+        dto.setCategoryId(category.getId());
+        dto.setName(category.getName());
+        dto.setLevel(category.getLevel());
+        dto.setParent(category.isParent());
+        // Không map products hoặc chỉ lấy ID của chúng nếu cần
+        return dto;
     }
 }

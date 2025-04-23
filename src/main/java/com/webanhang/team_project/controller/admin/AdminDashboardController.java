@@ -5,6 +5,7 @@ import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.service.admin.IAdminDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +27,7 @@ public class AdminDashboardController {
      *
      * @return Dữ liệu tổng quan bảng điều khiển bao gồm doanh thu, người bán hàng đầu và phân phối
      */
+    @Transactional
     @GetMapping("/overview")
     public ResponseEntity<ApiResponse> getDashboardOverview() {
         Map<String, Object> response = new HashMap<>();

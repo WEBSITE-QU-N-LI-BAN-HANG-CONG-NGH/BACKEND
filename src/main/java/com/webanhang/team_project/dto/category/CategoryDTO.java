@@ -10,4 +10,6 @@ public class CategoryDTO {
     private int level;
     private Long parentCategoryId;
     private List<CategoryDTO> subCategories;
-} 
+
+    private boolean isParent;
+}
