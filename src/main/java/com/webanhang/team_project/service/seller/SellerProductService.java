@@ -125,16 +125,16 @@ public class SellerProductService implements ISellerProductService {
         List<Image> images = new ArrayList<>();
 
         // Ưu tiên sử dụng danh sách hình ảnh mới
-        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
-            for (String imageUrl : request.getImageUrls()) {
-                Image image = new Image();
-                image.setProduct(product);
-                image.setDownloadUrl(imageUrl);
-                image.setFileName(extractFilenameFromUrl(imageUrl));
-                image.setFileType(determineFileTypeFromUrl(imageUrl));
-                images.add(image);
-            }
-        }
+//        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+//            for (String imageUrl : request.getImageUrls()) {
+//                Image image = new Image();
+//                image.setProduct(product);
+//                image.setDownloadUrl(imageUrl);
+//                image.setFileName(extractFilenameFromUrl(imageUrl));
+//                image.setFileType(determineFileTypeFromUrl(imageUrl));
+//                images.add(image);
+//            }
+//        }
 //        // Fallback vào imageUrl cũ nếu không có danh sách
 //        else if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
 //            Image image = new Image();

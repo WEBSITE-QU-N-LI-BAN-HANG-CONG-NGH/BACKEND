@@ -1,5 +1,6 @@
 package com.webanhang.team_project.dto.product;
 
+import com.webanhang.team_project.model.Image;
 import com.webanhang.team_project.model.ProductSize;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -41,8 +42,7 @@ public class CreateProductRequest {
     private List<ProductSize> sizes = new ArrayList<>();
 
     @Size(max = 255, message = "Image URL must be less than 255 characters")
-//    private String imageUrl;
-    private List<String> imageUrls = new ArrayList<>();
+    private List<Image> imageUrls = new ArrayList<>();
 
     @NotBlank(message = "Top level category is required")
     private String topLevelCategory;

@@ -22,14 +22,12 @@ public class ProductController {
 //    private CategoryRepository categoryRepository;
 
     @GetMapping("/")
-    public ResponseEntity<Page<Product>> findProductsByCategory(
+    public ResponseEntity<List<ProductDTO>> findProductsByCategory(
             @RequestParam(required = false) String colorsStr,
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false) Integer minDiscount,
-            @RequestParam(required = false) String sort,
-            @RequestParam(defaultValue = "0") Integer pageNumber,
-            @RequestParam(defaultValue = "8") Integer pageSize
+            @RequestParam(required = false) String sort
     ) {
         // Chuyển đổi colorsStr thành List<String>
         List<String> colors = new ArrayList<>();
@@ -37,16 +35,19 @@ public class ProductController {
             colors = Arrays.asList(colorsStr.split(","));
         }
 
-        Page<Product> res = productService.findAllProductsByFilter(
+        List<Product> res = productService.findAllProductsByFilter(
                 colors,
                 minPrice,
                 maxPrice,
                 minDiscount,
-                sort,
-                pageNumber,
-                pageSize);
+                sort
+        );
 
-        return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
+        List<ProductDTO> productDTOs = res.stream()
+                .map(ProductDTO::new)
+                .toList();
+
+        return new ResponseEntity<>(productDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/id/{productId}")
@@ -57,29 +58,41 @@ public class ProductController {
     }
 
     @GetMapping("/{topCategoryName}/{secondCategoryName}")
-    public ResponseEntity<List<Product>> findProductByPath(
+    public ResponseEntity<List<ProductDTO>> findProductByPath(
             @PathVariable String topCategoryName,
             @PathVariable String secondCategoryName) {
         List<Product> res = productService.findByCategoryTopAndSecond(topCategoryName,secondCategoryName);
-        return new ResponseEntity<>(res, HttpStatus.OK);
+        List<ProductDTO> productDTOs = res.stream()
+                .map(ProductDTO::new)
+                .toList();
+        return new ResponseEntity<>(productDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/{categoryName}")
-    public ResponseEntity<List<Product>> findProductByCategory(
+    public ResponseEntity<List<ProductDTO>> findProductByCategory(
             @PathVariable String categoryName) {
         List<Product> products = productService.findProductByCategory(categoryName);
-        return new ResponseEntity<>(products, HttpStatus.OK);
+        List<ProductDTO> productDTOs = products.stream()
+                .map(ProductDTO::new)
+                .toList();
+        return new ResponseEntity<>(productDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/search/{productName}")
-    public ResponseEntity<List<Product>> searchProducts(@PathVariable String productName) {
+    public ResponseEntity<List<ProductDTO>> searchProducts(@PathVariable String productName) {
         List<Product> products = productService.searchProducts(productName);
-        return new ResponseEntity<>(products, HttpStatus.OK);
+        List<ProductDTO> productDTOs = products.stream()
+                .map(ProductDTO::new)
+                .toList();
+        return new ResponseEntity<>(productDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Product>> getAllProductsWithoutFilter() {
+    public ResponseEntity<List<ProductDTO>> getAllProductsWithoutFilter() {
         List<Product> products = productService.findAllProducts();
-        return new ResponseEntity<>(products, HttpStatus.OK);
+        List<ProductDTO> productDTOs = products.stream()
+                .map(ProductDTO::new)
+                .toList();
+        return new ResponseEntity<>(productDTOs, HttpStatus.OK);
     }
 }

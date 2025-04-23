@@ -21,14 +21,12 @@ public interface IProductService {
 
     public List<Product> findProductByCategory(String category) ;
 
-    Page<Product> findAllProductsByFilter(
+    List<Product> findAllProductsByFilter(
             List<String> colors,
             Integer minPrice,
             Integer maxPrice,
             Integer minDiscount,
-            String sort,
-            Integer pageNumber,
-            Integer pageSize);
+            String sort);
 
     public List<Product> findAllProducts() ;
 

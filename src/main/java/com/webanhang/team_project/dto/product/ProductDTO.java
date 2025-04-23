@@ -1,5 +1,6 @@
 package com.webanhang.team_project.dto.product;
 
+import com.webanhang.team_project.dto.image.ImageDTO;
 import com.webanhang.team_project.model.Category;
 import com.webanhang.team_project.model.Image;
 import com.webanhang.team_project.model.Product;
@@ -25,8 +26,8 @@ public class ProductDTO {
     private int quantity;
     private String brand;
     private String color;
-    private List<String> sizes;
-    private List<String> imageUrls;
+    private List<ProductSizeDTO> sizes;
+    private List<ImageDTO> imageUrls;
     private double averageRating; // Giữ kiểu double
     private int numRatings;
     private String topLevelCategory;
@@ -48,8 +49,7 @@ public class ProductDTO {
         // Lấy danh sách tên size từ List<ProductSize>
         if (product.getSizes() != null) {
             this.sizes = product.getSizes().stream()
-                    .map(ProductSize::getName) // Sử dụng method reference nếu có getName()
-                    // .map(ps -> ps.getName()) // Hoặc dùng lambda
+                    .map(sizee -> new ProductSizeDTO(sizee))
                     .collect(Collectors.toList());
         } else {
             this.sizes = Collections.emptyList();
@@ -57,10 +57,11 @@ public class ProductDTO {
 
         // Xử lý danh sách hình ảnh
         this.imageUrls = new ArrayList<>();
+
         if (product.getImages() != null && !product.getImages().isEmpty()) {
             this.imageUrls = product.getImages().stream()
-                    .map(Image::getDownloadUrl)
-                    .toList();
+                    .map(image -> new ImageDTO(image))
+                    .collect(Collectors.toList());
         }
 
         if (product.getReviews() != null && !product.getReviews().isEmpty()) {

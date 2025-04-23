@@ -90,6 +90,7 @@ public class ProductService implements IProductService {
         product.setColor(req.getColor());
         product.setCreatedAt(LocalDateTime.now());
         product.setQuantity(req.getQuantity());
+        product.setImages(req.getImageUrls());
 
         // Cập nhật discountedPrice dựa vào price và discountPersent
         product.updateDiscountedPrice();
@@ -103,6 +104,14 @@ public class ProductService implements IProductService {
                 size.setProduct(product);
             }
             product.setSizes(req.getSizes());
+        }
+
+        // xu ly hinh anh
+        if (req.getImageUrls() != null && !req.getImageUrls().isEmpty()) {
+            for (Image imageUrl : req.getImageUrls()) {
+                imageUrl.setProduct(product);
+            }
+            product.setImages(req.getImageUrls());
         }
 
         return productRepository.save(product);
@@ -217,14 +226,12 @@ public class ProductService implements IProductService {
     }
 
     @Override
-    public Page<Product> findAllProductsByFilter(
+    public List<Product> findAllProductsByFilter(
             List<String> colors,
             Integer minPrice, Integer maxPrice, Integer minDiscount,
-            String sort,
-            Integer pageNumber,
-            Integer pageSize) {
+            String sort
+    ) {
 
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
 
         List<Product> products = productRepository.findAll();
         System.out.println("Found " + products.size() + " total products initially");
@@ -260,7 +267,6 @@ public class ProductService implements IProductService {
             System.out.println("After minDiscount filter: " + products.size() + " products");
         }
 
-
         if (sort != null) {
             switch (sort) {
                 case "price_low":
@@ -283,20 +289,8 @@ public class ProductService implements IProductService {
             System.out.println("After sorting by " + sort);
         }
 
-        int startIndex = (int) pageable.getOffset();
-        int endIndex = Math.min((startIndex + pageable.getPageSize()), products.size());
-
-        List<Product> pageProducts;
-        if (startIndex >= products.size()) {
-            System.out.println("Returning empty page because startIndex >= filtered products size");
-            pageProducts = new ArrayList<>();
-        } else {
-            pageProducts = products.subList(startIndex, endIndex);
-        }
-        System.out.println("Returning " + pageProducts.size() + " products on page " + pageNumber + " (Total filtered: " + products.size() + ")");
-
         // Trả về đối tượng PageImpl chứa dữ liệu trang hiện tại và tổng số phần tử sau khi lọc
-        return new PageImpl<>(pageProducts, pageable, products.size());
+        return products;
     }
 
     @Override
