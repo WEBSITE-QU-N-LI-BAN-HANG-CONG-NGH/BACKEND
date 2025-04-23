@@ -25,5 +25,7 @@ public class UserProfileResponse {
     private List<Review> reviews = new ArrayList<>();
     private CartDTO cart;
     private LocalDateTime createdAt;
+    private String imageUrl;
+    private String oauthProvider;
 }
 

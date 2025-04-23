@@ -21,5 +21,7 @@ public class UserDTO {
     private boolean active;
     private List<Address> addresses;
     private LocalDateTime createdAt;
+    private String imageUrl;
+    private String oauthProvider;
 }
 

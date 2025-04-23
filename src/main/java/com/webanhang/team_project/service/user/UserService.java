@@ -96,6 +96,8 @@ public class UserService implements IUserService {
         userDTO.setActive(user.isActive());
         userDTO.setAddresses(user.getAddress());
         userDTO.setCreatedAt(user.getCreatedAt());
+        userDTO.setImageUrl(user.getImageUrl());
+        userDTO.setOauthProvider(user.getOauthProvider());
         return userDTO;
     }
 

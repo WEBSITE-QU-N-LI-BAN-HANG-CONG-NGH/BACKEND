@@ -8,6 +8,7 @@ import com.webanhang.team_project.dto.order.OrderDTO;
 import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.dto.user.UserProfileResponse;
 import com.webanhang.team_project.model.Address;
+import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.dto.user.CreateUserRequest;
@@ -137,6 +138,8 @@ public class UserController {
             profileResponse.setCart(user.getCart() != null ? new CartDTO(user.getCart()) : null);
             profileResponse.setCreatedAt(user.getCreatedAt());
             profileResponse.setOrders(orderDTOS);
+            profileResponse.setImageUrl(user.getImageUrl());
+            profileResponse.setOauthProvider(user.getOauthProvider());
 
             log.info("Successfully retrieved profile for user: {}", email);
             return ResponseEntity.ok(profileResponse);

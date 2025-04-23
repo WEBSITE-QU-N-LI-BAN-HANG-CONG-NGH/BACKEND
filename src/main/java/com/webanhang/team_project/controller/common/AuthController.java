@@ -204,9 +204,14 @@ public class AuthController {
 
         User user = userRepository.findByEmail(email);
         if (user == null) {
+            // Security consideration: Avoid confirming if an email is registered or not here.
+            // You might want to return a generic success message even if the email doesn't exist
+            // to prevent email enumeration attacks. However, for user experience,
+            // the current "Not Found" is clearer during development/testing.
+            // Let's keep the "Not Found" for now, but be aware of this.
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Email chưa được đăng ký."));
+                    .body(ApiResponse.error("Email chưa được đăng ký hoặc không hợp lệ."));
         }
 
         // --- Add cooldown check ---
@@ -219,15 +224,16 @@ public class AuthController {
                     .body(ApiResponse.error(waitMessage));
         }
 
+        // --- Proceed if allowed ---
         try {
-            String otp = otpService.generateOtp(email);
+            String otp = otpService.generateOtp(email); // This now also updates the generation time
             otpService.sendOtpEmail(email, otp);
-            return ResponseEntity.ok(ApiResponse.success(null, "Mã OTP mới đã được gửi tới email."));
+            return ResponseEntity.ok(ApiResponse.success(null, "Mã OTP mới đã được gửi tới email. Vui lòng kiểm tra hộp thư của bạn."));
         } catch (Exception e) {
-            log.error("Lỗi khi gửi lại OTP: ", e);
+            log.error("Lỗi khi gửi lại OTP cho email {}: ", email, e); // Log email for context
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Lỗi khi gửi OTP: " + e.getMessage()));
+                    .body(ApiResponse.error("Đã xảy ra lỗi khi gửi OTP. Vui lòng thử lại sau.")); // More generic error message
         }
     }
 
