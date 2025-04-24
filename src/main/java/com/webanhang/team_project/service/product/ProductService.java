@@ -1,10 +1,7 @@
 package com.webanhang.team_project.service.product;
 
 
-import com.webanhang.team_project.dto.product.AddProductRequest;
-import com.webanhang.team_project.dto.product.ProductDTO;
-import com.webanhang.team_project.dto.product.CreateProductRequest;
-import com.webanhang.team_project.dto.product.UpdateProductRequest;
+import com.webanhang.team_project.dto.product.*;
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.*;
 import com.webanhang.team_project.repository.CartItemRepository;
@@ -226,40 +223,44 @@ public class ProductService implements IProductService {
     }
 
     @Override
-    public List<Product> findAllProductsByFilter(
-            String color,
-            Integer minPrice,
-            Integer maxPrice,
-            String sort
-    ) {
+    public List<Product> findAllProductsByFilter(FilterProduct filterProduct) {
 
+        List<Product> products = new ArrayList<>();
 
-        List<Product> products = productRepository.findAll();
+        if (filterProduct.getTopLevelCategory() != null && filterProduct.getSecondLevelCategory() != null) {
+            products = findByCategoryTopAndSecond(filterProduct.getTopLevelCategory(), filterProduct.getSecondLevelCategory());
+        } else if (filterProduct.getTopLevelCategory() != null) {
+            products = findProductByCategory(filterProduct.getTopLevelCategory());
+        } else if (filterProduct.getSecondLevelCategory() != null) {
+            products = findProductByCategory(filterProduct.getSecondLevelCategory());
+        } else {
+            products = findAllProducts();
+        }
         System.out.println("Found " + products.size() + " total products initially");
 
         // Lọc theo colors (giữ nguyên)
-        if (color != null && !color.isEmpty()) {
+        if (filterProduct.getColor() != null && !filterProduct.getColor().isEmpty()) {
             products = products.stream()
-                    .filter(p -> p.getColor() != null && p.getColor().equalsIgnoreCase(color))
+                    .filter(p -> p.getColor() != null && p.getColor().equalsIgnoreCase(filterProduct.getColor()))
                     .collect(Collectors.toList());
             System.out.println("After color filter: " + products.size() + " products");
         }
 
-        if (minPrice != null) {
+        if (filterProduct.getMinPrice() != null) {
             products = products.stream()
-                    .filter(p -> p.getDiscountedPrice() >= minPrice)
+                    .filter(p -> p.getDiscountedPrice() >= filterProduct.getMinPrice())
                     .collect(Collectors.toList());
             System.out.println("After minPrice filter: " + products.size() + " products");
         }
-        if (maxPrice != null) {
+        if (filterProduct.getMaxPrice() != null) {
             products = products.stream()
-                    .filter(p -> p.getDiscountedPrice() <= maxPrice)
+                    .filter(p -> p.getDiscountedPrice() <= filterProduct.getMaxPrice())
                     .collect(Collectors.toList());
             System.out.println("After maxPrice filter: " + products.size() + " products");
         }
 
-        if (sort != null) {
-            switch (sort) {
+        if (filterProduct.getSort() != null) {
+            switch (filterProduct.getSort()) {
                 case "price_low":
                     products.sort((p1, p2) -> Integer.compare(p1.getDiscountedPrice(), p2.getDiscountedPrice()));
                     break;
@@ -277,7 +278,6 @@ public class ProductService implements IProductService {
                     // products.sort((p1, p2) -> p1.getId().compareTo(p2.getId()));
                     break;
             }
-            System.out.println("After sorting by " + sort);
         }
 
         // Trả về đối tượng PageImpl chứa dữ liệu trang hiện tại và tổng số phần tử sau khi lọc

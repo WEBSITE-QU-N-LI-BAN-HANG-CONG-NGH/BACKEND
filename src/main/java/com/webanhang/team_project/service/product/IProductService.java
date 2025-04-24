@@ -2,6 +2,7 @@ package com.webanhang.team_project.service.product;
 
 
 
+import com.webanhang.team_project.dto.product.FilterProduct;
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.model.Product;
@@ -21,12 +22,7 @@ public interface IProductService {
 
     public List<Product> findProductByCategory(String category) ;
 
-    List<Product> findAllProductsByFilter(
-            String color,
-            Integer minPrice,
-            Integer maxPrice,
-            String sort
-    );
+    List<Product> findAllProductsByFilter(FilterProduct filterProduct) ;
 
     public List<Product> findAllProducts() ;
 

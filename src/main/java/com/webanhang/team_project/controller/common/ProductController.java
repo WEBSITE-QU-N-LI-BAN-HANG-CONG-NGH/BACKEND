@@ -26,8 +26,7 @@ public class ProductController {
     public ResponseEntity<List<ProductDTO>> findProductsByCategory(
             @RequestBody FilterProduct filterProduct
     ) {
-
-        List<Product> res = productService.findAllProductsByFilter(filterProduct.getColor(), filterProduct.getMinPrice(),filterProduct.getMaxPrice(), filterProduct.getSort());
+        List<Product> res = productService.findAllProductsByFilter(filterProduct);
 
         List<ProductDTO> productDTOs = res.stream()
                 .map(ProductDTO::new)
