@@ -9,14 +9,12 @@ public class FilterProduct {
     private String color;
     private Integer minPrice;
     private Integer maxPrice;
-    private Integer minDiscount;
     private String sort;
 
-    public FilterProduct(String color, Integer minPrice, Integer maxPrice, Integer minDiscount, String sort) {
+    public FilterProduct(String color, Integer minPrice, Integer maxPrice, String sort) {
         this.color = color;
         this.minPrice = minPrice;
         this.maxPrice = maxPrice;
-        this.minDiscount = minDiscount;
         this.sort = sort;
     }
 }

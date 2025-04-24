@@ -27,7 +27,7 @@ public class ProductController {
             @RequestBody FilterProduct filterProduct
     ) {
 
-        List<Product> res = productService.findAllProductsByFilter(filterProduct.getColor(), filterProduct.getMinPrice(),filterProduct.getMaxPrice(), filterProduct.getMinDiscount(), filterProduct.getSort());
+        List<Product> res = productService.findAllProductsByFilter(filterProduct.getColor(), filterProduct.getMinPrice(),filterProduct.getMaxPrice(), filterProduct.getSort());
 
         List<ProductDTO> productDTOs = res.stream()
                 .map(ProductDTO::new)

@@ -228,7 +228,8 @@ public class ProductService implements IProductService {
     @Override
     public List<Product> findAllProductsByFilter(
             String color,
-            Integer minPrice, Integer maxPrice, Integer minDiscount,
+            Integer minPrice,
+            Integer maxPrice,
             String sort
     ) {
 
@@ -255,13 +256,6 @@ public class ProductService implements IProductService {
                     .filter(p -> p.getDiscountedPrice() <= maxPrice)
                     .collect(Collectors.toList());
             System.out.println("After maxPrice filter: " + products.size() + " products");
-        }
-
-        if (minDiscount != null) {
-            products = products.stream()
-                    .filter(p -> p.getDiscountPersent() >= minDiscount)
-                    .collect(Collectors.toList());
-            System.out.println("After minDiscount filter: " + products.size() + " products");
         }
 
         if (sort != null) {

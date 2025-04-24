@@ -25,8 +25,8 @@ public interface IProductService {
             String color,
             Integer minPrice,
             Integer maxPrice,
-            Integer minDiscount,
-            String sort);
+            String sort
+    );
 
     public List<Product> findAllProducts() ;
 
