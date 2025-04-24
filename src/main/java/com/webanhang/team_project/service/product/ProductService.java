@@ -227,7 +227,7 @@ public class ProductService implements IProductService {
 
     @Override
     public List<Product> findAllProductsByFilter(
-            List<String> colors,
+            String color,
             Integer minPrice, Integer maxPrice, Integer minDiscount,
             String sort
     ) {
@@ -237,15 +237,12 @@ public class ProductService implements IProductService {
         System.out.println("Found " + products.size() + " total products initially");
 
         // Lọc theo colors (giữ nguyên)
-        if(colors != null && !colors.isEmpty()) {
-            List<String> finalColors = colors; // Biến final hoặc effectively final cho lambda
+        if (color != null && !color.isEmpty()) {
             products = products.stream()
-                    .filter(product -> product.getColor() != null && finalColors.stream()
-                            .anyMatch(c -> c.equalsIgnoreCase(product.getColor())))
+                    .filter(p -> p.getColor() != null && p.getColor().equalsIgnoreCase(color))
                     .collect(Collectors.toList());
             System.out.println("After color filter: " + products.size() + " products");
         }
-
 
         if (minPrice != null) {
             products = products.stream()

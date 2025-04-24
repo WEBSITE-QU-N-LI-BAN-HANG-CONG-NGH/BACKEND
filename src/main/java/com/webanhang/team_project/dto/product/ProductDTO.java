@@ -33,6 +33,7 @@ public class ProductDTO {
     private String topLevelCategory;
     private String secondLevelCategory;
     private Long quantitySold;
+    private Integer discountPercent;
 
     // Constructor để chuyển đổi từ Product entity
     public ProductDTO(Product product) {
@@ -44,6 +45,7 @@ public class ProductDTO {
         this.quantity = product.getQuantity();
         this.brand = product.getBrand();
         this.color = product.getColor();
+        this.discountPercent=product.getDiscountPersent();
         this.quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
 
         // Lấy danh sách tên size từ List<ProductSize>

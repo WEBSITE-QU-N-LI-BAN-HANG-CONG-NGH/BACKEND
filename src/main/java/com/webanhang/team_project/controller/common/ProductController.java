@@ -1,5 +1,6 @@
 package com.webanhang.team_project.controller.common;
 
+import com.webanhang.team_project.dto.product.FilterProduct;
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.service.product.IProductService;
@@ -23,25 +24,10 @@ public class ProductController {
 
     @GetMapping("/")
     public ResponseEntity<List<ProductDTO>> findProductsByCategory(
-            @RequestParam(required = false) String colorsStr,
-            @RequestParam(required = false) Integer minPrice,
-            @RequestParam(required = false) Integer maxPrice,
-            @RequestParam(required = false) Integer minDiscount,
-            @RequestParam(required = false) String sort
+            @RequestBody FilterProduct filterProduct
     ) {
-        // Chuyển đổi colorsStr thành List<String>
-        List<String> colors = new ArrayList<>();
-        if (colorsStr != null && !colorsStr.isEmpty()) {
-            colors = Arrays.asList(colorsStr.split(","));
-        }
 
-        List<Product> res = productService.findAllProductsByFilter(
-                colors,
-                minPrice,
-                maxPrice,
-                minDiscount,
-                sort
-        );
+        List<Product> res = productService.findAllProductsByFilter(filterProduct.getColor(), filterProduct.getMinPrice(),filterProduct.getMaxPrice(), filterProduct.getMinDiscount(), filterProduct.getSort());
 
         List<ProductDTO> productDTOs = res.stream()
                 .map(ProductDTO::new)

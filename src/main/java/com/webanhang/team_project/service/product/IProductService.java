@@ -22,7 +22,7 @@ public interface IProductService {
     public List<Product> findProductByCategory(String category) ;
 
     List<Product> findAllProductsByFilter(
-            List<String> colors,
+            String color,
             Integer minPrice,
             Integer maxPrice,
             Integer minDiscount,
