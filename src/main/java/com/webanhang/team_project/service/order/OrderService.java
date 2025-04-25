@@ -87,7 +87,7 @@ public class OrderService implements IOrderService {
         order.setPaymentStatus(PaymentStatus.PENDING);
 
         // Lấy tổng tiền từ Cart đã được tính toán (bao gồm cả discount)
-        order.setTotalAmount(cart.getTotalPrice()); // Tổng giá gốc
+        order.setTotalAmount(cart.getTotalDiscountedPrice()); // Tổng giá gốc
         order.setTotalItems(cart.getTotalItems());
         order.setDiscount(cart.getDiscount());
         order.setTotalDiscountedPrice(cart.getTotalDiscountedPrice()); // Tổng giá sau khi giảm

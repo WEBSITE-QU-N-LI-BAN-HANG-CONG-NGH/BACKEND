@@ -34,14 +34,14 @@ public class Cart {
     @JsonBackReference
     private User user;
 
-    @Column(name = "total_price")
-    private int totalPrice;
-
     @Column(name = "total_items")
     private int totalItems;
 
     @Column(name = "total_discounted_price")
     private int totalDiscountedPrice;
+
+    @Column(name = "original_price")
+    private int originalPrice;
 
     @Column(name = "discount")
     private int discount;
@@ -54,9 +54,4 @@ public class Cart {
                 .mapToInt(item -> item.getProduct().getPrice() * item.getQuantity())
                 .sum();
     }
-
-    public int getTotal() {
-        return totalPrice - totalDiscountedPrice;
-    }
-
 }

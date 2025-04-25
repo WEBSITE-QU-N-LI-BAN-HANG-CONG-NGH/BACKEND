@@ -10,18 +10,18 @@ import java.util.stream.Collectors;
 @Data
 public class CartDTO {
     private Long id;
-    private int totalPrice;      // Tổng giá gốc
+    private int totalOriginalPrice;      // Tổng giá gốc
     private int totalItems;      // Tổng số lượng sản phẩm
     private int totalDiscountedPrice;  // Tổng giá sau giảm giá
-    private int total;           // Tổng tiền phải trả
+    private int discount;  // Tổng tiền giảm giá
     private List<CartItemDTO> cartItems;
 
     public CartDTO(Cart cart) {
         this.id = cart.getId();
-        this.totalPrice = cart.getTotalPrice();
         this.totalItems = cart.getTotalItems();
         this.totalDiscountedPrice = cart.getTotalDiscountedPrice();
-        this.total = cart.getTotal();
+        this.totalOriginalPrice = cart.getOriginalPrice();
+        this.discount = cart.getDiscount();
 
         if (cart.getCartItems() != null) {
             this.cartItems = cart.getCartItems().stream()

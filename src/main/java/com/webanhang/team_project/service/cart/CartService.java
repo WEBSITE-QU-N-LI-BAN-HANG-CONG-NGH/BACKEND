@@ -159,17 +159,17 @@ public class CartService implements ICartService {
         // Cập nhật đối tượng cart
         cart.getCartItems().clear();
         cart.setTotalItems(0);
-        cart.setTotalPrice(0);
+        cart.setOriginalPrice(0);
         cart.setTotalDiscountedPrice(0);
-        cart.setDiscount(0);
 
         // Lưu giỏ hàng đã được cập nhật
         cartRepository.save(cart);
     }
+
     private void updateCartTotals(Cart cart) {
         Set<CartItem> items = cart.getCartItems(); // use set
 
-        int totalPrice = items.stream()
+        int totalOriginalPrice = items.stream()
                 .mapToInt(item -> item.getPrice() * item.getQuantity())
                 .sum();
 
@@ -181,10 +181,10 @@ public class CartService implements ICartService {
                 .mapToInt(CartItem::getQuantity)
                 .sum();
 
-        cart.setTotalPrice(totalPrice);
+        cart.setOriginalPrice(totalOriginalPrice);
         cart.setTotalDiscountedPrice(totalDiscountedPrice);
         cart.setTotalItems(totalItems);
-        cart.setDiscount(totalPrice - totalDiscountedPrice);
+        cart.setDiscount(totalOriginalPrice - totalDiscountedPrice);
     }
 }
 
