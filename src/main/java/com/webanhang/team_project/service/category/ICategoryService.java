@@ -17,4 +17,6 @@ public interface ICategoryService {
     List<Category> getAllParentCategories();
 
     List<Category> getChildTopCategories(String topCategory);
+
+//    List<Category> getAllCategories();
 }

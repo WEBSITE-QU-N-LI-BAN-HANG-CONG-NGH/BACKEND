@@ -1,6 +1,7 @@
 package com.webanhang.team_project.controller.common;
 
 
+import com.cloudinary.Api;
 import com.webanhang.team_project.dto.category.CategoryDTO;
 import com.webanhang.team_project.model.Category;
 import com.webanhang.team_project.dto.response.ApiResponse;
@@ -17,6 +18,15 @@ import java.util.stream.Collectors;
 @RequestMapping("${api.prefix}/categories")
 public class CategoryController {
     private final ICategoryService categoryService;
+
+    @GetMapping("/")
+    public ResponseEntity<ApiResponse> getAllByParentAndSub() {
+        List<Category> categories = categoryService.getAllParentCategories();
+        List<CategoryDTO> categoryDTOs = categories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success(categoryDTOs, "Get all categories success"));
+    }
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllCategories() {
@@ -47,12 +57,8 @@ public class CategoryController {
     }
 
     private CategoryDTO convertToDTO(Category category) {
-        CategoryDTO dto = new CategoryDTO();
-        dto.setCategoryId(category.getId());
-        dto.setName(category.getName());
-        dto.setLevel(category.getLevel());
-        dto.setParent(category.isParent());
-        // Không map products hoặc chỉ lấy ID của chúng nếu cần
+        CategoryDTO dto = new CategoryDTO(category);
         return dto;
     }
+
 }

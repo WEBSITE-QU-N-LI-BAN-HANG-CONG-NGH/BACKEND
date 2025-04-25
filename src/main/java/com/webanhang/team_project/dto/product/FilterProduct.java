@@ -2,11 +2,13 @@ package com.webanhang.team_project.dto.product;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Setter
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class FilterProduct {
     private String topLevelCategory;
     private String secondLevelCategory;
