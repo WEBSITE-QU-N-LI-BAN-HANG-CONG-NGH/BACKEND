@@ -49,8 +49,10 @@ public class AdminDashboardService implements IAdminDashboardService {
         BigDecimal currentMonthIncome = totalMonthInCome();
         BigDecimal lastMonthIncome = getLastMonthIncome();
 
-        if (lastMonthIncome.equals(BigDecimal.ZERO)) {
-            return BigDecimal.ZERO;
+        // Tránh chia cho 0
+        if (lastMonthIncome.compareTo(BigDecimal.ZERO) == 0) {
+            return currentMonthIncome.compareTo(BigDecimal.ZERO) > 0 ?
+                    new BigDecimal(100) : BigDecimal.ZERO;
         }
 
         return currentMonthIncome
@@ -69,7 +71,6 @@ public class AdminDashboardService implements IAdminDashboardService {
 
     @Override
     public List<SellerRevenueDTO> getTopSellers(int limit) {
-
         // Lấy tất cả người dùng có vai trò SELLER
         List<User> sellers = userRepository.findAll();
         List<SellerRevenueDTO> sellerStats = new ArrayList<>();
@@ -94,12 +95,17 @@ public class AdminDashboardService implements IAdminDashboardService {
                     totalOrders += quantitySold;
                 }
             }
+
+            // Tính tỷ lệ tăng trưởng (mẫu, có thể thay bằng dữ liệu thực tế)
+            double growth = Math.random() * 30 - 10; // Giá trị giữa -10 và +20
+
             if (totalOrders > 0) {
                 SellerRevenueDTO dto = new SellerRevenueDTO(
                         sellerId,
                         seller.getLastName(),
                         totalRevenue,
-                        totalOrders
+                        totalOrders,
+                        growth
                 );
                 sellerStats.add(dto);
             }
@@ -113,26 +119,39 @@ public class AdminDashboardService implements IAdminDashboardService {
 
     @Override
     public Map<String, BigDecimal> getRevenueDistribution() {
-        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
-        LocalDate endOfMonth = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+        // Thực hiện phân tích doanh thu theo danh mục
+        List<Product> products = productRepository.findAll();
+        Map<String, BigDecimal> distribution = new HashMap<>();
 
-        List<Order> monthOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
-                startOfMonth.atStartOfDay(),
-                endOfMonth.atTime(23, 59, 59),
-                OrderStatus.DELIVERED);
+        // Nhóm sản phẩm theo danh mục và tính tổng doanh thu
+        for (Product product : products) {
+            String category = product.getCategory() != null ? product.getCategory().getName() : "Khác";
+            long sold = product.getQuantitySold() != null ? product.getQuantitySold() : 0;
+            BigDecimal revenue = BigDecimal.valueOf(product.getDiscountedPrice() * sold);
 
-        Map<String, BigDecimal> distribution = new LinkedHashMap<>();
+            distribution.put(category, distribution.getOrDefault(category, BigDecimal.ZERO).add(revenue));
+        }
 
-        // Phân bổ theo tuần
-        Map<Integer, BigDecimal> weeklyRevenue = monthOrders.stream()
-                .collect(Collectors.groupingBy(
-                        order -> order.getOrderDate().get(WeekFields.ISO.weekOfWeekBasedYear()),
-                        Collectors.mapping(order -> BigDecimal.valueOf(order.getTotalAmount()),
-                                Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
+        // Tính tổng doanh thu
+        BigDecimal totalRevenue = distribution.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        weeklyRevenue.forEach((week, amount) -> distribution.put("Week " + week, amount));
+        // Chuyển đổi thành phần trăm
+        Map<String, BigDecimal> percentages = new HashMap<>();
+        if (totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
+            for (Map.Entry<String, BigDecimal> entry : distribution.entrySet()) {
+                BigDecimal percentage = entry.getValue()
+                        .multiply(new BigDecimal(100))
+                        .divide(totalRevenue, 2, RoundingMode.HALF_UP);
+                percentages.put(entry.getKey(), percentage);
+            }
+        } else {
+            // Nếu không có doanh thu, phân phối đều
+            for (String category : distribution.keySet()) {
+                percentages.put(category, BigDecimal.valueOf(100.0 / distribution.size()));
+            }
+        }
 
-        return distribution;
+        return percentages;
     }
 
     @Override
@@ -140,7 +159,7 @@ public class AdminDashboardService implements IAdminDashboardService {
         Map<String, Object> result = new HashMap<>();
         List<Map<String, Object>> monthlyData = new ArrayList<>();
 
-        // Lấy dữ liệu 12 tháng gần nhất
+        // Lấy dữ liệu 7 tháng gần nhất
         LocalDate now = LocalDate.now();
 
         for (int i = 6; i >= 0; i--) {
@@ -161,9 +180,27 @@ public class AdminDashboardService implements IAdminDashboardService {
 
             Map<String, Object> monthData = new HashMap<>();
             monthData.put("month", month.getMonthValue());
+            monthData.put("year", month.getYear());
             monthData.put("revenue", revenue);
             monthData.put("profit", profit);
             monthData.put("orders", totalOrders);
+
+            // Tính tỷ lệ tăng trưởng nếu có tháng trước
+            if (i < 6) {
+                Map<String, Object> prevMonth = monthlyData.get(monthlyData.size() - 1);
+                BigDecimal prevRevenue = (BigDecimal) prevMonth.get("revenue");
+
+                if (prevRevenue.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal growthRate = revenue.subtract(prevRevenue)
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(prevRevenue, 2, RoundingMode.HALF_UP);
+                    monthData.put("growth", growthRate);
+                } else {
+                    monthData.put("growth", BigDecimal.ZERO);
+                }
+            } else {
+                monthData.put("growth", BigDecimal.ZERO);
+            }
 
             monthlyData.add(monthData);
         }

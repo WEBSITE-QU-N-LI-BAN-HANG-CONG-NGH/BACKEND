@@ -2,16 +2,19 @@ package com.webanhang.team_project.controller.admin;
 
 
 
+import com.webanhang.team_project.dto.order.OrderDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.service.order.IOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,9 +29,13 @@ public class AdminOrderController {
      * @return Danh sách đơn hàng
      */
     @GetMapping("/all")
+    @Transactional
     public ResponseEntity<ApiResponse> getAllOrders() {
         List<Order> orders = orderService.getAllOrders();
-        return ResponseEntity.ok(ApiResponse.success(orders, "Lấy tất cả đơn hàng thành công"));
+        List<OrderDTO> orderDTOs = orders.stream()
+                .map(order -> new OrderDTO(order))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Lấy tất cả đơn hàng thành công"));
     }
 
     /**

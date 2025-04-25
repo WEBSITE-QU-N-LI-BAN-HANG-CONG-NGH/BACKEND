@@ -1,5 +1,6 @@
 package com.webanhang.team_project.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.webanhang.team_project.enums.PaymentMethod;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.enums.OrderStatus;
@@ -30,6 +31,7 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(name = "user_id",nullable = false)
+    @JsonIgnore
     private User user;
 
     @Column(name="order_date")

@@ -45,7 +45,7 @@ public class User {
         @Size(max = 15, message = "Phone number must be less than 15 characters")
         private String phone;
 
-        @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+        @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
         private List<Address> address = new ArrayList<>();
 
         @Column(name = "created_at")

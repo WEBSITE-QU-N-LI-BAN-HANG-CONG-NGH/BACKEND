@@ -148,6 +148,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    @Transactional
     public Order confirmedOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.PENDING) {
@@ -158,6 +159,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    @Transactional
     public Order shippedOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
@@ -168,6 +170,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    @Transactional
     public Order deliveredOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() != OrderStatus.SHIPPED) {
@@ -187,6 +190,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    @Transactional
     public Order cancelOrder(Long orderId) {
         Order order = findOrderById(orderId);
         if (order.getOrderStatus() == OrderStatus.DELIVERED) {
@@ -198,6 +202,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    @Transactional
     public List<Order> getAllOrders() {
         List<Order> orders = orderRepository.findAll();
         if (orders.isEmpty()) {
@@ -207,6 +212,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    @Transactional
     public void deleteOrder(Long orderId) {
         Order order = findOrderById(orderId);
         orderRepository.delete(order);

@@ -31,9 +31,19 @@ public class AdminDashboardController {
     @GetMapping("/overview")
     public ResponseEntity<ApiResponse> getDashboardOverview() {
         Map<String, Object> response = new HashMap<>();
-        response.put("revenue", getRevenueOverview());
-        response.put("topSellers", getTopSellers());
-        response.put("distribution", getRevenueDistribution());
+
+        // Lấy dữ liệu doanh thu
+        Map<String, Object> revenueData = getRevenueOverviewData();
+        response.put("revenue", revenueData);
+
+        // Lấy danh sách người bán hàng đầu
+        List<SellerRevenueDTO> topSellers = adminDashboardService.getTopSellers(5);
+        response.put("topSellers", topSellers);
+
+        // Lấy phân phối doanh thu
+        Map<String, BigDecimal> distribution = adminDashboardService.getRevenueDistribution();
+        response.put("distribution", distribution);
+
         return ResponseEntity.ok(ApiResponse.success(response, "Get dashboard overview success"));
     }
 
@@ -44,11 +54,16 @@ public class AdminDashboardController {
      */
     @GetMapping("/revenue")
     public ResponseEntity<ApiResponse> getRevenueOverview() {
+        Map<String, Object> revenueData = getRevenueOverviewData();
+        return ResponseEntity.ok(ApiResponse.success(revenueData, "Get revenue overview success"));
+    }
+
+    private Map<String, Object> getRevenueOverviewData() {
         Map<String, Object> revenue = new HashMap<>();
         revenue.put("currentMonthIncome", adminDashboardService.totalMonthInCome());
         revenue.put("comparePercent", adminDashboardService.compareToRecentMonthIncomeByPercent());
         revenue.put("compareDifference", adminDashboardService.compareToRecentMonthIncomeByVND());
-        return ResponseEntity.ok(ApiResponse.success(revenue, "Get revenue overview success"));
+        return revenue;
     }
 
     /**

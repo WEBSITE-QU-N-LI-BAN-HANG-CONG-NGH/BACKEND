@@ -20,5 +20,6 @@ public interface IAdminDashboardService {
     // Phần 3: Phân bổ doanh thu
     Map<String, BigDecimal> getRevenueDistribution();
 
+    // Phần 4: Doanh thu theo tháng
     Map<String, Object> getMonthlyRevenue();
 }
