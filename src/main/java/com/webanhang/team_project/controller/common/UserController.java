@@ -5,14 +5,13 @@ import com.webanhang.team_project.dto.address.AddAddressRequest;
 import com.webanhang.team_project.dto.address.AddressDTO;
 import com.webanhang.team_project.dto.cart.CartDTO;
 import com.webanhang.team_project.dto.order.OrderDTO;
-import com.webanhang.team_project.dto.user.UserDTO;
-import com.webanhang.team_project.dto.user.UserProfileResponse;
+import com.webanhang.team_project.dto.role.ChangeRoleRequest;
+import com.webanhang.team_project.dto.user.*;
+import com.webanhang.team_project.enums.UserRole;
 import com.webanhang.team_project.model.Address;
 import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.User;
-import com.webanhang.team_project.dto.user.CreateUserRequest;
-import com.webanhang.team_project.dto.user.UpdateUserRequest;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.repository.UserRepository;
 import com.webanhang.team_project.service.user.IUserService;
@@ -136,8 +135,6 @@ public class UserController {
         }
     }
 
-
-
     @Transactional
     @GetMapping("/address")
     public ResponseEntity<?> getUserAddress() {
@@ -173,7 +170,6 @@ public class UserController {
         }
     }
 
-
     @PostMapping("/addresses")
     @Transactional
     public ResponseEntity<?> addUserAddress(@RequestHeader("Authorization") String jwt,
@@ -192,5 +188,32 @@ public class UserController {
 
         userService.addUserAddress(user, req);
         return ResponseEntity.ok(Map.of("message", "Address added successfully"));
+    }
+
+    @PostMapping("/change-role")
+    public ResponseEntity<ApiResponse> changeUserRole(
+            @RequestHeader("Authorization") String jwt,
+            @RequestBody ChangeRoleRequest request) {
+
+        User user = userService.findUserByJwt(jwt);
+
+        // check valid target role
+        String targetRole = request.getRole().toUpperCase();
+        if (!targetRole.equals("CUSTOMER") && !targetRole.equals("SELLER")) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid role. Only CUSTOMER or SELLER are supported"));
+        }
+
+        // check if current is role target
+        if (user.getRole().getName().name().equals(targetRole)) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Account already has role " + targetRole));
+        }
+
+        BasicUserDTO updatedUser = userService.changeUserRole(user.getId(), targetRole);
+
+        return ResponseEntity.ok(ApiResponse.success(updatedUser, "Successfully changed role to " + targetRole));
     }
 }

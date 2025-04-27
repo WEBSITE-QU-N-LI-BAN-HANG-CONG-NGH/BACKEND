@@ -3,6 +3,7 @@ package com.webanhang.team_project.service.user;
 
 import com.webanhang.team_project.dto.address.AddAddressRequest;
 import com.webanhang.team_project.dto.address.AddressDTO;
+import com.webanhang.team_project.dto.user.BasicUserDTO;
 import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.dto.user.CreateUserRequest;
@@ -25,4 +26,5 @@ public interface IUserService {
     UserDTO findUserProfileByJwt(String jwt);
 
     AddressDTO addUserAddress(User user, AddAddressRequest request);
+    BasicUserDTO changeUserRole(Long userId, String roleName);
 }

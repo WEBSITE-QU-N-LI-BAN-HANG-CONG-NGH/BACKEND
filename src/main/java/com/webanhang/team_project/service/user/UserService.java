@@ -2,6 +2,7 @@ package com.webanhang.team_project.service.user;
 
 import com.webanhang.team_project.dto.address.AddAddressRequest;
 import com.webanhang.team_project.dto.address.AddressDTO;
+import com.webanhang.team_project.dto.user.BasicUserDTO;
 import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.enums.UserRole;
 import com.webanhang.team_project.model.Address;
@@ -184,6 +185,32 @@ public class UserService implements IUserService {
         return new AddressDTO(newAddress);
     }
 
+    @Override
+    @Transactional
+    public BasicUserDTO changeUserRole(Long userId, String roleName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        UserRole userRole;
+        try {
+            userRole = UserRole.valueOf(roleName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Role not valid: " + roleName);
+        }
+
+        if (userRole == UserRole.ADMIN) {
+            throw new IllegalArgumentException("Can't change to role ADMIN");
+        }
+
+        Role role = roleRepository.findByName(userRole)
+                .orElseThrow(() -> new RuntimeException("Role " + roleName + " not found"));
+        user.setRole(role);
+
+        User res = userRepository.save(user);
+        BasicUserDTO userDTO = convertToBasicDto(res);
+        return userDTO;
+    }
+
     public void forgotPassword(String email, String newPassword) {
         User user = userRepository.findByEmail(email);
         if (user == null) {
@@ -191,5 +218,21 @@ public class UserService implements IUserService {
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+
+    public BasicUserDTO convertToBasicDto(User user) {
+        BasicUserDTO dto = new BasicUserDTO();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setMobile(user.getPhone());
+        dto.setActive(user.isActive());
+        dto.setRole(user.getRole() != null && user.getRole().getName() != null ?
+                user.getRole().getName().name() : "UNKNOWN");
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setImageUrl(user.getImageUrl());
+        dto.setOauthProvider(user.getOauthProvider());
+        return dto;
     }
 }
