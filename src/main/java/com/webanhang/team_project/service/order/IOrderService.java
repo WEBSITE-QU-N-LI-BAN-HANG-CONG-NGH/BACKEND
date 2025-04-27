@@ -24,4 +24,5 @@ public interface IOrderService {
     public List<Order> getAllOrders();
     public void deleteOrder(Long orderId);
     public Map<String, Object> getOrderStatistics(LocalDate start, LocalDate end);
+    List<Order> getAllOrdersByJF();
 }

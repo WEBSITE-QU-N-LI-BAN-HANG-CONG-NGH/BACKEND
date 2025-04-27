@@ -37,21 +37,6 @@ public class UserController {
     private final IUserService userService;
     private final UserRepository userRepository;
 
-
-//    @GetMapping("/{userId}")
-//    public ResponseEntity<ApiResponse> getUserById(@PathVariable Long userId) {
-//        User user = userService.getUserById(userId);
-//        UserDTO userDto = userService.convertUserToDto(user);
-//        return ResponseEntity.ok(ApiResponse.success(userDto, "Found!"));
-//    }
-
-//    @PostMapping("/add")
-//    public ResponseEntity<ApiResponse> createUser(@RequestBody CreateUserRequest request) {
-//        User user = userService.createUser(request);
-//        UserDTO userDto = userService.convertUserToDto(user);
-//        return ResponseEntity.ok(ApiResponse.success(userDto, "Create User Success!"));
-//    }
-
     @PutMapping("/{userId}/update")
     public ResponseEntity<ApiResponse> updateUser(@RequestBody UpdateUserRequest request, @PathVariable Long userId) {
         User user = userService.updateUser(request, userId);
@@ -153,6 +138,7 @@ public class UserController {
 
 
 
+    @Transactional
     @GetMapping("/address")
     public ResponseEntity<?> getUserAddress() {
         try {
@@ -189,6 +175,7 @@ public class UserController {
 
 
     @PostMapping("/addresses")
+    @Transactional
     public ResponseEntity<?> addUserAddress(@RequestHeader("Authorization") String jwt,
                                             @RequestBody AddAddressRequest req) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

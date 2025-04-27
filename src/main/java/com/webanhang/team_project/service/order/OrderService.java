@@ -263,4 +263,11 @@ public class OrderService implements IOrderService {
         
         return result;
     }
+
+    @Override
+    @Transactional
+    public List<Order> getAllOrdersByJF() {
+        // Sử dụng JPQL với JOIN FETCH để lấy thông tin User cùng với Order
+        return orderRepository.findAllWithUser();
+    }
 }

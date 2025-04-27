@@ -74,38 +74,34 @@ public class AdminDashboardService implements IAdminDashboardService {
         // Lấy tất cả người dùng có vai trò SELLER
         List<User> sellers = userRepository.findAll();
         List<SellerRevenueDTO> sellerStats = new ArrayList<>();
-        List<Product> allProducts = productRepository.findAll();
+        List<Order> completedOrders = orderRepository.findByOrderStatus(OrderStatus.DELIVERED);
 
-        // Tạo thống kê cho mỗi người bán dựa trên quantitySold
+        // Tạo map để theo dõi doanh thu của mỗi người bán
+        Map<Long, BigDecimal> sellerRevenue = new HashMap<>();
+        Map<Long, Integer> sellerOrderCount = new HashMap<>();
+
+        // Tính toán doanh thu từ các đơn hàng
+        for (Order order : completedOrders) {
+            if (order.getUser() != null) {
+                Long sellerId = order.getUser().getId();
+                BigDecimal orderAmount = BigDecimal.valueOf(order.getTotalAmount());
+
+                // Cập nhật doanh thu và số lượng đơn hàng
+                sellerRevenue.put(sellerId, sellerRevenue.getOrDefault(sellerId, BigDecimal.ZERO).add(orderAmount));
+                sellerOrderCount.put(sellerId, sellerOrderCount.getOrDefault(sellerId, 0) + 1);
+            }
+        }
+
+        // Tạo DTO cho mỗi người bán
         for (User seller : sellers) {
             Long sellerId = seller.getId();
-            BigDecimal totalRevenue = BigDecimal.ZERO;
-            int totalOrders = 0;
-
-            // Tính doanh thu dựa trên số lượng đã bán của sản phẩm
-            for (Product product : allProducts) {
-                if (product.getCategory() != null &&
-                        product.getCategory().getProducts() != null &&
-                        product.getCategory().getProducts().stream()
-                                .anyMatch(p -> p.getId().equals(sellerId))) {
-
-                    long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
-                    BigDecimal productRevenue = BigDecimal.valueOf(product.getDiscountedPrice() * quantitySold);
-                    totalRevenue = totalRevenue.add(productRevenue);
-                    totalOrders += quantitySold;
-                }
-            }
-
-            // Tính tỷ lệ tăng trưởng (mẫu, có thể thay bằng dữ liệu thực tế)
-            double growth = Math.random() * 30 - 10; // Giá trị giữa -10 và +20
-
-            if (totalOrders > 0) {
+            if (sellerRevenue.containsKey(sellerId)) {
                 SellerRevenueDTO dto = new SellerRevenueDTO(
                         sellerId,
                         seller.getLastName(),
-                        totalRevenue,
-                        totalOrders,
-                        growth
+                        sellerRevenue.get(sellerId),
+                        sellerOrderCount.get(sellerId),
+                        0.0 // Có thể tính toán tỷ lệ tăng trưởng nếu cần
                 );
                 sellerStats.add(dto);
             }

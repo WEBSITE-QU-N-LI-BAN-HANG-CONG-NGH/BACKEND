@@ -1,6 +1,7 @@
 package com.webanhang.team_project.dto.user;
 
 import com.webanhang.team_project.model.Address;
+import com.webanhang.team_project.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,5 +24,14 @@ public class UserDTO {
     private LocalDateTime createdAt;
     private String imageUrl;
     private String oauthProvider;
+
+    // constructor for orderdetailDTO
+    public UserDTO(User user) {
+        this.id = user.getId();
+        this.firstName = user.getFirstName();
+        this.lastName = user.getLastName();
+        this.email = user.getEmail();
+        this.mobile = user.getPhone();
+    }
 }
 

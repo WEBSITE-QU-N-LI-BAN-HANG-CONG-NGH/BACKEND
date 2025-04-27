@@ -3,6 +3,7 @@ package com.webanhang.team_project.controller.admin;
 
 
 import com.webanhang.team_project.dto.order.OrderDTO;
+import com.webanhang.team_project.dto.order.OrderDetailDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.service.order.IOrderService;
@@ -31,9 +32,9 @@ public class AdminOrderController {
     @GetMapping("/all")
     @Transactional
     public ResponseEntity<ApiResponse> getAllOrders() {
-        List<Order> orders = orderService.getAllOrders();
-        List<OrderDTO> orderDTOs = orders.stream()
-                .map(order -> new OrderDTO(order))
+        List<Order> orders = orderService.getAllOrdersByJF();
+        List<OrderDetailDTO> orderDTOs = orders.stream()
+                .map(order -> new OrderDetailDTO(order))
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Lấy tất cả đơn hàng thành công"));
     }

@@ -98,8 +98,8 @@ public class SecurityConfig {
                         .failureHandler(oAuth2FailureHandler))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new CloudflareFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new RateLimitFilter(), CloudflareFilter.class);
+                .addFilterBefore(new CloudflareFilter(), UsernamePasswordAuthenticationFilter.class);
+//                .addFilterBefore(new RateLimitFilter(), CloudflareFilter.class);
         return http.build();
     }
 }
