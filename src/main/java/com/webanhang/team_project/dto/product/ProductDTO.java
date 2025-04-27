@@ -35,6 +35,9 @@ public class ProductDTO {
     private Long quantitySold;
     private Integer discountPercent;
 
+    // Thêm trường sellerId để hiển thị thông tin người bán
+    private Long sellerId;
+
     // Constructor để chuyển đổi từ Product entity
     public ProductDTO(Product product) {
         this.id = product.getId();
@@ -76,6 +79,9 @@ public class ProductDTO {
 
         // Lấy số lượng đánh giá
         this.numRatings = product.getNumRating();
+        // Thêm sellerId
+        this.sellerId = product.getSellerId();
+
 
         // Xử lý categories
         Category category = product.getCategory();

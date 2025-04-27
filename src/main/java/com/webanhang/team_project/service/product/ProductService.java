@@ -89,6 +89,11 @@ public class ProductService implements IProductService {
         product.setQuantity(req.getQuantity());
         product.setImages(req.getImageUrls());
 
+        // Lưu sellerId nếu có
+        if (req.getSellerId() != null) {
+            product.setSellerId(req.getSellerId());
+        }
+
         // Cập nhật discountedPrice dựa vào price và discountPersent
         product.updateDiscountedPrice();
 

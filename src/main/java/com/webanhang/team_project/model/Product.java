@@ -83,6 +83,9 @@ public class Product {
     @JsonIgnore
     private List<Review> reviews = new ArrayList<>();
 
+    @JoinColumn(name = "seller_id")
+    private Long sellerId;
+
     // so luong danh gia
     @Formula("(SELECT COUNT(r.id) FROM review r WHERE r.product_id = id)")
     private int numRating;

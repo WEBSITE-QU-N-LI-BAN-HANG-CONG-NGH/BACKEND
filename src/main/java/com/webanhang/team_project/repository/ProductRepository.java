@@ -25,4 +25,36 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p ORDER BY p.quantitySold DESC")
     List<Product> findTopSellingProducts(Pageable pageable);
+
+    Product getProductById(Long productId);
+    // Tìm tất cả sản phẩm theo danh mục
+    List<Product> findByCategoryName(String categoryName);
+
+    // Tìm sản phẩm theo phần tên (cho tìm kiếm)
+    List<Product> findByTitleContaining(String productName);
+
+    // Tìm sản phẩm theo người bán (sử dụng sellerId)
+    List<Product> findBySellerId(Long sellerId);
+
+    // Tìm sản phẩm theo ID và người bán
+    Product findByIdAndSellerId(Long productId, Long sellerId);
+
+    // Tìm sản phẩm bán chạy nhất của người bán
+    @Query("SELECT p FROM Product p WHERE p.sellerId = :sellerId ORDER BY p.quantitySold DESC")
+    List<Product> findTopSellingProductsBySeller(@Param("sellerId") Long sellerId, Pageable pageable);
+
+    // Tìm sản phẩm theo khoảng giá
+    @Query("SELECT p FROM Product p WHERE p.sellerId = :sellerId AND p.price BETWEEN :minPrice AND :maxPrice")
+    List<Product> findBySellerIdAndPriceBetween(
+            @Param("sellerId") Long sellerId,
+            @Param("minPrice") int minPrice,
+            @Param("maxPrice") int maxPrice);
+
+    // Tính tổng số sản phẩm đã bán của một người bán
+    @Query("SELECT SUM(p.quantitySold) FROM Product p WHERE p.sellerId = :sellerId")
+    Long sumQuantitySoldBySellerId(@Param("sellerId") Long sellerId);
+
+    // Tính tổng doanh thu của một người bán
+    @Query("SELECT SUM(p.discountedPrice * p.quantitySold) FROM Product p WHERE p.sellerId = :sellerId")
+    Integer calculateTotalRevenueBySellerId(@Param("sellerId") Long sellerId);
 }

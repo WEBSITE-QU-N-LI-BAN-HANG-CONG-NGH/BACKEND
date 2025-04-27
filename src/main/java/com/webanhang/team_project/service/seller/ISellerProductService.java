@@ -1,14 +1,25 @@
 package com.webanhang.team_project.service.seller;
 
 import com.webanhang.team_project.dto.product.CreateProductRequest;
+import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.model.Product;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
+import java.util.Map;
+
 public interface ISellerProductService {
-    Page<Product> getSellerProducts(Long sellerId, int page, int size, String search);
-    Product createProduct(Long sellerId, CreateProductRequest request);
-    Product getProductDetail(Long sellerId, Long productId);
-    Product updateProduct(Long sellerId, Long productId, Product product);
-    void deleteProduct(Long sellerId, Long productId);
-    Product updateInventory(Long sellerId, Long productId, int quantity);
+    ProductDTO createProduct(CreateProductRequest request);
+
+    ProductDTO updateProduct(Long productId, Product product);
+
+    void deleteProduct(Long productId);
+
+    List<ProductDTO> getSellerProducts(Long sellerId);
+
+    ProductDTO getProductDetail(Long productId);
+
+    Map<String, Object> getProductStatOfSeller(Long sellerId);
+
+    List<ProductDTO> createMultipleProducts(List<CreateProductRequest> requests);
 }

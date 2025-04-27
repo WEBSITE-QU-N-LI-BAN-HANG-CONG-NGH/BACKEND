@@ -7,6 +7,7 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class CreateProductRequest {
@@ -50,5 +51,6 @@ public class CreateProductRequest {
     @NotBlank(message = "Second level category is required")
     private String secondLevelCategory;
 
-
+    private Long sellerId;
+//    private List<Map<String, Object>> sizes = new ArrayList<>();
 }

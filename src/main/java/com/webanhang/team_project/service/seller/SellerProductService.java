@@ -1,10 +1,13 @@
 package com.webanhang.team_project.service.seller;
 
 import com.webanhang.team_project.dto.product.CreateProductRequest;
+import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.model.*;
 import com.webanhang.team_project.repository.*;
+import com.webanhang.team_project.service.product.IProductService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,269 +33,223 @@ public class SellerProductService implements ISellerProductService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
-
-    @Override
-    public Page<Product> getSellerProducts(Long sellerId, int page, int size, String search) {
-        Pageable pageable = PageRequest.of(page, size);
-
-        // Đảm bảo người bán tồn tại
-        User seller = userRepository.findById(sellerId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người bán"));
-
-        // Lấy tất cả sản phẩm
-        List<Product> allProducts = productRepository.findAll();
-
-        // Lọc sản phẩm của người bán
-        List<Product> sellerProducts = allProducts.stream()
-                .filter(product -> product.getCategory() != null &&
-                        product.getCategory().getProducts() != null &&
-                        product.getCategory().getProducts().stream()
-                                .anyMatch(p -> p.getId().equals(sellerId)))
-                .collect(Collectors.toList());
-
-        // Tìm kiếm nếu có từ khóa
-        if (search != null && !search.isEmpty()) {
-            sellerProducts = sellerProducts.stream()
-                    .filter(product ->
-                            (product.getTitle() != null && product.getTitle().toLowerCase().contains(search.toLowerCase())) ||
-                                    (product.getDescription() != null && product.getDescription().toLowerCase().contains(search.toLowerCase())) ||
-                                    (product.getBrand() != null && product.getBrand().toLowerCase().contains(search.toLowerCase()))
-                    )
-                    .collect(Collectors.toList());
-        }
-
-        // Phân trang kết quả
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), sellerProducts.size());
-
-        return new PageImpl<>(
-                sellerProducts.subList(start, end),
-                pageable,
-                sellerProducts.size()
-        );
-    }
+    private final IProductService productService;
 
     @Override
     @Transactional
-    public Product createProduct(Long sellerId, CreateProductRequest request) {
-        // Đảm bảo người bán tồn tại
-        User seller = userRepository.findById(sellerId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người bán"));
+    public ProductDTO createProduct(CreateProductRequest req)  {
+        // Xử lý category theo cấp bậc mới (tối đa 2 cấp)
+        Category parentCategory = null;
+        Category category = null;
 
-        // Xử lý category
-        Category topLevel = categoryRepository.findByName(request.getTopLevelCategory());
-        if(topLevel == null) {
-            topLevel = new Category();
-            topLevel.setName(request.getTopLevelCategory());
-            topLevel.setLevel(1);
-            topLevel = categoryRepository.save(topLevel);
+        // Xử lý cấp 1 (parent category)
+        if (req.getTopLevelCategory() != null && !req.getTopLevelCategory().isEmpty()) {
+            parentCategory = categoryRepository.findByName(req.getTopLevelCategory());
+            if (parentCategory == null) {
+                parentCategory = new Category();
+                parentCategory.setName(req.getTopLevelCategory());
+                parentCategory.setLevel(1);
+                parentCategory.setParent(true);
+                parentCategory = categoryRepository.save(parentCategory);
+            } else if (parentCategory.getLevel() != 1) {
+                throw new IllegalArgumentException("Top level category must have level 1");
+            }
+
+            // Xử lý cấp 2 (nếu có)
+            if (req.getSecondLevelCategory() != null && !req.getSecondLevelCategory().isEmpty()) {
+                category = categoryRepository.findByName(req.getSecondLevelCategory());
+                if (category == null) {
+                    category = new Category();
+                    category.setName(req.getSecondLevelCategory());
+                    category.setLevel(2);
+                    category.setParent(false);
+                    category.setParentCategory(parentCategory);
+                    category = categoryRepository.save(category);
+                } else if (category.getLevel() != 2) {
+                    throw new IllegalArgumentException("Second level category must have level 2");
+                }
+            } else {
+                // Nếu không có cấp 2, sử dụng cấp 1
+                category = parentCategory;
+            }
         }
-
-        Category secondLevel = categoryRepository.findByName(request.getSecondLevelCategory());
-        if(secondLevel == null) {
-            secondLevel = new Category();
-            secondLevel.setName(request.getSecondLevelCategory());
-            secondLevel.setLevel(2);
-            secondLevel.setParentCategory(topLevel);
-            secondLevel = categoryRepository.save(secondLevel);
-        }
-
 
         // Tạo sản phẩm mới
         Product product = new Product();
-        product.setTitle(request.getTitle());
-        product.setDescription(request.getDescription());
-        product.setPrice(request.getPrice());
-        product.setDiscountPersent(request.getDiscountPersent());
-        product.setDiscountedPrice(request.getPrice() - (request.getPrice() * request.getDiscountPersent() / 100));
-        product.setQuantity(request.getQuantity());
-        product.setBrand(request.getBrand());
-        product.setColor(request.getColor());
-        product.setCategory(secondLevel);
+        product.setTitle(req.getTitle());
+        product.setDescription(req.getDescription());
+        product.setPrice(req.getPrice());
+        product.setDiscountPersent(req.getDiscountPersent());
+        product.setBrand(req.getBrand());
+        product.setColor(req.getColor());
         product.setCreatedAt(LocalDateTime.now());
+        product.setQuantity(req.getQuantity());
+        product.setImages(req.getImageUrls());
+
+        // Lưu sellerId nếu có
+        if (req.getSellerId() != null) {
+            product.setSellerId(req.getSellerId());
+        }
+
+        // Cập nhật discountedPrice dựa vào price và discountPersent
+        product.updateDiscountedPrice();
+
+        // Gán category cho sản phẩm (sẽ là cấp 2 nếu có, nếu không thì là cấp 1)
+        product.setCategory(category);
 
         // Xử lý sizes
-        if (request.getSizes() != null) {
-            for (ProductSize size : request.getSizes()) {
+        if (req.getSizes() != null) {
+            for (ProductSize size : req.getSizes()) {
                 size.setProduct(product);
             }
-            product.setSizes(request.getSizes());
+            product.setSizes(req.getSizes());
         }
 
-        // Lưu sản phẩm trước để có ID
-        product =  productRepository.save(product);
-        // Xử lý danh sách hình ảnh
-        List<Image> images = new ArrayList<>();
-
-        // Ưu tiên sử dụng danh sách hình ảnh mới
-//        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
-//            for (String imageUrl : request.getImageUrls()) {
-//                Image image = new Image();
-//                image.setProduct(product);
-//                image.setDownloadUrl(imageUrl);
-//                image.setFileName(extractFilenameFromUrl(imageUrl));
-//                image.setFileType(determineFileTypeFromUrl(imageUrl));
-//                images.add(image);
-//            }
-//        }
-//        // Fallback vào imageUrl cũ nếu không có danh sách
-//        else if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
-//            Image image = new Image();
-//            image.setProduct(product);
-//            image.setDownloadUrl(request.getImageUrl());
-//            image.setFileName(extractFilenameFromUrl(request.getImageUrl()));
-//            image.setFileType(determineFileTypeFromUrl(request.getImageUrl()));
-//            images.add(image);
-//        }
-
-        if (!images.isEmpty()) {
-            product.setImages(images);
+        // xu ly hinh anh
+        if (req.getImageUrls() != null && !req.getImageUrls().isEmpty()) {
+            for (Image imageUrl : req.getImageUrls()) {
+                imageUrl.setProduct(product);
+            }
+            product.setImages(req.getImageUrls());
         }
+        product = productRepository.save(product);
+        ProductDTO productDto = new ProductDTO(product);
 
-        return productRepository.save(product);
-    }
-
-    @Override
-    public Product getProductDetail(Long sellerId, Long productId) {
-        // Đảm bảo người bán tồn tại
-        userRepository.findById(sellerId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người bán"));
-
-        // Lấy sản phẩm
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-
-        // Kiểm tra sản phẩm thuộc người bán
-        if (product.getCategory() == null ||
-                product.getCategory().getProducts() == null ||
-                product.getCategory().getProducts().stream()
-                        .noneMatch(p -> p.getId().equals(sellerId))) {
-            throw new RuntimeException("Sản phẩm không thuộc người bán này");
-        }
-
-        return product;
+        return productDto;
     }
 
     @Override
     @Transactional
-    public Product updateProduct(Long sellerId, Long productId, Product productRequest) {
-        // Kiểm tra sản phẩm
-        Product existingProduct = getProductDetail(sellerId, productId);
+    public ProductDTO updateProduct(Long productId, Product product)  {
+        Product existingProduct = productRepository.getProductById(productId);
 
-        // Cập nhật thông tin
-        if (productRequest.getTitle() != null) {
-            existingProduct.setTitle(productRequest.getTitle());
+        // Cập nhật các thuộc tính cơ bản
+        if (product.getTitle() != null) {
+            existingProduct.setTitle(product.getTitle());
         }
-        if (productRequest.getDescription() != null) {
-            existingProduct.setDescription(productRequest.getDescription());
+        if (product.getDescription() != null) {
+            existingProduct.setDescription(product.getDescription());
         }
-        if (productRequest.getPrice() > 0) {
-            existingProduct.setPrice(productRequest.getPrice());
-            // Cập nhật giá sau giảm giá
-            existingProduct.updateDiscountedPrice();
+        if (product.getBrand() != null) {
+            existingProduct.setBrand(product.getBrand());
         }
-        if (productRequest.getDiscountPersent() >= 0) {
-            existingProduct.setDiscountPersent(productRequest.getDiscountPersent());
-            // Cập nhật giá sau giảm giá
-            existingProduct.updateDiscountedPrice();
+        if (product.getColor() != null) {
+            existingProduct.setColor(product.getColor());
         }
-        if (productRequest.getQuantity() >= 0) {
-            existingProduct.setQuantity(productRequest.getQuantity());
-        }
-        if (productRequest.getBrand() != null) {
-            existingProduct.setBrand(productRequest.getBrand());
-        }
-        if (productRequest.getColor() != null) {
-            existingProduct.setColor(productRequest.getColor());
-        }
-        // Cập nhật danh sách hình ảnh nếu có
-        if (productRequest.getImages() != null && !productRequest.getImages().isEmpty()) {
-            // Xóa hình ảnh cũ
+
+        // Xử lý danh sách hình ảnh mới
+        if (product.getImages() != null && !product.getImages().isEmpty()) {
+            // Xóa tất cả hình ảnh cũ
             existingProduct.getImages().clear();
 
             // Thêm hình ảnh mới
-            for (Image image : productRequest.getImages()) {
+            for (Image image : product.getImages()) {
                 image.setProduct(existingProduct);
                 existingProduct.getImages().add(image);
             }
         }
 
-        // Cập nhật sizes nếu có
-        if (productRequest.getSizes() != null && !productRequest.getSizes().isEmpty()) {
-            // Xóa sizes cũ
-            existingProduct.getSizes().clear();
-
-            // Thêm sizes mới
-            for (ProductSize size : productRequest.getSizes()) {
-                size.setProduct(existingProduct);
-                existingProduct.getSizes().add(size);
-            }
+        // Cập nhật giá và giảm giá
+        if (product.getPrice() > 0) {
+            existingProduct.setPrice(product.getPrice());
+        }
+        if (product.getDiscountPersent() >= 0) {
+            existingProduct.setDiscountPersent(product.getDiscountPersent());
         }
 
-        return productRepository.save(existingProduct);
-    }
-
-    @Override
-    @Transactional
-    public void deleteProduct(Long sellerId, Long productId) {
-        // Kiểm tra sản phẩm
-        Product product = getProductDetail(sellerId, productId);
-
-        // Xóa sản phẩm
-        productRepository.delete(product);
-    }
-
-    @Override
-    @Transactional
-    public Product updateInventory(Long sellerId, Long productId, int quantity) {
-        // Kiểm tra sản phẩm
-        Product product = getProductDetail(sellerId, productId);
+        // Cập nhật discountedPrice
+        existingProduct.updateDiscountedPrice();
 
         // Cập nhật số lượng
-        product.setQuantity(quantity);
+        if (product.getQuantity() >= 0) {
+            existingProduct.setQuantity(product.getQuantity());
+        }
 
-        return productRepository.save(product);
+        // Cập nhật category nếu có thay đổi
+        if (product.getCategory() != null && product.getCategory().getId() != null) {
+            Category category = categoryRepository.findById(product.getCategory().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+            existingProduct.setCategory(category);
+        }
+
+        Product res = productRepository.save(existingProduct);
+        ProductDTO productDto = new ProductDTO(res);
+
+        return productDto;
     }
 
-    private String extractFilenameFromUrl(String url) {
-        if (url == null || url.isEmpty()) {
-            return "unknown";
-        }
-
-        // Lấy tên file từ URL
-        String[] parts = url.split("/");
-        if (parts.length > 0) {
-            String fileName = parts[parts.length - 1];
-            // Xử lý trường hợp có query parameters
-            if (fileName.contains("?")) {
-                fileName = fileName.substring(0, fileName.indexOf("?"));
-            }
-            return fileName;
-        }
-
-        return "image_" + System.currentTimeMillis();
+    @Override
+    @Transactional
+    public void deleteProduct(Long productId) {
+        productService.deleteProduct(productId);
     }
 
-    private String determineFileTypeFromUrl(String url) {
-        if (url == null || url.isEmpty()) {
-            return "image/jpeg"; // Mặc định
+    @Override
+    public List<ProductDTO> getSellerProducts(Long sellerId) {
+        List<Product> products = productRepository.findBySellerId(sellerId);
+        List<ProductDTO> productDTOs = products.stream()
+                .map(ProductDTO::new)
+                .toList();
+
+        return productDTOs;
+    }
+
+    @Override
+    public ProductDTO getProductDetail(Long productId) {
+        Product product = productService.findProductById(productId);
+        ProductDTO productDTO = new ProductDTO(product);
+        return productDTO;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> getProductStatOfSeller(Long sellerId) {
+
+        List<Product> products = productRepository.findBySellerId(sellerId);
+
+        Map<String, Object> stats = new HashMap<>();
+
+        // Tổng số sản phẩm
+        stats.put("totalProducts", products.size());
+
+        // Tổng số lượng đã bán
+        long totalSold = products.stream()
+                .filter(p -> p.getQuantitySold() != null)
+                .mapToLong(Product::getQuantitySold)
+                .sum();
+        stats.put("totalSold", totalSold);
+
+        // Tổng doanh thu
+        int totalRevenue = products.stream()
+                .filter(p -> p.getQuantitySold() != null)
+                .mapToInt(p -> p.getDiscountedPrice() * p.getQuantitySold().intValue())
+                .sum();
+        stats.put("totalRevenue", totalRevenue);
+
+        // Sản phẩm bán chạy nhất
+        Product bestSeller = products.stream()
+                .filter(p -> p.getQuantitySold() != null && p.getQuantitySold() > 0)
+                .max((p1, p2) -> p1.getQuantitySold().compareTo(p2.getQuantitySold()))
+                .orElse(null);
+
+        if (bestSeller != null) {
+            Map<String, Object> bestSellerInfo = new HashMap<>();
+            bestSellerInfo.put("id", bestSeller.getId());
+            bestSellerInfo.put("title", bestSeller.getTitle());
+            bestSellerInfo.put("sold", bestSeller.getQuantitySold());
+            bestSellerInfo.put("revenue", bestSeller.getDiscountedPrice() * bestSeller.getQuantitySold());
+            stats.put("bestSeller", bestSellerInfo);
         }
+        return stats;
+    }
 
-        String fileName = extractFilenameFromUrl(url).toLowerCase();
-
-        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
-            return "image/jpeg";
-        } else if (fileName.endsWith(".png")) {
-            return "image/png";
-        } else if (fileName.endsWith(".gif")) {
-            return "image/gif";
-        } else if (fileName.endsWith(".webp")) {
-            return "image/webp";
-        } else if (fileName.endsWith(".svg")) {
-            return "image/svg+xml";
-        }
-
-        return "image/jpeg"; // Mặc định nếu không xác định được
+    @Override
+    @Transactional
+    public List<ProductDTO> createMultipleProducts(List<CreateProductRequest> requests) {
+        return requests.stream()
+                .map(req -> productService.createProduct(req))
+                .map(product -> new ProductDTO(product))
+                .toList();
     }
 }
 
