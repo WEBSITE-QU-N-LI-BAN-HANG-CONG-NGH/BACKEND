@@ -87,12 +87,11 @@ public class Product {
     private Long sellerId;
 
     // so luong danh gia
-    @Formula("(SELECT COUNT(r.id) FROM review r WHERE r.product_id = id)")
-    private int numRating;
+    @Column(name = "num_ratings", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private int numRatings = 0; // Đổi tên và đặt giá trị mặc định
 
-    // average rating
-    @Formula("(SELECT COALESCE(AVG(r.rating), 0.0) FROM review r WHERE r.product_id = id)") // Dùng 0.0 cho double
-    private double averageRating;
+    @Column(name = "average_rating", nullable = false, columnDefinition = "DOUBLE DEFAULT 0.0")
+    private double averageRating = 0.0; // Đặt giá trị mặc định
 
 //
     @Column(name = "quantity_sold")

@@ -7,6 +7,8 @@ import com.webanhang.team_project.repository.CategoryRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -58,7 +60,10 @@ public class CategoryService implements ICategoryService {
 
     @Override
     public List<Category> getChildTopCategories(String topCategory) {
-        return categoryRepository.findByParentCategoryName(topCategory);
+        // Tạo đối tượng Pageable yêu cầu trang đầu tiên (index 0) với 5 phần tử
+        Pageable limit = PageRequest.of(0, 5);
+        // Gọi phương thức repository đã sửa đổi
+        return categoryRepository.findByParentCategoryNameIgnoreCase(topCategory, limit);
     }
 
 //    @Override

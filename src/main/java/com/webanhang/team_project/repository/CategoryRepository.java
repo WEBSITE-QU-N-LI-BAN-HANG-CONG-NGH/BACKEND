@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +31,5 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByParentCategoryId(Long parentId);
 
     // Tìm kiếm danh mục con có tên là danh mục cha đã cho
-    @Query("SELECT c FROM Category c WHERE LOWER(c.parentCategory.name) = LOWER(:parentCategoryName)")
-    List<Category> findByParentCategoryName(@Param("parentCategoryName") String parentCategoryName);
-
+    List<Category> findByParentCategoryNameIgnoreCase(String parentCategoryName, Pageable pageable);
 }

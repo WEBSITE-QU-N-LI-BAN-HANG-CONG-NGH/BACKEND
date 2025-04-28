@@ -85,7 +85,7 @@ public class AdminReportService implements IAdminReportService {
 
         // Số lượng sản phẩm có rating cao
         long highRatedProducts = products.stream()
-                .filter(p -> p.getNumRating() >= 4)
+                .filter(p -> p.getNumRatings() >= 4)
                 .count();
 
         result.put("highRatedProducts", highRatedProducts);

@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Formula;
 
 @Getter
 @Setter
@@ -42,5 +43,25 @@ public class Review {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Formula("(SELECT COUNT(r.id) FROM review r WHERE r.product_id = product_id AND r.rating = 1)")
+    @JsonIgnore
+    private Integer oneStarCount;
+
+    @Formula("(SELECT COUNT(r.id) FROM review r WHERE r.product_id = product_id AND r.rating = 2)")
+    @JsonIgnore
+    private Integer twoStarCount;
+
+    @Formula("(SELECT COUNT(r.id) FROM review r WHERE r.product_id = product_id AND r.rating = 3)")
+    @JsonIgnore
+    private Integer threeStarCount;
+
+    @Formula("(SELECT COUNT(r.id) FROM review r WHERE r.product_id = product_id AND r.rating = 4)")
+    @JsonIgnore
+    private Integer fourStarCount;
+
+    @Formula("(SELECT COUNT(r.id) FROM review r WHERE r.product_id = product_id AND r.rating = 5)")
+    @JsonIgnore
+    private Integer fiveStarCount;
 
 }

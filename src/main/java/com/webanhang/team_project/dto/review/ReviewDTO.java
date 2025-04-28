@@ -9,6 +9,7 @@ public class ReviewDTO {
     private Long id;
     private String review;
     private Long productId;
+    private Long userId;
     private String userFirstName;
     private String userLastName;
     private LocalDateTime createdAt;
@@ -22,5 +23,6 @@ public class ReviewDTO {
         this.userLastName = review.getUser().getLastName();
         this.createdAt = review.getCreatedAt();
         this.rating = review.getRating();
+        this.userId = review.getUser().getId();
     }
 } 

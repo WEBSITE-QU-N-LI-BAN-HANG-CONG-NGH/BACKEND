@@ -103,33 +103,76 @@ public class CartService implements ICartService {
         return cartRepository.save(cart);
     }
 
+    // Trong CartServiceImpl.java (hoặc tương đương)
     @Override
-    public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req) {
-        Cart cart = findUserCart(userId);
+    @Transactional // Đảm bảo các thao tác DB trong cùng transaction
+    public Cart updateCartItem(Long userId, Long itemId, AddItemRequest req) { // Giữ AddItemRequest vì Controller đang dùng nó
+        // Hoặc tốt hơn là tạo một DTO mới chỉ chứa quantity: CartItemQuantityUpdateRequest
+        // public Cart updateCartItem(Long userId, Long itemId, CartItemQuantityUpdateRequest req) {
+
+        // 1. Tìm giỏ hàng của user (vẫn cần thiết)
+        Cart cart = findUserCart(userId); // Hàm này cần đảm bảo hoạt động đúng
+
+        // 2. Tìm CartItem cần cập nhật bằng itemId
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
-        
-        Product product = productService.findProductById(req.getProductId());
+                .orElseThrow(() -> new RuntimeException("Cart item not found with id: " + itemId)); // Dùng exception cụ thể hơn
 
-        ProductSize productSize = product.getSizes().stream()
-                .filter(ps -> ps.getName().equals(req.getSize()))
-                .findFirst()
-                .orElse(null);
-
-        if (req.getQuantity() > productSize.getQuantity()) {
-            throw new RuntimeException("Số lượng sản phẩm không đủ trong kho");
-        }
-
+        // 3. Kiểm tra xem CartItem có thuộc về giỏ hàng của user không
         if (!item.getCart().getId().equals(cart.getId())) {
-            throw new RuntimeException("Cart item does not belong to user");
+            throw new RuntimeException("Cart item does not belong to the current user's cart."); // Dùng exception cụ thể
         }
 
-        item.setQuantity(req.getQuantity());
+        // 4. Lấy số lượng mới từ request
+        Integer newQuantity = req.getQuantity(); // Lấy quantity từ request DTO
+        if (newQuantity == null || newQuantity < 1) {
+            throw new RuntimeException("Quantity must be greater than 0."); // Validate số lượng
+        }
+
+        // 5. *** QUAN TRỌNG: Kiểm tra số lượng tồn kho ***
+        // Cần lấy thông tin Product và ProductSize liên quan đến CartItem *hiện tại*
+        // Không nên dựa vào productId/size từ request body (vì nó không được gửi hoặc không cần thiết)
+        Product product = item.getProduct(); // Lấy Product từ CartItem
+        String itemSizeName = item.getSize(); // Lấy Size từ CartItem
+
+        if (product == null) {
+            throw new RuntimeException("Product associated with cart item not found."); // Lỗi dữ liệu nếu product null
+        }
+
+        // Tìm ProductSize tương ứng với size của CartItem
+        ProductSize productSize = product.getSizes().stream()
+                .filter(ps -> ps.getName().equals(itemSizeName))
+                .findFirst()
+                .orElse(null); // Hoặc .orElseThrow nếu size bắt buộc phải tồn tại
+
+        if (productSize == null) {
+            throw new RuntimeException("Size '" + itemSizeName + "' not found for product " + product.getId());
+        }
+
+        // Kiểm tra số lượng tồn kho so với số lượng MỚI yêu cầu
+        if (newQuantity > productSize.getQuantity()) {
+            throw new RuntimeException("Số lượng sản phẩm '" + product.getTitle() + "' size '" + itemSizeName + "' không đủ trong kho (Còn lại: " + productSize.getQuantity() + ")");
+        }
+        // *************************************************
+
+        // 6. Cập nhật số lượng cho CartItem
+        item.setQuantity(newQuantity);
+        // Có thể cần cập nhật lại giá nếu giá sản phẩm thay đổi (tùy logic)
+        // item.setPrice(product.getPrice());
+        // item.setDiscountedPrice(product.getDiscountedPrice());
+
+        // 7. Lưu lại CartItem đã cập nhật
         cartItemRepository.save(item);
 
-        updateCartTotals(cart);
-        return cartRepository.save(cart);
+        // 8. Cập nhật lại tổng tiền của giỏ hàng
+        updateCartTotals(cart); // Hàm này tính lại totalPrice, totalDiscountedPrice...
+
+        // 9. Lưu lại giỏ hàng (không bắt buộc nếu updateCartTotals không thay đổi cart entity)
+        // return cartRepository.save(cart);
+        return cart; // Trả về cart đã được cập nhật (trong bộ nhớ)
     }
+
+// Đồng thời sửa Controller để nhận DTO chỉ có quantity nếu muốn
+// Hoặc giữ nguyên AddItemRequest nhưng chỉ dùng trường quantity của nó trong service.
 
     @Override
     public void removeCartItem(Long userId, Long itemId) {

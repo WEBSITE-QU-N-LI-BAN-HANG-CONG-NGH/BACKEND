@@ -78,7 +78,7 @@ public class ProductDTO {
 
 
         // Lấy số lượng đánh giá
-        this.numRatings = product.getNumRating();
+        this.numRatings = product.getNumRatings();
         // Thêm sellerId
         this.sellerId = product.getSellerId();
 
