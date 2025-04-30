@@ -87,7 +87,7 @@ public class OrderService implements IOrderService {
         order.setPaymentStatus(PaymentStatus.PENDING);
 
         // Lấy tổng tiền từ Cart đã được tính toán (bao gồm cả discount)
-        order.setTotalAmount(cart.getTotalDiscountedPrice()); // Tổng giá gốc
+        order.setOriginalPrice(cart.getOriginalPrice()); // Tổng giá gốc
         order.setTotalItems(cart.getTotalItems());
         order.setDiscount(cart.getDiscount());
         order.setTotalDiscountedPrice(cart.getTotalDiscountedPrice()); // Tổng giá sau khi giảm
@@ -138,7 +138,7 @@ public class OrderService implements IOrderService {
 
         // Xóa các mục trong giỏ hàng sau khi đã tạo OrderItems thành công
         // Sử dụng clear() và save() để kích hoạt orphanRemoval nếu có cấu hình
-        cartService.clearCart(user.getId());
+//        cartService.clearCart(user.getId());
 
         // Lưu lại Order lần cuối với danh sách OrderItems đã được thêm vào
         // Thực ra, do order là managed entity và ta đã thêm orderItems vào list của nó,

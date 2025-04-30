@@ -16,6 +16,4 @@ public class FilterProduct {
     private Integer minPrice;
     private Integer maxPrice;
     private String sort;
-
-
 }

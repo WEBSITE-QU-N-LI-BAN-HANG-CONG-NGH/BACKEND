@@ -162,7 +162,7 @@ public class AdminManageUserService implements IAdminManageUserService {
 
             BigDecimal customerSpending = customerOrders.stream()
                     .filter(order -> order.getOrderStatus() == OrderStatus.DELIVERED)
-                    .map(order -> BigDecimal.valueOf(order.getTotalAmount()))
+                    .map(order -> BigDecimal.valueOf(order.getTotalDiscountedPrice()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             totalSpending = totalSpending.add(customerSpending);
@@ -197,7 +197,7 @@ public class AdminManageUserService implements IAdminManageUserService {
 
         return customerOrders.stream()
                 .filter(order -> order.getOrderStatus() == OrderStatus.DELIVERED)
-                .map(order -> BigDecimal.valueOf(order.getTotalAmount()))
+                .map(order -> BigDecimal.valueOf(order.getTotalDiscountedPrice()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

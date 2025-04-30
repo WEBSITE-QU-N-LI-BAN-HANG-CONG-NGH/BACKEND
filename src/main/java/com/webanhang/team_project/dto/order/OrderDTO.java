@@ -15,12 +15,12 @@ import java.util.List;
 public class OrderDTO {
     private Long id;
     private OrderStatus orderStatus; // Thêm orderStatus
-    private int totalAmount;
     private Integer totalDiscountedPrice; // Sửa thành Integer để đồng bộ với Order
     private int discount; // Thêm discount
     private int totalItems;
     private LocalDateTime orderDate;
     private LocalDateTime deliveryDate;
+    private Integer originalPrice;
     private AddressDTO shippingAddress;
     private PaymentStatus paymentStatus;
     private List<OrderItemDTO> orderItems;
@@ -28,8 +28,8 @@ public class OrderDTO {
 
     public OrderDTO(Order order) {
         this.id = order.getId();
+        this.originalPrice = order.getOriginalPrice();
         this.orderStatus = order.getOrderStatus();
-        this.totalAmount = order.getTotalAmount();
         this.totalDiscountedPrice = order.getTotalDiscountedPrice() != null ? order.getTotalDiscountedPrice() : 0;
         this.discount = order.getDiscount();
         this.totalItems = order.getTotalItems();

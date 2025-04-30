@@ -204,6 +204,7 @@ public class CartService implements ICartService {
         cart.setTotalItems(0);
         cart.setOriginalPrice(0);
         cart.setTotalDiscountedPrice(0);
+        cart.setDiscount(0);
 
         // Lưu giỏ hàng đã được cập nhật
         cartRepository.save(cart);

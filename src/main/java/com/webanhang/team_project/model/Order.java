@@ -37,8 +37,8 @@ public class Order {
     @Column(name="order_date")
     private LocalDateTime orderDate;
 
-    @Column(name="total_amount", precision = 19, scale = 2)
-    private int totalAmount;
+    @Column(name="original_price", precision = 19, scale = 2)
+    private int originalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(name="order_status")

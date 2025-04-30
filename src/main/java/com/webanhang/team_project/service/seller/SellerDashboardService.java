@@ -241,7 +241,7 @@ public class SellerDashboardService implements ISellerDashboardService {
                         order.getId(),
                         order.getUser().getFirstName() + " " + order.getUser().getLastName(),
                         order.getOrderDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                        order.getTotalAmount(),
+                        order.getTotalDiscountedPrice(),
                         order.getOrderStatus().name()
                 ))
                 .toList();

@@ -39,7 +39,7 @@ public class AdminDashboardService implements IAdminDashboardService {
                 OrderStatus.DELIVERED);
 
         return monthOrders.stream()
-                .map(Order::getTotalAmount)
+                .map(Order::getTotalDiscountedPrice)
                 .map(BigDecimal::valueOf)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -84,7 +84,7 @@ public class AdminDashboardService implements IAdminDashboardService {
         for (Order order : completedOrders) {
             if (order.getUser() != null) {
                 Long sellerId = order.getUser().getId();
-                BigDecimal orderAmount = BigDecimal.valueOf(order.getTotalAmount());
+                BigDecimal orderAmount = BigDecimal.valueOf(order.getTotalDiscountedPrice());
 
                 // Cập nhật doanh thu và số lượng đơn hàng
                 sellerRevenue.put(sellerId, sellerRevenue.getOrDefault(sellerId, BigDecimal.ZERO).add(orderAmount));
@@ -167,7 +167,7 @@ public class AdminDashboardService implements IAdminDashboardService {
                     startOfMonth, endOfMonth, OrderStatus.DELIVERED);
 
             BigDecimal revenue = monthOrders.stream()
-                    .map(order -> BigDecimal.valueOf(order.getTotalAmount()))
+                    .map(order -> BigDecimal.valueOf(order.getTotalDiscountedPrice()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal profit = revenue.multiply(new BigDecimal("0.25")); // Giả định lợi nhuận là 25% doanh thu
@@ -216,7 +216,7 @@ public class AdminDashboardService implements IAdminDashboardService {
                 OrderStatus.DELIVERED);
 
         return lastMonthOrders.stream()
-                .map(Order::getTotalAmount)
+                .map(Order::getTotalDiscountedPrice)
                 .map(BigDecimal::valueOf)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
