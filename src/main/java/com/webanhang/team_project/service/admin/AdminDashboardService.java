@@ -168,7 +168,7 @@ public class AdminDashboardService implements IAdminDashboardService {
             orderData.put("id", order.getId());
             orderData.put("trackingNo", "TN-" + order.getId());
             orderData.put("orderDate", order.getOrderDate());
-            orderData.put("totalAmount", order.getTotalAmount());
+            orderData.put("totalAmount", order.getOriginalPrice()-order.getTotalDiscountedPrice());
             orderData.put("status", order.getOrderStatus());
 
             // Thông tin người dùng
@@ -259,7 +259,7 @@ public class AdminDashboardService implements IAdminDashboardService {
                     startOfDay, endOfDay, OrderStatus.DELIVERED);
 
             BigDecimal revenue = dayOrders.stream()
-                    .map(order -> BigDecimal.valueOf(order.getTotalAmount()))
+                    .map(order -> BigDecimal.valueOf(order.getOriginalPrice()-order.getTotalDiscountedPrice()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             Map<String, Object> dayData = new HashMap<>();
@@ -305,7 +305,7 @@ public class AdminDashboardService implements IAdminDashboardService {
 
             // Tính tổng doanh thu
             BigDecimal revenue = weekOrders.stream()
-                    .map(order -> BigDecimal.valueOf(order.getTotalAmount()))
+                    .map(order -> BigDecimal.valueOf(order.getOriginalPrice()-order.getTotalDiscountedPrice()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             // Tạo dữ liệu cho tuần này
