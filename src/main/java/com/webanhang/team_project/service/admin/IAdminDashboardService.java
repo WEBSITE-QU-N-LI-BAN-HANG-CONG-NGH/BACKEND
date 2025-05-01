@@ -7,19 +7,14 @@ import java.util.Map;
 import com.webanhang.team_project.dto.seller.SellerRevenueDTO;
 
 public interface IAdminDashboardService {
-    // Phần 1: Tổng quan doanh thu
     BigDecimal totalMonthInCome();
-
     BigDecimal compareToRecentMonthIncomeByPercent();
-
     BigDecimal compareToRecentMonthIncomeByVND();
-
-    // Phần 2: Xếp hạng người bán
+    Map<String, Object> getMonthlyRevenue();
     List<SellerRevenueDTO> getTopSellers(int limit);
-
-    // Phần 3: Phân bổ doanh thu
     Map<String, BigDecimal> getRevenueDistribution();
 
-    // Phần 4: Doanh thu theo tháng
-    Map<String, Object> getMonthlyRevenue();
+    Map<String, Object> getProductStatistics();
+
+    Map<String, Object> getDashboardOverview();
 }

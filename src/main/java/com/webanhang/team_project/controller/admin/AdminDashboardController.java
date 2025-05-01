@@ -27,25 +27,12 @@ public class AdminDashboardController {
      *
      * @return Dữ liệu tổng quan bảng điều khiển bao gồm doanh thu, người bán hàng đầu và phân phối
      */
-    @Transactional
     @GetMapping("/overview")
     public ResponseEntity<ApiResponse> getDashboardOverview() {
-        Map<String, Object> response = new HashMap<>();
-
-        // Lấy dữ liệu doanh thu
-        Map<String, Object> revenueData = getRevenueOverviewData();
-        response.put("revenue", revenueData);
-
-        // Lấy danh sách người bán hàng đầu
-        List<SellerRevenueDTO> topSellers = adminDashboardService.getTopSellers(5);
-        response.put("topSellers", topSellers);
-
-        // Lấy phân phối doanh thu
-        Map<String, BigDecimal> distribution = adminDashboardService.getRevenueDistribution();
-        response.put("distribution", distribution);
-
-        return ResponseEntity.ok(ApiResponse.success(response, "Get dashboard overview success"));
+        Map<String, Object> res = adminDashboardService.getDashboardOverview();
+        return ResponseEntity.ok(ApiResponse.success(res, "Get dashboard overview success"));
     }
+
 
     /**
      * Lấy tổng quan doanh thu
@@ -97,5 +84,12 @@ public class AdminDashboardController {
     public ResponseEntity<ApiResponse> getRevenueDistribution() {
         Map<String, BigDecimal> distribution = adminDashboardService.getRevenueDistribution();
         return ResponseEntity.ok(ApiResponse.success(distribution, "Get revenue distribution success"));
+    }
+
+    // Thêm endpoint mới để lấy riêng thống kê sản phẩm nếu cần
+    @GetMapping("/products/stats")
+    public ResponseEntity<ApiResponse> getProductStatistics() {
+        Map<String, Object> productStats = adminDashboardService.getProductStatistics();
+        return ResponseEntity.ok(ApiResponse.success(productStats, "Get product statistics success"));
     }
 }

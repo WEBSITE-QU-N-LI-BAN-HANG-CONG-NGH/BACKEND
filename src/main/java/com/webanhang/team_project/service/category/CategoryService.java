@@ -2,6 +2,7 @@ package com.webanhang.team_project.service.category;
 
 
 import com.webanhang.team_project.dto.category.CategoryDTO;
+import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Category;
 import com.webanhang.team_project.repository.CategoryRepository;
 import jakarta.persistence.EntityExistsException;
@@ -9,6 +10,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,6 +31,19 @@ public class CategoryService implements ICategoryService {
 
    @Override
    public Category updateCategory(Category category) {
+       // Đảm bảo cấp bậc không vượt quá 2
+       if (category.getParentCategory() != null) {
+           Category parentCategory = findCategoryById(category.getParentCategory().getId());
+           if (parentCategory.getParentCategory() != null) {
+               throw new EntityExistsException(parentCategory.getName() + "already exists");
+           }
+           category.setLevel(2);
+           category.setParent(false);
+       } else {
+           category.setLevel(1);
+           category.setParent(true);
+       }
+
        return Optional.ofNullable(findCategoryById(category.getId()))
                .map(oldCategory -> {
                    oldCategory.setName(category.getName());

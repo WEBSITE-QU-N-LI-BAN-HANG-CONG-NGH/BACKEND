@@ -141,7 +141,7 @@ public class SellerProductController {
      * @param jwt Token xác thực của người bán
      * @return Tạo hàng loạt sản phẩm
      */
-    @GetMapping("/create-multi-product")
+    @PostMapping("/create-multi-product")
     public ResponseEntity<ApiResponse> createMultipleProduct(
             @RequestBody List<CreateProductRequest> requests,
             @RequestHeader("Authorization") String jwt) {

@@ -10,6 +10,7 @@ import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -219,5 +220,58 @@ public class AdminDashboardService implements IAdminDashboardService {
                 .map(Order::getTotalDiscountedPrice)
                 .map(BigDecimal::valueOf)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+
+    @Transactional
+    @Override
+    public Map<String, Object> getProductStatistics() {
+        Map<String, Object> productStats = new HashMap<>();
+
+        // Số lượng mẫu sản phẩm
+        long totalProducts = productRepository.count();
+
+        // Tính toán số lượng trong kho và đã bán
+        long inStock = 0;
+        long soldItems = 0;
+
+        List<Product> products = productRepository.findAll();
+        for (Product product : products) {
+            inStock += (product.getQuantity() != 0) ? product.getQuantity() : 0;
+            soldItems += (product.getQuantitySold() != null) ? product.getQuantitySold() : 0;
+        }
+
+        productStats.put("totalProducts", totalProducts);
+        productStats.put("inStock", inStock);
+        productStats.put("soldItems", soldItems);
+
+        return productStats;
+    }
+
+    @Transactional
+    @Override
+    public Map<String, Object> getDashboardOverview() {
+        Map<String, Object> overview = new HashMap<>();
+
+        // Lấy dữ liệu doanh thu
+        Map<String, Object> revenueData = new HashMap<>();
+        revenueData.put("currentMonthIncome", totalMonthInCome());
+        revenueData.put("comparePercent", compareToRecentMonthIncomeByPercent());
+        revenueData.put("compareDifference", compareToRecentMonthIncomeByVND());
+        overview.put("revenue", revenueData);
+
+        // Lấy danh sách người bán hàng đầu
+        List<SellerRevenueDTO> topSellers = getTopSellers(5);
+        overview.put("topSellers", topSellers);
+
+        // Lấy phân phối doanh thu
+        Map<String, BigDecimal> distribution = getRevenueDistribution();
+        overview.put("distribution", distribution);
+
+        // Lấy thống kê sản phẩm
+        Map<String, Object> productStats = getProductStatistics();
+        overview.put("productStats", productStats);
+
+        return overview;
     }
 }

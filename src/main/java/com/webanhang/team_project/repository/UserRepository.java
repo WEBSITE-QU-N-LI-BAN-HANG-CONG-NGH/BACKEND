@@ -31,4 +31,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Kết hợp tìm kiếm và lọc
     List<User> findByEmailContainingOrFirstNameContainingOrLastNameContainingAndRoleName(
             String email, String firstName, String lastName, UserRole roleName, Pageable pageable);
+
+    @Query("SELECT COUNT(u) FROM User u JOIN u.role r WHERE r.name = :roleName")
+    long countByRoleName(@Param("roleName") UserRole roleName);
 }

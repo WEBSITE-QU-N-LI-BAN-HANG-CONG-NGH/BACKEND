@@ -46,18 +46,6 @@ public class AdminCategoryController {
      */
     @PutMapping("/update")
     public ResponseEntity<ApiResponse> updateCategory(@RequestBody Category category) {
-        // Đảm bảo cấp bậc không vượt quá 2
-        if (category.getParentCategory() != null) {
-            Category parentCategory = categoryService.findCategoryById(category.getParentCategory().getId());
-            if (parentCategory.getParentCategory() != null) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("Cannot create category with depth > 2"));
-            }
-            category.setLevel(2);
-            category.setParent(false);
-        } else {
-            category.setLevel(1);
-            category.setParent(true);
-        }
 
         Category updatedCategory = categoryService.updateCategory(category);
         return ResponseEntity.ok().body(ApiResponse.success(updatedCategory, "Success. Update category id: " + category.getId()));
