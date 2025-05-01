@@ -95,4 +95,59 @@ public class OrderController {
         OrderDTO orderDTO = new OrderDTO(order);
         return new ResponseEntity<>(orderDTO, HttpStatus.OK);
     }
+
+    @GetMapping("/pending")
+    public ResponseEntity<ApiResponse> getPendingOrders() {
+        List<Order> orders = orderService.getPendingOrders();
+        List<OrderDTO> orderDTOs = new ArrayList<>();
+        for (Order order : orders) {
+            OrderDTO orderDTO = new OrderDTO(order);
+            orderDTOs.add(orderDTO);
+        }
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get pending orders success!"));
+    }
+
+    @GetMapping("/confirmed")
+    public ResponseEntity<ApiResponse> getConfirmedOrders() {
+        List<Order> orders = orderService.getConfirmedOrders();
+        List<OrderDTO> orderDTOs = new ArrayList<>();
+        for (Order order : orders) {
+            OrderDTO orderDTO = new OrderDTO(order);
+            orderDTOs.add(orderDTO);
+        }
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get confirmed orders success!"));
+    }
+
+    @GetMapping("/shipped")
+    public ResponseEntity<ApiResponse> getShippedOrders() {
+        List<Order> orders = orderService.getShippedOrders();
+        List<OrderDTO> orderDTOs = new ArrayList<>();
+        for (Order order : orders) {
+            OrderDTO orderDTO = new OrderDTO(order);
+            orderDTOs.add(orderDTO);
+        }
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get shipped orders success!"));
+    }
+
+    @GetMapping("/delivered")
+    public ResponseEntity<ApiResponse> getDeliveredOrders() {
+        List<Order> orders = orderService.getDeliveredOrders();
+        List<OrderDTO> orderDTOs = new ArrayList<>();
+        for (Order order : orders) {
+            OrderDTO orderDTO = new OrderDTO(order);
+            orderDTOs.add(orderDTO);
+        }
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get delivered orders success!"));
+    }
+
+    @GetMapping("/cancelled")
+    public ResponseEntity<ApiResponse> getCancelledOrders() {
+        List<Order> orders = orderService.getCancelledOrders();
+        List<OrderDTO> orderDTOs = new ArrayList<>();
+        for (Order order : orders) {
+            OrderDTO orderDTO = new OrderDTO(order);
+            orderDTOs.add(orderDTO);
+        }
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get cancelled orders success!"));
+    }
 }

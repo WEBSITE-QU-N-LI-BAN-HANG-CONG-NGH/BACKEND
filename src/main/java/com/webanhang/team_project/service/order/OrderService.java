@@ -261,4 +261,29 @@ public class OrderService implements IOrderService {
         // Sử dụng JPQL với JOIN FETCH để lấy thông tin User cùng với Order
         return orderRepository.findAllWithUser();
     }
+
+    @Override
+    public List<Order> getPendingOrders() {
+        return orderRepository.findByOrderStatus(OrderStatus.PENDING);
+    }
+
+    @Override
+    public List<Order> getConfirmedOrders() {
+        return orderRepository.findOrderByOrderStatus(OrderStatus.CONFIRMED);
+    }
+
+    @Override
+    public List<Order> getShippedOrders() {
+        return orderRepository.findOrderByOrderStatus(OrderStatus.SHIPPED);
+    }
+
+    @Override
+    public List<Order> getDeliveredOrders() {
+        return orderRepository.findOrderByOrderStatus(OrderStatus.DELIVERED);
+    }
+
+    @Override
+    public List<Order> getCancelledOrders() {
+        return orderRepository.findOrderByOrderStatus(OrderStatus.CANCELLED);
+    }
 }
