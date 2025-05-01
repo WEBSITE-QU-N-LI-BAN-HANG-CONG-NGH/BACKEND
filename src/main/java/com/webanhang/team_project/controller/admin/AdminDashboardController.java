@@ -3,10 +3,12 @@ package com.webanhang.team_project.controller.admin;
 import com.webanhang.team_project.dto.seller.SellerRevenueDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.service.admin.IAdminDashboardService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,74 +24,33 @@ public class AdminDashboardController {
 
     private final IAdminDashboardService adminDashboardService;
 
-    /**
-     * Lấy tổng quan bảng điều khiển
-     *
-     * @return Dữ liệu tổng quan bảng điều khiển bao gồm doanh thu, người bán hàng đầu và phân phối
-     */
-    @GetMapping("/overview")
-    public ResponseEntity<ApiResponse> getDashboardOverview() {
-        Map<String, Object> res = adminDashboardService.getDashboardOverview();
-        return ResponseEntity.ok(ApiResponse.success(res, "Get dashboard overview success"));
-    }
-
-
-    /**
-     * Lấy tổng quan doanh thu
-     *
-     * @return Thông tin tổng quan về doanh thu hiện tại, so sánh với tháng trước
-     */
-    @GetMapping("/revenue")
-    public ResponseEntity<ApiResponse> getRevenueOverview() {
-        Map<String, Object> revenueData = getRevenueOverviewData();
-        return ResponseEntity.ok(ApiResponse.success(revenueData, "Get revenue overview success"));
-    }
-
-    private Map<String, Object> getRevenueOverviewData() {
-        Map<String, Object> revenue = new HashMap<>();
-        revenue.put("currentMonthIncome", adminDashboardService.totalMonthInCome());
-        revenue.put("comparePercent", adminDashboardService.compareToRecentMonthIncomeByPercent());
-        revenue.put("compareDifference", adminDashboardService.compareToRecentMonthIncomeByVND());
-        return revenue;
-    }
-
-    /**
-     * Lấy doanh thu theo tháng
-     *
-     * @return Dữ liệu doanh thu theo từng tháng
-     */
-    @GetMapping("/revenue/monthly")
-    public ResponseEntity<ApiResponse> getMonthlyRevenue() {
-        Map<String, Object> monthlyData = adminDashboardService.getMonthlyRevenue();
-        return ResponseEntity.ok(ApiResponse.success(monthlyData, "Get monthly revenue success"));
-    }
-
-    /**
-     * Lấy danh sách người bán hàng đầu
-     *
-     * @return Danh sách người bán có doanh thu cao nhất
-     */
-    @GetMapping("/top-sellers")
-    public ResponseEntity<ApiResponse> getTopSellers() {
-        List<SellerRevenueDTO> topSellers = adminDashboardService.getTopSellers(5);
-        return ResponseEntity.ok(ApiResponse.success(topSellers, "Get top sellers success"));
-    }
-
-    /**
-     * Lấy phân phối doanh thu
-     *
-     * @return Thông tin phân phối doanh thu theo các phân loại
-     */
-    @GetMapping("/revenue-distribution")
-    public ResponseEntity<ApiResponse> getRevenueDistribution() {
-        Map<String, BigDecimal> distribution = adminDashboardService.getRevenueDistribution();
-        return ResponseEntity.ok(ApiResponse.success(distribution, "Get revenue distribution success"));
-    }
-
-    // Thêm endpoint mới để lấy riêng thống kê sản phẩm nếu cần
-    @GetMapping("/products/stats")
+    @GetMapping("/product-stats")
     public ResponseEntity<ApiResponse> getProductStatistics() {
         Map<String, Object> productStats = adminDashboardService.getProductStatistics();
         return ResponseEntity.ok(ApiResponse.success(productStats, "Get product statistics success"));
+    }
+
+    @GetMapping("/revenue-by-time/{period}")
+    public ResponseEntity<ApiResponse> getMonthlyRevenue(@PathVariable String period) {
+        Map<String, Object> monthlyData = adminDashboardService.getRevenueAnalytics(period);
+        return ResponseEntity.ok(ApiResponse.success(monthlyData, "Get monthly revenue success"));
+    }
+
+    @GetMapping("/revenue-by-category")
+    public ResponseEntity<ApiResponse> getMonthlyRevenueByCategory() {
+        Map<String, Object> categoryRevenue = adminDashboardService.getCategoryRevenue();
+        return ResponseEntity.ok(ApiResponse.success(categoryRevenue, "Get category revenue success"));
+    }
+
+    @GetMapping("/recent-orders/{limit}")
+    public ResponseEntity<ApiResponse> getRecentOrders(@PathVariable int limit) {
+        List<Map<String, Object>> recentOrder = adminDashboardService.getRecentOrders(limit);
+        return ResponseEntity.ok(ApiResponse.success(recentOrder, "Get recent order success"));
+    }
+
+    @GetMapping("/top-selling-products/{limit}")
+    public ResponseEntity<ApiResponse> getTopSellingProduct(@PathVariable int limit) {
+        List<Map<String, Object>> topSellingProducts = adminDashboardService.getTopSellingProducts(limit);
+        return ResponseEntity.ok(ApiResponse.success(topSellingProducts, "Get top selling product success"));
     }
 }
