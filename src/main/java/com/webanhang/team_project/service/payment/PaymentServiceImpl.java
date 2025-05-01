@@ -64,7 +64,7 @@ public class PaymentServiceImpl implements PaymentService {
             String vnp_OrderInfo = "Thanh toan don hang #" + orderId;
             String vnp_OrderType = "other"; // Thay đổi từ "billpayment" sang "other"
             String vnp_IpAddr = getIpAddress();
-            int amount = order.getTotalDiscountedPrice() ;
+            long amount = order.getTotalDiscountedPrice() * 100L;
 
             // Tạo map các tham số
             Map<String, String> vnp_Params = new HashMap<>();
@@ -77,7 +77,6 @@ public class PaymentServiceImpl implements PaymentService {
             vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
             vnp_Params.put("vnp_OrderType", vnp_OrderType);
             vnp_Params.put("vnp_Locale", "vn");
-            vnp_Params.put("orderId", String.valueOf(orderId));
 
             // Sửa Return URL - không đính kèm orderId vào URL
             vnp_Params.put("vnp_ReturnUrl", vnp_Returnurl);
@@ -133,6 +132,8 @@ public class PaymentServiceImpl implements PaymentService {
             String queryUrl = query.toString();
             String vnp_SecureHash = hmacSHA512(vnp_HashSecret, hashData.toString());
             queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
+
+//            queryUrl += "&orderId=" + orderId; // Thêm orderId vào queryUrl
 
             paymentDetail.setVnp_SecureHash(vnp_SecureHash);
             // Lưu chi tiết thanh toán

@@ -133,17 +133,8 @@ public class OrderService implements IOrderService {
 
         }
 
-        // Thêm danh sách OrderItem vào Order (sau khi đã xử lý hết cart items)
         order.setOrderItems(orderItems); // JPA sẽ quản lý việc lưu các OrderItem này do cascade
 
-        // Xóa các mục trong giỏ hàng sau khi đã tạo OrderItems thành công
-        // Sử dụng clear() và save() để kích hoạt orphanRemoval nếu có cấu hình
-//        cartService.clearCart(user.getId());
-
-        // Lưu lại Order lần cuối với danh sách OrderItems đã được thêm vào
-        // Thực ra, do order là managed entity và ta đã thêm orderItems vào list của nó,
-        // bước save này có thể không hoàn toàn cần thiết nếu cascade được thiết lập đúng,
-        // nhưng để chắc chắn thì gọi save() cũng không sao.
         return orderRepository.save(order);
     }
 
