@@ -170,6 +170,7 @@ public class OrderService implements IOrderService {
         // Cập nhật trạng thái đơn hàng
         order.setOrderStatus(OrderStatus.DELIVERED);
         order.setPaymentStatus(PaymentStatus.COMPLETED);
+        order.setDeliveryDate(LocalDateTime.now());
 
         // Cập nhật số lượng đã bán cho các sản phẩm
         for (OrderItem item : order.getOrderItems()) {

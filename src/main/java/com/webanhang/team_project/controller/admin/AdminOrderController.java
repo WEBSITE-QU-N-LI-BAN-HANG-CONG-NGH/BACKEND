@@ -48,7 +48,7 @@ public class AdminOrderController {
     @PutMapping("/{orderId}/confirm")
     public ResponseEntity<ApiResponse> confirmOrder(@PathVariable Long orderId) {
         Order order = orderService.confirmedOrder(orderId);
-        return ResponseEntity.ok(ApiResponse.success(order, "Xác nhận đơn hàng thành công"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Xác nhận đơn hàng thành công"));
     }
 
     /**
@@ -60,7 +60,7 @@ public class AdminOrderController {
     @PutMapping("/{orderId}/ship")
     public ResponseEntity<ApiResponse> shipOrder(@PathVariable Long orderId) {
         Order order = orderService.shippedOrder(orderId);
-        return ResponseEntity.ok(ApiResponse.success(order, "Chuyển trạng thái vận chuyển thành công"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Chuyển trạng thái vận chuyển thành công"));
     }
 
     /**
@@ -72,7 +72,7 @@ public class AdminOrderController {
     @PutMapping("/{orderId}/deliver")
     public ResponseEntity<ApiResponse> deliverOrder(@PathVariable Long orderId) {
         Order order = orderService.deliveredOrder(orderId);
-        return ResponseEntity.ok(ApiResponse.success(order, "Đánh dấu đã giao hàng thành công"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Đánh dấu đã giao hàng thành công"));
     }
 
     /**
@@ -84,7 +84,7 @@ public class AdminOrderController {
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<ApiResponse> cancelOrder(@PathVariable Long orderId) {
         Order order = orderService.cancelOrder(orderId);
-        return ResponseEntity.ok(ApiResponse.success(order, "Hủy đơn hàng thành công"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Hủy đơn hàng thành công"));
     }
 
     /**
