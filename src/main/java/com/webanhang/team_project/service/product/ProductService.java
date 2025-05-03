@@ -128,6 +128,15 @@ public class ProductService implements IProductService {
     }
 
     @Override
+    public List<ProductDTO> getAllProducts() {
+        List<Product> products = productRepository.findAll();
+        List<ProductDTO> productDTOs = products.stream()
+                .map(ProductDTO::new)
+                .toList();
+        return productDTOs;
+    }
+
+    @Override
     public List<Product> searchProducts(String keyword) {
         return productRepository.findByTitleContainingIgnoreCase(keyword);
     }

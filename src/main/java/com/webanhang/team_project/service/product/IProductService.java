@@ -26,6 +26,8 @@ public interface IProductService {
 
     public List<Product> findAllProducts() ;
 
+    List<ProductDTO> getAllProducts();
+
     public List<Product> searchProducts(String keyword);
 
     public List<Map<String, Object>> getTopSellingProducts(int limit);

@@ -43,11 +43,10 @@ public class AdminManageUserService implements IAdminManageUserService {
     @Override
     public Page<UserDTO> getAllUsers(int page, int size, String search, String role) {
         Pageable pageable = PageRequest.of(page, size);
-
         // Filter logic
         List<User> users;
 
-        // Thêm điều kiện không bao gồm ADMIN trong kết quả
+        // remove admin account
         if (StringUtils.hasText(search) && StringUtils.hasText(role)) {
             UserRole userRole = UserRole.valueOf(role.toUpperCase());
             // Search by name/email and filter by role
@@ -114,82 +113,36 @@ public class AdminManageUserService implements IAdminManageUserService {
         return convertToDto(savedUser);
     }
 
-        @Override
-        @Transactional
-        public void deleteUser(Long userId) {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    @Override
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-            // Xóa cart items trước khi xóa cart
-            if (user.getCart() != null) {
-                // Sử dụng clear() để xóa các cartItems được liên kết
-                user.getCart().getCartItems().clear();
-                cartRepository.delete(user.getCart());
-            }
-            orderItemRepository.deleteByOrderUserId(userId);
-            orderRepository.deleteByUserId(userId);
-            addressRepository.deleteByUserId(userId);
-            reviewRepository.deleteByUserId(userId);
-            userRepository.delete(user);
+        // Xóa cart items trước khi xóa cart
+        if (user.getCart() != null) {
+            // Sử dụng clear() để xóa các cartItems được liên kết
+            user.getCart().getCartItems().clear();
+            cartRepository.delete(user.getCart());
         }
-
-    private UserDTO convertToDto(User user) {
-        UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
-        dto.setEmail(user.getEmail());
-        dto.setFirstName(user.getFirstName());
-        dto.setLastName(user.getLastName());
-        dto.setActive(user.isActive());
-
-        if (user.getRole() != null) {
-            dto.setRole(user.getRole().getName().toString());
-        }
-
-        return dto;
+        orderItemRepository.deleteByOrderUserId(userId);
+        orderRepository.deleteByUserId(userId);
+        addressRepository.deleteByUserId(userId);
+        reviewRepository.deleteByUserId(userId);
+        userRepository.delete(user);
     }
 
     @Override
     public Map<String, Object> getCustomerStatistics() {
-        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> res = new HashMap<>();
 
-        // Lấy tất cả khách hàng (có role CUSTOMER)
-        List<User> customers = userRepository.findByRoleName(UserRole.CUSTOMER, Pageable.unpaged());
-        // Tổng chi tiêu của khách hàng
-        BigDecimal totalSpending = BigDecimal.ZERO;
+        long totalCustomers = userRepository.countByRoleName(UserRole.CUSTOMER);
+        long totalSellers = userRepository.countByRoleName(UserRole.SELLER);
 
-        for (User customer : customers) {
-            List<Order> customerOrders = orderRepository.findByUserId(customer.getId());
+        res.put("totalCustomers", totalCustomers);
+        res.put("totalSellers", totalSellers);
 
-            BigDecimal customerSpending = customerOrders.stream()
-                    .filter(order -> order.getOrderStatus() == OrderStatus.DELIVERED)
-                    .map(order -> BigDecimal.valueOf(order.getTotalDiscountedPrice()))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            totalSpending = totalSpending.add(customerSpending);
-        }
-
-        // Sắp xếp khách hàng theo chi tiêu
-        List<User> sortedCustomers = new ArrayList<>(customers);
-        sortedCustomers.sort((c1, c2) -> {
-            BigDecimal spending1 = calculateCustomerSpending(c1.getId());
-            BigDecimal spending2 = calculateCustomerSpending(c2.getId());
-            return spending2.compareTo(spending1); // Giảm dần
-        });
-
-        // Số lượng đơn hàng trung bình
-        int totalOrders = 0;
-        for (User customer : customers) {
-            List<Order> customerOrders = orderRepository.findByUserId(customer.getId());
-            totalOrders += customerOrders.size();
-        }
-
-        double avgOrders = customers.isEmpty() ? 0 : (double) totalOrders / customers.size();
-
-        result.put("totalCustomers", customers.size());
-        result.put("totalSpending", totalSpending);
-        result.put("averageOrders", avgOrders);
-
-        return result;
+        return res;
     }
 
     private BigDecimal calculateCustomerSpending(Long customerId) {
@@ -200,4 +153,22 @@ public class AdminManageUserService implements IAdminManageUserService {
                 .map(order -> BigDecimal.valueOf(order.getTotalDiscountedPrice()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    private UserDTO convertToDto(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setMobile(user.getPhone());
+        dto.setActive(user.isActive());
+        dto.setCreatedAt(user.getCreatedAt());
+
+        if (user.getRole() != null) {
+            dto.setRole(user.getRole().getName().toString());
+        }
+
+        return dto;
+    }
+
 }

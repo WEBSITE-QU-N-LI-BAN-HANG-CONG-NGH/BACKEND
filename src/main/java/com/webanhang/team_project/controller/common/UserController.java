@@ -38,8 +38,7 @@ public class UserController {
 
     @PutMapping("/{userId}/update")
     public ResponseEntity<ApiResponse> updateUser(@RequestBody UpdateUserRequest request, @PathVariable Long userId) {
-        User user = userService.updateUser(request, userId);
-        UserDTO userDto = userService.convertUserToDto(user);
+        UserDTO userDto = userService.updateUser(request, userId);
         return ResponseEntity.ok(ApiResponse.success(userDto, "Update User Success!"));
     }
 

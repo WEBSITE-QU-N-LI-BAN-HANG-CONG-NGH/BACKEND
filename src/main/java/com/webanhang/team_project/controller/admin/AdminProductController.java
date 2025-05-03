@@ -60,10 +60,7 @@ public class AdminProductController {
     @Transactional
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> findAllProducts() {
-        List<Product> products = productService.findAllProducts();
-        List<ProductDTO> productDTOs = products.stream()
-                .map(ProductDTO::new)
-                .toList();
+        List<ProductDTO> productDTOs = productService.getAllProducts();
         return ResponseEntity.ok(ApiResponse.success(productDTOs, "Lấy tất cả sản phẩm thành công"));
     }
 

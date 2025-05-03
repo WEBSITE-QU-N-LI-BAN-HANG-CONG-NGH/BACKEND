@@ -62,13 +62,15 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public User updateUser(UpdateUserRequest request, Long userId) {
-        return userRepository.findById(userId).map(existingUser -> {
-            existingUser.setFirstName(request.getFirstName());
-            existingUser.setLastName(request.getLastName());
-            existingUser.setPhone(request.getPhoneNumber());
-            return userRepository.save(existingUser);
-        }).orElseThrow(() -> new EntityNotFoundException("User not found"));
+    public UserDTO updateUser(UpdateUserRequest request, Long userId) {
+        User existingUser = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User " + userId + " not found"));
+        existingUser.setFirstName(request.getFirstName());
+        existingUser.setLastName(request.getLastName());
+        existingUser.setPhone(request.getPhoneNumber());
+        UserDTO userDto = modelMapper.map(existingUser, UserDTO.class);
+        return userDto;
     }
 
     @Override
