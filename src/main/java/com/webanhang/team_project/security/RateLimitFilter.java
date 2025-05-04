@@ -4,87 +4,77 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
+@Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    // Map lưu trữ số lượng request theo IP
-    private final Map<String, RequestCounter> requestCounters = new ConcurrentHashMap<>();
-    // Giới hạn request trong khoảng thời gian
-    private final int rateLimit = 50; // Số request tối đa
-    private final long timeWindow = 60000; // Khoảng thời gian (1 phút)
+    private final Map<String, RequestCount> requestCounts = new ConcurrentHashMap<>();
+
+    // Số request tối đa trong 1 phút
+    private final int MAX_REQUESTS = 50;
+    private final long TIME_WINDOW = 60 * 1000; // 1 phút
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Lấy địa chỉ IP của client
+        // Lấy địa chỉ IP của người dùng, ưu tiên từ CloudflareFilter
         String clientIp = getClientIp(request);
 
-        // Kiểm tra và cập nhật counter
+        // Kiểm tra giới hạn
         if (isRateLimited(clientIp)) {
-        response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
-            response.getWriter().write("Rate limit exceeded. Please try again later.");
+            response.setStatus(429); // 429
+            response.getWriter().write("Quá nhiều yêu cầu. Vui lòng thử lại sau.");
             return;
         }
 
-        // Tiếp tục chuỗi filter nếu không bị giới hạn
+        // Tiếp tục chuỗi filter
         filterChain.doFilter(request, response);
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            // Lấy IP đầu tiên trong chuỗi X-Forwarded-For
-            return xForwardedFor.split(",")[0].trim();
+        // Lấy từ CloudflareFilter (nếu có)
+        Object realIp = request.getAttribute("REAL_CLIENT_IP");
+        if (realIp != null) {
+            return realIp.toString();
         }
+
+        // Nếu không có, lấy IP thông thường
         return request.getRemoteAddr();
     }
 
     private boolean isRateLimited(String clientIp) {
         long now = System.currentTimeMillis();
 
-        // Lấy hoặc tạo counter cho IP
-        RequestCounter counter = requestCounters.computeIfAbsent(clientIp,
-                ip -> new RequestCounter(now));
+        // Lấy hoặc tạo counter
+        RequestCount count = requestCounts.computeIfAbsent(clientIp,
+                k -> new RequestCount(now, 0));
 
-        // Reset counter nếu đã hết thời gian
-        if (now - counter.getStartTime() > timeWindow) {
-            counter.reset(now);
+        // Kiểm tra xem có quá thời gian giới hạn không
+        if (now - count.timestamp > TIME_WINDOW) {
+            count.timestamp = now;
+            count.count = 1;
+            return false;
         }
 
-        // Tăng số lượng request
-        int count = counter.incrementAndGet();
-
-        // Kiểm tra giới hạn
-        return count > rateLimit;
+        // Tăng counter và kiểm tra
+        count.count++;
+        return count.count > MAX_REQUESTS;
     }
 
-    // Lớp nội bộ để theo dõi số lượng request
-    private static class RequestCounter {
-        private final AtomicInteger count = new AtomicInteger(0);
-        private long startTime;
+    private static class RequestCount {
+        long timestamp;
+        int count;
 
-        public RequestCounter(long startTime) {
-            this.startTime = startTime;
-        }
-
-        public int incrementAndGet() {
-            return count.incrementAndGet();
-        }
-
-        public long getStartTime() {
-            return startTime;
-        }
-
-        public void reset(long newStartTime) {
-            count.set(0);
-            startTime = newStartTime;
+        RequestCount(long timestamp, int count) {
+            this.timestamp = timestamp;
+            this.count = count;
         }
     }
 }

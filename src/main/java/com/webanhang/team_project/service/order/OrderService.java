@@ -4,6 +4,7 @@ package com.webanhang.team_project.service.order;
 
 
 import com.webanhang.team_project.dto.order.OrderDTO;
+import com.webanhang.team_project.dto.order.OrderDetailDTO;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
@@ -258,9 +259,13 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
-    public List<Order> getAllOrdersByJF() {
+    public List<OrderDetailDTO> getAllOrdersByJF() {
         // Sử dụng JPQL với JOIN FETCH để lấy thông tin User cùng với Order
-        return orderRepository.findAllWithUser();
+        List<Order> orders= orderRepository.findAllWithUser();
+        List<OrderDetailDTO> orderDTOs = orders.stream()
+                .map(order -> new OrderDetailDTO(order))
+                .toList();
+        return orderDTOs;
     }
 
     @Override

@@ -11,14 +11,13 @@ import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +28,7 @@ public class SellerDashboardService implements ISellerDashboardService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public SellerDashboardDTO getDashboardData(Long sellerId) {
         // Kiểm tra người bán tồn tại
         User seller = userRepository.findById(sellerId)
@@ -36,17 +36,14 @@ public class SellerDashboardService implements ISellerDashboardService {
 
         // Tính toán các thông số
         BigDecimal totalRevenue = calculateTotalRevenue(sellerId);
-        BigDecimal lastMonthRevenue = calculateLastMonthRevenue(sellerId);
-        BigDecimal revenueChange = calculateRevenueChange(totalRevenue, lastMonthRevenue);
-
         Integer totalOrders = countTotalOrders(sellerId);
-        Integer lastMonthOrders = countLastMonthOrders(sellerId);
-        Integer ordersChange = calculateOrdersChange(totalOrders, lastMonthOrders);
-
         Integer totalProducts = countTotalProducts(sellerId);
 
         // Lấy đơn hàng gần đây
         List<OrderStatsDTO> recentOrders = getRecentOrders(sellerId);
+
+        // Doanh thu theo tuần
+        Map<String, BigDecimal> revenueByWeek = getRevenueByWeek(sellerId);
 
         // Doanh thu theo tháng
         Map<String, BigDecimal> revenueByMonth = getRevenueByMonth(sellerId);
@@ -55,17 +52,17 @@ public class SellerDashboardService implements ISellerDashboardService {
                 totalRevenue,
                 totalOrders,
                 totalProducts,
-                revenueChange,
-                ordersChange,
                 recentOrders,
+                revenueByWeek,
                 revenueByMonth
         );
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, BigDecimal> getMonthlyRevenue(Long sellerId) {
         Map<String, BigDecimal> revenueData = new LinkedHashMap<>();
-        List<Product> sellerProducts = getSellerProducts(sellerId);
+        List<Product> sellerProducts = productRepository.findBySellerId(sellerId);
 
         // Lấy dữ liệu 12 tháng gần nhất
         LocalDate now = LocalDate.now();
@@ -76,9 +73,6 @@ public class SellerDashboardService implements ISellerDashboardService {
             String monthLabel = month.format(formatter);
 
             // Tính doanh thu tháng
-            LocalDateTime startOfMonth = month.withDayOfMonth(1).atStartOfDay();
-            LocalDateTime endOfMonth = month.withDayOfMonth(month.lengthOfMonth()).atTime(23, 59, 59);
-
             BigDecimal revenue = BigDecimal.ZERO;
 
             for (Product product : sellerProducts) {
@@ -92,7 +86,37 @@ public class SellerDashboardService implements ISellerDashboardService {
         return revenueData;
     }
 
+    @Transactional(readOnly = true)
+    public Map<String, BigDecimal> getRevenueByWeek(Long sellerId) {
+        Map<String, BigDecimal> revenueByWeek = new LinkedHashMap<>();
+        List<Product> sellerProducts = productRepository.findBySellerId(sellerId);
+
+        // Lấy dữ liệu 6 tuần gần nhất
+        LocalDate now = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
+
+        for (int i = 5; i >= 0; i--) {
+            LocalDate weekStart = now.minusWeeks(i);
+            LocalDate weekEnd = weekStart.plusDays(6);
+            String weekLabel = weekStart.format(formatter) + " - " + weekEnd.format(formatter);
+
+            // Tính doanh thu tuần
+            BigDecimal revenue = BigDecimal.ZERO;
+
+            for (Product product : sellerProducts) {
+                long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
+                BigDecimal productRevenue = BigDecimal.valueOf(product.getDiscountedPrice() * quantitySold);
+                revenue = revenue.add(productRevenue);
+            }
+
+            revenueByWeek.put(weekLabel, revenue);
+        }
+
+        return revenueByWeek;
+    }
+
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Integer> getOrderStats(Long sellerId) {
         Map<String, Integer> orderStats = new HashMap<>();
 
@@ -136,17 +160,12 @@ public class SellerDashboardService implements ISellerDashboardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Integer> getProductStats(Long sellerId) {
         Map<String, Integer> productStats = new HashMap<>();
 
-        // Đếm tổng số sản phẩm
-        List<Product> products = productRepository.findAll();
-        List<Product> sellerProducts = products.stream()
-                .filter(product -> product.getCategory() != null &&
-                        product.getCategory().getProducts() != null &&
-                        product.getCategory().getProducts().stream()
-                                .anyMatch(p -> p.getId().equals(sellerId)))
-                .collect(Collectors.toList());
+        // Đếm tổng số sản phẩm và trạng thái tồn kho
+        List<Product> sellerProducts = productRepository.findBySellerId(sellerId);
 
         int inStock = 0;
         int outOfStock = 0;
@@ -171,9 +190,10 @@ public class SellerDashboardService implements ISellerDashboardService {
     }
 
     // Các phương thức hỗ trợ
+    @Transactional(readOnly = true)
     private BigDecimal calculateTotalRevenue(Long sellerId) {
         // Lấy tất cả sản phẩm của người bán
-        List<Product> sellerProducts = getSellerProducts(sellerId);
+        List<Product> sellerProducts = productRepository.findBySellerId(sellerId);
 
         // Tính tổng doanh thu dựa trên số lượng đã bán và giá
         BigDecimal totalRevenue = BigDecimal.ZERO;
@@ -186,51 +206,18 @@ public class SellerDashboardService implements ISellerDashboardService {
         return totalRevenue;
     }
 
-    private BigDecimal calculateLastMonthRevenue(Long sellerId) {
-        // Giả định doanh thu tháng trước là 80% doanh thu hiện tại
-        // Trong thực tế, ta cần lưu lịch sử doanh thu theo tháng trong cơ sở dữ liệu
-        return calculateTotalRevenue(sellerId).multiply(new BigDecimal("0.8"));
-    }
-
-    private BigDecimal calculateRevenueChange(BigDecimal currentRevenue, BigDecimal lastRevenue) {
-        if (lastRevenue.equals(BigDecimal.ZERO)) {
-            return BigDecimal.ZERO;
-        }
-        return currentRevenue.subtract(lastRevenue)
-                .multiply(new BigDecimal(100))
-                .divide(lastRevenue, 2, RoundingMode.HALF_UP);
-    }
-
+    @Transactional(readOnly = true)
     private Integer countTotalOrders(Long sellerId) {
         List<Order> orders = orderRepository.findByUserId(sellerId);
         return orders.size();
     }
 
-    private Integer countLastMonthOrders(Long sellerId) {
-        LocalDate now = LocalDate.now();
-        LocalDate lastMonth = now.minusMonths(1);
-        LocalDateTime startOfLastMonth = lastMonth.withDayOfMonth(1).atStartOfDay();
-        LocalDateTime endOfLastMonth = lastMonth.withDayOfMonth(lastMonth.lengthOfMonth()).atTime(23, 59, 59);
-
-        List<Order> lastMonthOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
-                startOfLastMonth, endOfLastMonth, null);
-
-        return (int) lastMonthOrders.stream()
-                .filter(order -> order.getUser().getId().equals(sellerId))
-                .count();
-    }
-
-    private Integer calculateOrdersChange(Integer currentOrders, Integer lastOrders) {
-        if (lastOrders == 0) {
-            return 0;
-        }
-        return (currentOrders - lastOrders) * 100 / lastOrders;
-    }
-
+    @Transactional(readOnly = true)
     private Integer countTotalProducts(Long sellerId) {
-        return getSellerProducts(sellerId).size();
+        return productRepository.findBySellerId(sellerId).size();
     }
 
+    @Transactional(readOnly = true)
     private List<OrderStatsDTO> getRecentOrders(Long sellerId) {
         List<Order> orders = orderRepository.findByUserId(sellerId);
 
@@ -247,9 +234,10 @@ public class SellerDashboardService implements ISellerDashboardService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     private Map<String, BigDecimal> getRevenueByMonth(Long sellerId) {
         Map<String, BigDecimal> revenueByMonth = new LinkedHashMap<>();
-        List<Product> sellerProducts = getSellerProducts(sellerId);
+        List<Product> sellerProducts = productRepository.findBySellerId(sellerId);
 
         // Lấy dữ liệu 6 tháng gần nhất
         LocalDate now = LocalDate.now();
@@ -258,10 +246,6 @@ public class SellerDashboardService implements ISellerDashboardService {
         for (int i = 5; i >= 0; i--) {
             LocalDate month = now.minusMonths(i);
             String monthLabel = month.format(formatter);
-
-            // Tính doanh thu tháng
-            LocalDateTime startOfMonth = month.withDayOfMonth(1).atStartOfDay();
-            LocalDateTime endOfMonth = month.withDayOfMonth(month.lengthOfMonth()).atTime(23, 59, 59);
 
             // Tính doanh thu tháng dựa trên số lượng đã bán của sản phẩm
             BigDecimal revenue = BigDecimal.ZERO;
@@ -276,16 +260,5 @@ public class SellerDashboardService implements ISellerDashboardService {
         }
 
         return revenueByMonth;
-    }
-
-    private List<Product> getSellerProducts(Long sellerId) {
-        List<Product> allProducts = productRepository.findAll();
-
-        return allProducts.stream()
-                .filter(product -> product.getCategory() != null &&
-                        product.getCategory().getProducts() != null &&
-                        product.getCategory().getProducts().stream()
-                                .anyMatch(p -> p.getId().equals(sellerId)))
-                .toList();
     }
 }

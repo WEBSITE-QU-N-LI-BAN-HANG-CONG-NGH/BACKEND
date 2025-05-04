@@ -6,6 +6,7 @@ import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class ProductService implements IProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ModelMapper modelMapper;
 
     @Override
     @Transactional
@@ -127,6 +129,7 @@ public class ProductService implements IProductService {
         return productRepository.findAll();
     }
 
+    @Transactional
     @Override
     public List<ProductDTO> getAllProducts() {
         List<Product> products = productRepository.findAll();
@@ -317,6 +320,45 @@ public class ProductService implements IProductService {
         }
 
         return productRepository.save(existingProduct);
+    }
+
+    @Transactional
+    @Override
+    public ProductDTO updateProductByID(Long productId, Product product) {
+        Product curProduct = findProductById(productId);
+
+        // Update basic properties
+        if (product.getTitle() != null) curProduct.setTitle(product.getTitle());
+        if (product.getDescription() != null) curProduct.setDescription(product.getDescription());
+        if (product.getBrand() != null) curProduct.setBrand(product.getBrand());
+        if (product.getColor() != null) curProduct.setColor(product.getColor());
+
+        // Handle images
+        if (product.getImages() != null && !product.getImages().isEmpty()) {
+            curProduct.getImages().clear();
+            for (Image image : product.getImages()) {
+                image.setProduct(curProduct);
+                curProduct.getImages().add(image);
+            }
+        }
+
+        // Update price and discount
+        if (product.getPrice() > 0) curProduct.setPrice(product.getPrice());
+        if (product.getDiscountPersent() >= 0) curProduct.setDiscountPersent(product.getDiscountPersent());
+        curProduct.updateDiscountedPrice();
+
+        // Update quantity
+        if (product.getQuantity() >= 0) curProduct.setQuantity(product.getQuantity());
+
+        // Update category if provided
+        if (product.getCategory() != null && product.getCategory().getId() != null) {
+            Category category = categoryRepository.findById(product.getCategory().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+            curProduct.setCategory(category);
+        }
+        //save new info
+        Product updatedProduct = productRepository.save(curProduct);
+        return modelMapper.map(updatedProduct, ProductDTO.class);
     }
 
     private Map<String, Object> mapProductToMap(Product p) {

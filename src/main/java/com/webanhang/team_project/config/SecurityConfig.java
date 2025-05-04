@@ -20,7 +20,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
@@ -34,19 +33,22 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@Slf4j   //Thêm logger (log) để ghi log phục vụ debug.
+@Slf4j
 public class SecurityConfig {
     @Value("${api.prefix}")
     private String API;
 
-    private final AppUserDetailsService userDetailsService;  //: Dịch vụ tùy chỉnh để tải thông tin người dùng.
-    private final JwtEntryPoint authEntryPoint;   //: Điểm vào cho xác thực JWT, xử lý các lỗi xác thực.
-    private final AuthTokenFilter authTokenFilter;  //: Bộ lọc xác thực JWT, kiểm tra tính hợp lệ của token trong mỗi yêu cầu.
-    private final OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService;  //Xử lý đăng nhập qua OAuth2.
+    private final AppUserDetailsService userDetailsService;
+    private final JwtEntryPoint authEntryPoint;
+    private final AuthTokenFilter authTokenFilter;
+    private final OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2FailureHandler oAuth2FailureHandler;
-    private final ErrorResponseUtils errorResponseUtils; //Công cụ gửi phản hồi lỗi.
-    private final PasswordEncoder passwordEncoder;  //Dùng để mã hóa mật khẩu.
+    private final ErrorResponseUtils errorResponseUtils;
+    private final PasswordEncoder passwordEncoder;
+    private final CloudflareFilter cloudflareFilter;
+    private final RateLimitFilter rateLimitFilter;
+
 
 
 //  Cung cấp AuthenticationManager để xác thực người dùng.
@@ -75,13 +77,13 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        List<String> securedUrls = List.of(API + "/carts/**", API + "/cartItems/**", API + "/orders/**");  ///api/carts/**, /api/cartItems/**, /api/orders/**: Yêu cầu đã xác thực (bất kỳ vai trò nào).
+        List<String> securedUrls = List.of(API + "/carts/**", API + "/cartItems/**", API + "/orders/**");
 
         http
                 .csrf(AbstractHttpConfigurer::disable)  //Tắt CSRF (csrf().disable()): Phù hợp với API không trạng thái (stateless) sử dụng JWT.
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authEntryPoint)  //Thiết lập xử lý lỗi xác thực (authEntryPoint) và từ chối truy cập (accessDeniedHandler).
-                        .accessDeniedHandler(accessDeniedHandler()))  //Sử dụng phiên không trạng thái (SessionCreationPolicy.STATELESS): Không lưu trữ phiên trên server, dựa vào JWT.
+                        .accessDeniedHandler(accessDeniedHandler()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -98,8 +100,8 @@ public class SecurityConfig {
                         .failureHandler(oAuth2FailureHandler))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new CloudflareFilter(), UsernamePasswordAuthenticationFilter.class);
-//                .addFilterBefore(new RateLimitFilter(), CloudflareFilter.class);
+                .addFilterBefore(cloudflareFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, CloudflareFilter.class);
         return http.build();
     }
 }

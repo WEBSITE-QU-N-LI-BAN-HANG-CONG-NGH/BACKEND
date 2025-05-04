@@ -57,7 +57,6 @@ public class AdminProductController {
      *
      * @return Danh sách sản phẩm trong hệ thống
      */
-    @Transactional
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> findAllProducts() {
         List<ProductDTO> productDTOs = productService.getAllProducts();
@@ -72,11 +71,9 @@ public class AdminProductController {
      * @return Thông tin sản phẩm sau khi cập nhật
      */
     @PutMapping("/{productId}/update")
-    @Transactional
     public ResponseEntity<ApiResponse> updateProduct(@PathVariable Long productId, @RequestBody Product product) {
-        Product updatedProduct = productService.updateProduct(productId, product);
-        ProductDTO productDTO = new ProductDTO(updatedProduct);
-        return ResponseEntity.ok(ApiResponse.success(productDTO, "Cập nhật sản phẩm thành công"));
+        ProductDTO updatedProduct = productService.updateProductByID(productId, product);
+        return ResponseEntity.ok(ApiResponse.success(updatedProduct, "Cập nhật sản phẩm thành công"));
     }
 
     /**

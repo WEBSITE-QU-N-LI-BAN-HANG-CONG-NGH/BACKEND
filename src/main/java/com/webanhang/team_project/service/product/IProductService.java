@@ -18,6 +18,8 @@ public interface IProductService {
 
     public Product updateProduct(Long productId, Product product) ;
 
+    ProductDTO updateProductByID(Long productId, Product product);
+
     public Product findProductById(Long id) ;
 
     public List<Product> findProductByCategory(String category) ;

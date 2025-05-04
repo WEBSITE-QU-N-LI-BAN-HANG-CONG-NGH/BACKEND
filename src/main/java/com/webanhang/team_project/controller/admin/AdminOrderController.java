@@ -30,12 +30,8 @@ public class AdminOrderController {
      * @return Danh sách đơn hàng
      */
     @GetMapping("/all")
-    @Transactional
     public ResponseEntity<ApiResponse> getAllOrders() {
-        List<Order> orders = orderService.getAllOrdersByJF();
-        List<OrderDetailDTO> orderDTOs = orders.stream()
-                .map(order -> new OrderDetailDTO(order))
-                .toList();
+        List<OrderDetailDTO> orderDTOs = orderService.getAllOrdersByJF();
         return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Lấy tất cả đơn hàng thành công"));
     }
 

@@ -3,6 +3,7 @@ package com.webanhang.team_project.service.order;
 
 
 import com.webanhang.team_project.dto.order.OrderDTO;
+import com.webanhang.team_project.dto.order.OrderDetailDTO;
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.User;
@@ -24,7 +25,7 @@ public interface IOrderService {
     public List<Order> getAllOrders();
     public void deleteOrder(Long orderId);
     public Map<String, Object> getOrderStatistics(LocalDate start, LocalDate end);
-    List<Order> getAllOrdersByJF();
+    List<OrderDetailDTO> getAllOrdersByJF();
 
     List<Order> getPendingOrders();
 
