@@ -29,23 +29,19 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
 
         log.error("OAuth2 authentication failed: {}", exception.getMessage());
 
-        // Lấy thông báo lỗi
         String errorMessage = exception.getMessage();
         if (errorMessage == null || errorMessage.isEmpty()) {
             errorMessage = "Đăng nhập thất bại, vui lòng thử lại.";
         }
 
-        // Mã hóa thông báo lỗi để an toàn khi đưa vào URL
         String encodedErrorMessage = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
 
-        // Xây dựng URL với tham số lỗi
         String redirectUrl = UriComponentsBuilder.fromUriString(defaultFailureRedirectUri)
                 .queryParam("error", encodedErrorMessage)
                 .build().toUriString();
 
         log.info("Redirecting to: {}", redirectUrl);
 
-        // Chuyển hướng người dùng đến trang đăng nhập với thông báo lỗi
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }

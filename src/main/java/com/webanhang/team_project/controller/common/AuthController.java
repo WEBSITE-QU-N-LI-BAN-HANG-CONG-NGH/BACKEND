@@ -32,13 +32,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequiredArgsConstructor   //Annotation của Lombok để tự động tạo constructor với các tham số là các trường final
+@RequiredArgsConstructor
 @Slf4j
 @RequestMapping("${api.prefix}/auth")
 public class AuthController {
     private final JwtUtils jwtUtils;
     private final CookieUtils cookieUtils;
-    private final AppUserDetailsService userDetailsService;  // Service để tải thông tin người dùng
+    private final AppUserDetailsService userDetailsService;
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final UserRepository userRepository;
@@ -154,41 +154,6 @@ public class AuthController {
         cookieUtils.deleteRefreshTokenCookie(response);
         return ResponseEntity.ok(ApiResponse.success(null, "Đăng xuất thành công!"));
     }
-
-//    /**
-//     * Kiểm tra trạng thái xác thực hiện tại
-//     */
-//
-//    @GetMapping("/status")
-//    public ResponseEntity<ApiResponse> checkAuthStatus(Authentication authentication) {
-//        if (authentication != null && authentication.isAuthenticated()) {
-//            Map<String, Object> userInfo = new HashMap<>();
-//            userInfo.put("authenticated", true);
-//            userInfo.put("email", authentication.getName());
-//            userInfo.put("authorities", authentication.getAuthorities());
-//            return ResponseEntity.ok(ApiResponse.success(userInfo, "Đã xác thực."));
-//        }
-//        return ResponseEntity.ok(ApiResponse.success(Map.of("authenticated", false), "Chưa xác thực."));
-//    }
-
-//    @GetMapping("/current-user")
-//    public ResponseEntity<ApiResponse> getCurrentUser(Authentication authentication) {
-//        log.info("Authentication: {}", authentication);
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return ResponseEntity
-//                    .status(HttpStatus.UNAUTHORIZED)
-//                    .body(ApiResponse.error("User not authenticated"));
-//        }
-//
-//        AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-//        User user = userService.getUserById(userDetails.getId());
-//        UserDTO userDto = userService.convertUserToDto(user);
-//
-//        return ResponseEntity.ok(ApiResponse.success(userDto, "Current user info retrieved successfully"));
-//    }
-
-
-
 
     /**
      * Gửi lại OTP nếu người dùng không nhận được

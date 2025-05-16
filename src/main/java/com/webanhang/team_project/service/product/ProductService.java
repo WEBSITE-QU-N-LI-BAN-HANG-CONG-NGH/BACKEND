@@ -191,6 +191,7 @@ public class ProductService implements IProductService {
         return productRepository.findProductsByTopAndSecondCategoryNames(topCategory, secondCategory);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Product> findAllProductsByFilter(FilterProduct filter) {
         Specification<Product> spec = (root, query, criteriaBuilder) -> {

@@ -137,6 +137,8 @@ public class OtpService {
     public void sendOtpEmail(String email, String otp) {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         try {
+            // true = multipart message
+            // true = enable HTML content
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             // Chuẩn bị context cho Thymeleaf
@@ -150,14 +152,15 @@ public class OtpService {
             String htmlContent = templateEngine.process("mail/otp-verification-email", context);
 
             helper.setTo(email);
-            helper.setSubject("Mã xác thực tài khoản TechShop của bạn"); // Chủ đề email
+            helper.setSubject("Mã xác thực tài khoản của bạn"); // Chủ đề email
             helper.setText(htmlContent, true); // true để chỉ định đây là nội dung HTML
 
             mailSender.send(mimeMessage);
-            log.info("Đã gửi email OTP HTML (Thymeleaf) tới {}", email);
+            log.info("Đã gửi email OTP HTML tới {}", email);
 
         } catch (MessagingException e) {
-            log.error("Lỗi khi gửi email OTP HTML (Thymeleaf) tới {}: {}", email, e.getMessage(), e);
+            log.error("Lỗi khi gửi email OTP HTML tới {}: {}", email, e.getMessage());
+            // Xử lý lỗi phù hợp (ví dụ: throw exception tùy chỉnh)
             throw new RuntimeException("Không thể gửi email OTP.", e);
         }
     }

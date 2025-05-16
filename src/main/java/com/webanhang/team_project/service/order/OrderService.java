@@ -290,7 +290,7 @@ public class OrderService implements IOrderService {
     @Transactional
     public List<OrderDetailDTO> getAllOrdersByJF() {
         // Sử dụng JPQL với JOIN FETCH để lấy thông tin User cùng với Order
-        List<Order> orders= orderRepository.findAllWithUser();
+        List<Order> orders= orderRepository.findAllWithUserOrderByOrderDateDesc();
         List<OrderDetailDTO> orderDTOs = orders.stream()
                 .map(order -> new OrderDetailDTO(order))
                 .toList();

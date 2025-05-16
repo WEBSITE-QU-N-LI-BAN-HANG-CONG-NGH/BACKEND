@@ -17,15 +17,12 @@ public class CloudflareFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Lấy header CF-Connecting-IP từ Cloudflare
         String realClientIp = request.getHeader("CF-Connecting-IP");
 
-        // Nếu có, lưu vào request attribute
         if (realClientIp != null && !realClientIp.isEmpty()) {
             request.setAttribute("REAL_CLIENT_IP", realClientIp);
         }
 
-        // Tiếp tục chuỗi filter
         filterChain.doFilter(request, response);
     }
 }

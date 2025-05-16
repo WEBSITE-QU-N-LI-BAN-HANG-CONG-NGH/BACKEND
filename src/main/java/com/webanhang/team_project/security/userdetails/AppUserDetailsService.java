@@ -19,7 +19,6 @@ public class AppUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException, DisabledException {
-        // Sử dụng findByEmail trực tiếp, Optional chỉ làm phức tạp hơn ở đây
         User user = userRepository.findByEmail(email);
 
         if (user == null) {
@@ -27,12 +26,9 @@ public class AppUserDetailsService implements UserDetailsService {
         }
 
         if (!user.isActive()) {
-            // Ném DisabledException thay vì trả về UserDetails với isEnabled=false
-            // Để có thông báo lỗi rõ ràng hơn cho người dùng
             throw new DisabledException("Account is not activated for email: " + email);
         }
 
-        // Sử dụng factory method chuẩn cho UserDetails
         return AppUserDetails.buildUserDetails(user);
     }
 }

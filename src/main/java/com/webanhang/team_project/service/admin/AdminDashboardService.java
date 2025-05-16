@@ -90,11 +90,7 @@ public class AdminDashboardService implements IAdminDashboardService {
     @Override
     public Map<String, Object> getCategoryRevenue() {
         Map<String, Object> result = new HashMap<>();
-
-        // Lấy tất cả sản phẩm
         List<Product> products = productRepository.findAll();
-
-        // Tạo map để lưu doanh thu theo danh mục
         Map<String, BigDecimal> categoryRevenueMap = new HashMap<>();
 
         // Tính doanh thu cho từng danh mục
@@ -115,27 +111,12 @@ public class AdminDashboardService implements IAdminDashboardService {
         BigDecimal totalRevenue = categoryRevenueMap.values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Tạo kết quả với top 3 + others
-        Map<String, BigDecimal> topCategories = new LinkedHashMap<>();
-        BigDecimal othersRevenue = BigDecimal.ZERO;
-
-        for (int i = 0; i < sortedEntries.size(); i++) {
-            Map.Entry<String, BigDecimal> entry = sortedEntries.get(i);
-            if (i < 3) {
-                topCategories.put(entry.getKey(), entry.getValue());
-            } else {
-                othersRevenue = othersRevenue.add(entry.getValue());
-            }
-        }
-
-        // Thêm "Khác" nếu có nhiều hơn 3 danh mục
-        if (sortedEntries.size() > 3) {
-            topCategories.put("Khác", othersRevenue);
-        }
-
-        // Tính phần trăm cho mỗi danh mục
         Map<String, Object> categoryData = new LinkedHashMap<>();
-        for (Map.Entry<String, BigDecimal> entry : topCategories.entrySet()) {
+
+        // Xử lý top 3 danh mục
+        int topCount = Math.min(3, sortedEntries.size());
+        for (int i = 0; i < topCount; i++) {
+            Map.Entry<String, BigDecimal> entry = sortedEntries.get(i);
             Map<String, Object> categoryInfo = new HashMap<>();
             categoryInfo.put("value", entry.getValue());
             categoryInfo.put("percentage", entry.getValue()
@@ -143,6 +124,22 @@ public class AdminDashboardService implements IAdminDashboardService {
                     .divide(totalRevenue.max(BigDecimal.ONE), 2, RoundingMode.HALF_UP));
 
             categoryData.put(entry.getKey(), categoryInfo);
+        }
+
+        // handle others
+        if (sortedEntries.size() > 3) {
+            BigDecimal othersRevenue = BigDecimal.ZERO;
+            for (int i = 3; i < sortedEntries.size(); i++) {
+                othersRevenue = othersRevenue.add(sortedEntries.get(i).getValue());
+            }
+
+            Map<String, Object> othersInfo = new HashMap<>();
+            othersInfo.put("value", othersRevenue);
+            othersInfo.put("percentage", othersRevenue
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(totalRevenue.max(BigDecimal.ONE), 2, RoundingMode.HALF_UP));
+
+            categoryData.put("Khác", othersInfo);
         }
 
         result.put("categories", categoryData);

@@ -30,30 +30,23 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class AuthTokenFilter extends OncePerRequestFilter {  /**
-     * OncePerRequestFilter là một lớp trừu tượng trong Spring Security,
-     * được sử dụng để tạo ra các bộ lọc (filter) mà chỉ chạy một lần cho mỗi yêu cầu HTTP.
-     * Điều này giúp đảm bảo rằng bộ lọc của bạn sẽ không chạy nhiều lần cho cùng một yêu cầu,
-     * điều này có thể xảy ra nếu bạn sử dụng các bộ lọc khác nhau trong chuỗi bộ lọc của Spring Security.
-     */
-
+public class AuthTokenFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(AuthTokenFilter.class);
     private final JwtUtils jwtUtils;
     private final AppUserDetailsService userDetailsService;
     private final ErrorResponseUtils errorResponseUtils;
 
     @Override
-    //Xử lý logic xác thực JWT.
     protected void doFilterInternal(@NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
-            String jwt = parseJwt(request); ///để trích xuất token từ header Authorization (định dạng Bearer <token>).
-            if (StringUtils.hasText(jwt) && jwtUtils.validateToken(jwt)) {  /// Nếu token tồn tại và hợp lệ (kiểm tra bằng jwtUtils.validateToken(jwt)
+            String jwt = parseJwt(request);
+            if (StringUtils.hasText(jwt) && jwtUtils.validateToken(jwt)) {
                 String username = jwtUtils.getEmailFromToken(jwt);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()); ///Tạo đối tượng UsernamePasswordAuthenticationToken chứa thông tin người dùng và quyền (authorities).
-                SecurityContextHolder.getContext().setAuthentication(auth);  ///Lưu thông tin xác thực vào SecurityContextHolder để Spring Security sử dụng.
+                var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
         } catch (Exception e) {
             log.error("Lỗi xác thực JWT: {}", e.getMessage());
@@ -63,18 +56,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {  /**
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Gửi response lỗi khi token không hợp lệ
-     */
     private void sendErrorResponse(HttpServletResponse response) throws IOException {
         errorResponseUtils.sendAuthenticationError(response,
                 "Token truy cập không hợp lệ, vui lòng đăng nhập và thử lại!");
     }
 
-    /**
-     * Trích xuất JWT token từ Authorization header
-     * Format header: "Bearer <token>"
-     */
     public String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {

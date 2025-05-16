@@ -29,4 +29,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findOrderByOrderStatus(OrderStatus status);
 
     List<Order> findByUserIdAndOrderStatus(Long userId, OrderStatus orderStatus);
+
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.user LEFT JOIN FETCH o.shippingAddress ORDER BY o.orderDate DESC")
+    List<Order> findAllWithUserOrderByOrderDateDesc();
+
 }
