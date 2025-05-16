@@ -1,19 +1,14 @@
 package com.webanhang.team_project.controller.admin;
 
-import com.webanhang.team_project.dto.seller.SellerRevenueDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.service.admin.IAdminDashboardService;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,13 +26,13 @@ public class AdminDashboardController {
     }
 
     @GetMapping("/revenue-by-time/{period}")
-    public ResponseEntity<ApiResponse> getMonthlyRevenue(@PathVariable String period) {
+    public ResponseEntity<ApiResponse> getRevenueByPeriodOfTime(@PathVariable String period) {
         Map<String, Object> monthlyData = adminDashboardService.getRevenueAnalytics(period);
         return ResponseEntity.ok(ApiResponse.success(monthlyData, "Get monthly revenue success"));
     }
 
     @GetMapping("/revenue-by-category")
-    public ResponseEntity<ApiResponse> getMonthlyRevenueByCategory() {
+    public ResponseEntity<ApiResponse> getRevenueByCategory() {
         Map<String, Object> categoryRevenue = adminDashboardService.getCategoryRevenue();
         return ResponseEntity.ok(ApiResponse.success(categoryRevenue, "Get category revenue success"));
     }
