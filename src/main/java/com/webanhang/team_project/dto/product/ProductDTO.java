@@ -8,6 +8,7 @@ import com.webanhang.team_project.model.ProductSize; // Giả sử import Produc
 import com.webanhang.team_project.model.Review;   // Giả sử import Review
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,7 @@ public class ProductDTO {
     private String secondLevelCategory;
     private Long quantitySold;
     private Integer discountPercent;
+    private LocalDateTime createdAt;
 
     // Thêm trường sellerId để hiển thị thông tin người bán
     private Long sellerId;
@@ -50,6 +52,7 @@ public class ProductDTO {
         this.color = product.getColor();
         this.discountPercent=product.getDiscountPersent();
         this.quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
+        this.createdAt = (product.getCreatedAt() != null) ? product.getCreatedAt() : LocalDateTime.now();
 
         // Lấy danh sách tên size từ List<ProductSize>
         if (product.getSizes() != null) {

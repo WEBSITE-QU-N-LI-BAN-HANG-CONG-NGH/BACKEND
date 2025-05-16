@@ -20,15 +20,6 @@ public class AdminManageUserController {
 
     private final IAdminManageUserService adminUserService;
 
-    /**
-     * Lấy danh sách tất cả người dùng với phân trang và lọc
-     *
-     * @param page   Số trang, mặc định là 0
-     * @param size   Số lượng bản ghi trên một trang, mặc định là 10
-     * @param search Từ khóa tìm kiếm theo email hoặc tên
-     * @param role   Lọc theo vai trò (ADMIN, SELLER, CUSTOMER)
-     * @return Danh sách người dùng đã được phân trang và lọc
-     */
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
@@ -40,25 +31,12 @@ public class AdminManageUserController {
         return ResponseEntity.ok(ApiResponse.success(users, "Get all users success"));
     }
 
-    /**
-     * Lấy thông tin chi tiết của một người dùng
-     *
-     * @param  userId ID của người dùng cần xem
-     * @return Thông tin chi tiết của người dùng
-     */
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse> getUserDetails(@PathVariable Long userId) {
         UserDTO user = adminUserService.getUserDetails(userId);
         return ResponseEntity.ok(ApiResponse.success(user, "Get user details success"));
     }
 
-    /**
-     * Thay đổi vai trò của người dùng
-     *
-     * @param  userId ID của người dùng cần thay đổi
-     * @param  request Yêu cầu thay đổi vai trò
-     * @return Thông tin người dùng sau khi cập nhật
-     */
     @PutMapping("/{userId}/change-role")
     public ResponseEntity<ApiResponse> changeUserRole(
             @PathVariable Long userId,
@@ -68,13 +46,6 @@ public class AdminManageUserController {
         return ResponseEntity.ok(ApiResponse.success(updatedUser, "Change user role success"));
     }
 
-    /**
-     * Cập nhật trạng thái hoạt động của người dùng
-     *
-     * @param  userId ID của người dùng cần cập nhật
-     * @param  request Yêu cầu cập nhật (active = true/false)
-     * @return Thông tin người dùng sau khi cập nhật
-     */
     @PutMapping("/{userId}/status")
     public ResponseEntity<ApiResponse> updateUserStatus(
             @PathVariable Long userId,
@@ -84,23 +55,12 @@ public class AdminManageUserController {
         return ResponseEntity.ok(ApiResponse.success(updatedUser, "Update user status success"));
     }
 
-    /**
-     * Xóa người dùng khỏi hệ thống
-     *
-     * @param  userId ID của người dùng cần xóa
-     * @return Thông báo kết quả
-     */
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long userId) {
         adminUserService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success(null, "Delete user success"));
     }
 
-    /**
-     * Lấy thống kê về khách hàng
-     *
-     * @return Dữ liệu thống kê về khách hàng
-     */
     @GetMapping("/customers/stats")
     public ResponseEntity<ApiResponse> getCustomerStats() {
         Map<String, Object> stats = adminUserService.getCustomerStatistics();

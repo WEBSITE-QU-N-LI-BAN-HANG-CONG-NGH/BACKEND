@@ -23,8 +23,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("DELETE FROM Order o WHERE o.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);
 
-    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.user LEFT JOIN FETCH o.shippingAddress")
-    List<Order> findAllWithUser();
-
     List<Order> findOrderByOrderStatus(OrderStatus status);
+
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.user LEFT JOIN FETCH o.shippingAddress ORDER BY o.orderDate DESC")
+    List<Order> findAllWithUserOrderByOrderDateDesc();
 }

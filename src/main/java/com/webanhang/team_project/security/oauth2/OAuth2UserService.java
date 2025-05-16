@@ -36,34 +36,19 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RestTemplate restTemplate; // ** Thêm RestTemplate **
+    private final RestTemplate restTemplate;
 
-    // Define standard error codes
     private static final String OAUTH2_PROCESSING_ERROR_CODE = "oauth2_processing_error";
     private static final String EMAIL_NOT_FOUND_ERROR_CODE = "email_not_found";
     private static final String ROLE_NOT_FOUND_ERROR_CODE = "role_not_found";
-    private static final String GITHUB_EMAILS_API_URL = "https://api.github.com/user/emails"; // URL API emails của GitHub
-
-    // ** Thêm Bean RestTemplate vào Configuration của bạn nếu chưa có **
-    // Ví dụ trong lớp @Configuration chính:
-    // @Bean
-    // public RestTemplate restTemplate() {
-    //     return new RestTemplate();
-    // }
-
+    private static final String GITHUB_EMAILS_API_URL = "https://api.github.com/user/emails";
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        // ** Thay đổi kiểu trả về của phương thức này ngầm định là OAuth2User,
-        //    nhưng chúng ta sẽ trả về AppUserDetails (vẫn là hợp lệ vì AppUserDetails implements OAuth2User)
-        //    hoặc cần điều chỉnh để trả về UserDetails nếu cần thiết hơn trong ngữ cảnh Spring Security chung.
-        //    Tuy nhiên, để đơn giản, trả về AppUserDetails hoạt động được với OAuth2SuccessHandler.
-        // **
-
         OAuth2User oauth2User = super.loadUser(userRequest);
 
         try {
-            return processOAuth2User(userRequest, oauth2User); // processOAuth2User sẽ trả về AppUserDetails
+            return processOAuth2User(userRequest, oauth2User);
         } catch (OAuth2AuthenticationException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -78,7 +63,6 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         }
     }
 
-    // ** Sửa đổi kiểu trả về thành AppUserDetails **
     private AppUserDetails processOAuth2User(OAuth2UserRequest userRequest, OAuth2User oauth2User) {
         String provider = userRequest.getClientRegistration().getRegistrationId();
         String email = extractEmail(oauth2User.getAttributes(), provider, userRequest);
@@ -96,7 +80,6 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         User user = userRepository.findByEmail(email);
 
         if (user == null) {
-            // ** Truyền cả attributes vào createUser để lấy thêm thông tin như name, image **
             user = this.createUser(oauth2User.getAttributes(), email, provider);
             log.info("Created new user from OAuth2 provider {}: {}", provider, email);
         } else {
@@ -106,22 +89,18 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                 userRepository.save(user);
                 log.info("Activated existing inactive user: {}", email);
             }
-            // Optional: Update user details (name, image) from provider if needed
-            // updateUserIfNeeded(user, oauth2User.getAttributes(), provider);
         }
 
-        // ** Tạo và trả về AppUserDetails thay vì oauth2User gốc **
         return AppUserDetails.buildUserDetails(user);
     }
 
-    // ** Sửa đổi để nhận userRequest và gọi API phụ **
     private String extractEmail(Map<String, Object> attributes, String provider, OAuth2UserRequest userRequest) {
         String email = null;
 
         if ("google".equalsIgnoreCase(provider)) {
             email = (String) attributes.get("email");
         } else if ("github".equalsIgnoreCase(provider)) {
-            email = (String) attributes.get("email"); // Thử lấy email từ attributes chính trước
+            email = (String) attributes.get("email");
 
             // Nếu không có email trong attributes chính, và provider là github -> gọi API /user/emails
             if (!StringUtils.hasText(email)) {
@@ -133,29 +112,23 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         return email;
     }
 
-    // ** Phương thức mới để gọi API /user/emails của GitHub **
     private String fetchGithubPrimaryVerifiedEmail(OAuth2AccessToken accessToken) {
         HttpHeaders headers = new HttpHeaders();
-        // Gửi Access Token trong header Authorization
         headers.setBearerAuth(accessToken.getTokenValue());
-        // Đặt header Accept theo khuyến nghị của GitHub API v3
         headers.add("Accept", "application/vnd.github.v3+json");
 
         HttpEntity<String> entity = new HttpEntity<>("", headers);
 
         try {
-            // Thực hiện gọi GET đến API emails
             ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
                     GITHUB_EMAILS_API_URL,
                     HttpMethod.GET,
                     entity,
-                    // Định nghĩa kiểu trả về là một List các Map
                     new ParameterizedTypeReference<List<Map<String, Object>>>() {}
             );
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 List<Map<String, Object>> emails = response.getBody();
-                // Tìm email nào là primary VÀ verified
                 Optional<String> primaryVerifiedEmail = emails.stream()
                         .filter(emailMap -> Boolean.TRUE.equals(emailMap.get("primary")) && Boolean.TRUE.equals(emailMap.get("verified")))
                         .map(emailMap -> (String) emailMap.get("email"))
@@ -166,25 +139,23 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                     return primaryVerifiedEmail.get();
                 } else {
                     log.warn("Could not find a primary and verified email in the response from GitHub /user/emails.");
-                    return null; // Không tìm thấy email phù hợp
+                    return null;
                 }
             } else {
                 log.error("Failed to fetch emails from GitHub /user/emails. Status code: {}", response.getStatusCode());
-                return null; // Lỗi khi gọi API
+                return null;
             }
         } catch (Exception e) {
             log.error("Error calling GitHub /user/emails endpoint: {}", e.getMessage(), e);
-            return null; // Lỗi ngoại lệ khi gọi API
+            return null;
         }
     }
 
 
-    // Phương thức createUser và setNames giữ nguyên như trước
     private User createUser(Map<String, Object> attributes, String email, String provider) {
-        // ... (giữ nguyên code createUser)
         User user = new User();
         user.setEmail(email);
-        user.setActive(true); // New users via OAuth are active by default
+        user.setActive(true);
 
         String name = null;
         String imageUrl = null;
@@ -193,14 +164,13 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         if ("google".equalsIgnoreCase(provider)) {
             name = (String) attributes.get("name");
             imageUrl = (String) attributes.get("picture");
-            providerId = (String) attributes.get("sub"); // Google's unique ID
+            providerId = (String) attributes.get("sub");
         } else if ("github".equalsIgnoreCase(provider)) {
             name = (String) attributes.get("name");
             if (!StringUtils.hasText(name)) {
-                name = (String) attributes.get("login"); // Fallback to login username
+                name = (String) attributes.get("login");
             }
             imageUrl = (String) attributes.get("avatar_url");
-            // GitHub's ID is typically an integer, convert safely
             Object idObj = attributes.get("id");
             if (idObj != null) {
                 providerId = String.valueOf(idObj);
@@ -208,9 +178,9 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         }
 
         setNames(user, name);
-        user.setImageUrl(imageUrl); // Set image URL if available
+        user.setImageUrl(imageUrl);
         user.setOauthProvider(provider);
-        user.setOauthProviderId(providerId); // Store provider-specific ID
+        user.setOauthProviderId(providerId);
 
         // Generate a secure random password (user won't use it for OAuth login)
         String randomPassword = UUID.randomUUID().toString();
@@ -225,7 +195,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                             "Default user role (CUSTOMER) could not be found.",
                             null
                     );
-                    return new RuntimeException("Default role not found"); // Sẽ được bắt bởi catch chung
+                    return new RuntimeException("Default role not found");
                 });
         user.setRole(role);
 
@@ -233,9 +203,8 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private void setNames(User user, String fullName) {
-        // ... (giữ nguyên code setNames)
         if (StringUtils.hasText(fullName)) {
-            String[] names = fullName.trim().split("\\s+"); // Split by any whitespace
+            String[] names = fullName.trim().split("\\s+");
             if (names.length > 0) {
                 user.setFirstName(names[0]);
                 if (names.length > 1) {
@@ -245,13 +214,12 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                     }
                     user.setLastName(lastName.toString().trim());
                 } else {
-                    user.setLastName(""); // Set empty if only one name part
+                    user.setLastName("");
                 }
             }
         } else {
-            // Provide a sensible default if name is missing
             user.setFirstName("User");
-            user.setLastName(String.valueOf(System.currentTimeMillis())); // Or use part of email/ID
+            user.setLastName(String.valueOf(System.currentTimeMillis()));
         }
     }
 }

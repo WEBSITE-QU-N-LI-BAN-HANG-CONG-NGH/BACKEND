@@ -15,20 +15,16 @@ import java.util.List;
 import java.util.Map; // ** Thêm import này **
 
 @Getter
-// @Setter // Cân nhắc bỏ nếu không thực sự cần thay đổi sau khi tạo
-public class AppUserDetails implements UserDetails, OAuth2User { // ** Implement thêm OAuth2User **
+public class AppUserDetails implements UserDetails, OAuth2User {
 
-    private final Long id; // Nên là final
-    private final String email; // Nên là final
-    private final String password; // Nên là final
-    private final boolean enabled; // Thêm trường này để lưu trạng thái active/enabled
-    private final Collection<? extends GrantedAuthority> authorities; // Nên là final
+    private final Long id;
+    private final String email;
+    private final String password;
+    private final boolean enabled;
+    private final Collection<? extends GrantedAuthority> authorities;
 
-    // ** Thêm trường để lưu các thuộc tính OAuth2 **
-    private Map<String, Object> attributes; // Không nên là final nếu cần set sau
+    private Map<String, Object> attributes;
 
-    // --- Constructor ---
-    // Constructor chính, nhận tất cả các giá trị cần thiết
     public AppUserDetails(Long id, String email, String password, boolean enabled, Collection<? extends GrantedAuthority> authorities, Map<String, Object> attributes) {
         this.id = id;
         this.email = email;
@@ -38,27 +34,22 @@ public class AppUserDetails implements UserDetails, OAuth2User { // ** Implement
         this.attributes = attributes;
     }
 
-    // --- Factory Methods ---
-    // Factory method cho đăng nhập thông thường (từ User entity)
     public static AppUserDetails buildUserDetails(User user) {
         List<GrantedAuthority> authorities = List.of(
                 new SimpleGrantedAuthority(user.getRole().getName().name()));
-        // Truyền trạng thái active của User vào constructor
         return new AppUserDetails(
                 user.getId(),
                 user.getEmail(),
                 user.getPassword(),
-                user.isActive(), // Sử dụng trạng thái active từ User
+                user.isActive(),
                 authorities,
-                null // Không có attributes OAuth2 trong trường hợp này
+                null
         );
     }
 
-    // Factory method cho đăng nhập OAuth2 (từ User entity và attributes)
     public static AppUserDetails buildOAuth2UserDetails(User user, Map<String, Object> attributes) {
         List<GrantedAuthority> authorities = List.of(
                 new SimpleGrantedAuthority(user.getRole().getName().name()));
-        // Truyền trạng thái active và attributes vào constructor
         return new AppUserDetails(
                 user.getId(),
                 user.getEmail(),
@@ -66,7 +57,7 @@ public class AppUserDetails implements UserDetails, OAuth2User { // ** Implement
                 user.getPassword(),
                 user.isActive(), // Sử dụng trạng thái active từ User
                 authorities,
-                attributes // Truyền attributes OAuth2
+                attributes
         );
     }
 
@@ -89,22 +80,21 @@ public class AppUserDetails implements UserDetails, OAuth2User { // ** Implement
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Hoặc return this.enabled;
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Hoặc return this.enabled;
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Hoặc return this.enabled;
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        // Trả về trạng thái active/enabled đã lưu
         return this.enabled;
     }
 
@@ -114,15 +104,12 @@ public class AppUserDetails implements UserDetails, OAuth2User { // ** Implement
         return attributes;
     }
 
-    // Cần setter nếu attributes không được truyền qua constructor và không phải final
     public void setAttributes(Map<String, Object> attributes) {
         this.attributes = attributes;
     }
 
     @Override
     public String getName() {
-        // Trả về định danh duy nhất trong ngữ cảnh OAuth2
-        // Dùng id người dùng nội bộ là một lựa chọn tốt
         return String.valueOf(this.id);
     }
 }
