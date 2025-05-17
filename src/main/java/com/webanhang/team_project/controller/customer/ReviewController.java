@@ -142,4 +142,20 @@ public class ReviewController {
         ReviewDTO reviewDTO = new ReviewDTO(res);
         return ResponseEntity.ok(ApiResponse.success(reviewDTO, "Get Review By Id Success!"));
     }
+
+    @GetMapping("/can-review/{productId}")
+    public ResponseEntity<?> canUserReviewProduct(@PathVariable Long productId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Authentication failed", "code", "AUTH_ERROR"));
+        }
+
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
+
+        boolean canReview = reviewService.canUserReviewProduct(user.getId(), productId);
+        return ResponseEntity.ok(ApiResponse.success(canReview, "Check Review Permission Success!"));
+    }
 }

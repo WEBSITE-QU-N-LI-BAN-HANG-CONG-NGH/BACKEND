@@ -2,8 +2,11 @@ package com.webanhang.team_project.service.review;
 
 
 
+import com.webanhang.team_project.enums.OrderStatus;
+import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.model.User;
+import com.webanhang.team_project.repository.OrderRepository;
 import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.repository.ReviewRepository;
 import com.webanhang.team_project.dto.review.ReviewRequest;
@@ -23,10 +26,15 @@ public class ReviewServiceImpl implements ReviewService{
     private final ReviewRepository reviewRepository;
     private final IProductService productService;
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
 
     @Override
     @Transactional // Đảm bảo các thao tác DB (save review, update product) là một khối duy nhất
     public Review createReview(User user, ReviewRequest reviewRequest) {
+        if (!canUserReviewProduct(user.getId(), reviewRequest.getProductId())) {
+            throw new IllegalStateException("Người dùng không đủ điều kiện để đánh giá sản phẩm này. " +
+                    "Có thể bạn chưa mua sản phẩm, chưa nhận hàng hoặc đã đánh giá trước đó.");
+        }
         // Tìm sản phẩm bằng ProductRepository
         Product product = productRepository.findById(reviewRequest.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + reviewRequest.getProductId()));
@@ -101,6 +109,24 @@ public class ReviewServiceImpl implements ReviewService{
     public Review getReviewById(Long reviewId) {
         return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
+    }
+
+    @Override
+    public boolean canUserReviewProduct(Long userId, Long productId) {
+        // Kiểm tra xem người dùng đã mua sản phẩm và đã nhận hàng (DELIVERED) chưa
+        List<Order> userOrders = orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.DELIVERED);
+
+        // Đếm số lần mua sản phẩm thành công (đã giao hàng)
+        long purchaseCount = userOrders.stream()
+                .flatMap(order -> order.getOrderItems().stream())
+                .filter(orderItem -> orderItem.getProduct().getId().equals(productId))
+                .count();
+
+        // Đếm số lần người dùng đã đánh giá sản phẩm này
+        long reviewCount = reviewRepository.countByUserIdAndProductId(userId, productId);
+
+        // Cho phép đánh giá nếu số lần mua nhiều hơn số lần đã đánh giá
+        return purchaseCount >= reviewCount;
     }
 
     // --- Hàm private để cập nhật rating cho Product ---

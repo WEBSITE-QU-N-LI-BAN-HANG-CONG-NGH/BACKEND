@@ -13,4 +13,5 @@ public interface ReviewService {
     public Review updateReview(Long reviewId, ReviewRequest reviewRequest, User user);
     public void deleteReview(Long reviewId, User user);
     public Review getReviewById(Long reviewId);
+    public boolean canUserReviewProduct(Long userId, Long productId);
 }

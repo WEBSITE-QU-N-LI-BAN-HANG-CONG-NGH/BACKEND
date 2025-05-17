@@ -22,4 +22,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // Phương thức xóa theo userId (nếu bạn cần) - Spring Data JPA tự tạo query
     void deleteByUserId(Long userId); // Tên này đúng quy ước
+
+    boolean existsByUserIdAndProductId(Long userId, Long productId);
+
+    // Đếm số lượng đánh giá của một người dùng cho một sản phẩm cụ thể
+    Long countByUserIdAndProductId(Long userId, Long productId);
 }
