@@ -77,17 +77,14 @@ public class OtpService {
                 LocalDateTime.now().isBefore(otpData.getExpirationTime());
 
         if (isValid) {
-            // Nếu OTP hợp lệ, kích hoạt tài khoản (nếu chưa active)
-            // It's generally better to activate *only* during registration verification,
-            // not during password reset OTP validation. Let's refine activateUserAccount.
             User user = userRepository.findByEmail(email);
 
-            if (user.isActive()==true) {
-                throw new RuntimeException("Tài khoản đã được kích hoạt trước đó");
+            if (user != null && user.isBanned()) {
+                throw new RuntimeException("your account is banned");
             }
 
-            if (user != null && !user.isActive()) {
-                activateUserAccount(email); // Activate only if not already active
+            if (user != null && !user.isActive() && !user.isBanned()) {
+                activateUserAccount(email);
             }
             // Xóa OTP sau khi đã dùng thành công
             otpStorage.remove(email);

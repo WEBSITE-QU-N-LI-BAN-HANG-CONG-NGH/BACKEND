@@ -74,6 +74,9 @@ public class User {
         @JoinColumn(name = "role_id")
         private Role role;
 
+        @Column(name = "is_banned", nullable = false)
+        private boolean banned = false;
+
         // Các trường bổ sung cho OAuth2 -> lưu detail info từ oauth provider
         private String oauthProvider;
         private String oauthProviderId;

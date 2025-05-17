@@ -17,4 +17,6 @@ public interface IAdminManageUserService {
     void deleteUser(Long userId);
 
     Map<String, Object> getCustomerStatistics();
+
+    UserDTO banUser(Long userId, boolean banned);
 }

@@ -25,6 +25,10 @@ public class AppUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User not found with email: " + email);
         }
 
+        if (user.isBanned()) {
+            throw new DisabledException("your account has been banned");
+        }
+
         if (!user.isActive()) {
             throw new DisabledException("Account is not activated for email: " + email);
         }

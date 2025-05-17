@@ -109,6 +109,26 @@ public class AdminManageUserService implements IAdminManageUserService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         user.setActive(active);
+        // if blocked -> banned
+        if (!active) {
+            user.setBanned(true);
+        }
+
+        User savedUser = userRepository.save(user);
+
+        return convertToDto(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserDTO banUser(Long userId, boolean banned) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        user.setBanned(banned);
+        if (!banned) {
+            user.setActive(true);
+        }
         User savedUser = userRepository.save(user);
 
         return convertToDto(savedUser);
