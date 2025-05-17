@@ -4,8 +4,8 @@ import com.webanhang.team_project.dto.image.ImageDTO;
 import com.webanhang.team_project.model.Category;
 import com.webanhang.team_project.model.Image;
 import com.webanhang.team_project.model.Product;
-import com.webanhang.team_project.model.ProductSize; // Giả sử import ProductSize
-import com.webanhang.team_project.model.Review;   // Giả sử import Review
+import com.webanhang.team_project.model.ProductSize;
+import com.webanhang.team_project.model.Review;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -26,16 +26,24 @@ public class ProductDTO {
     private int quantity;
     private String brand;
     private String color;
+    private String weight;
+    private String dimension;
+    private String batteryTtype;
+    private String batteryCapacity;
+    private String ramCapacity;
+    private String romCapacity;
+    private String screenSize;
+    private String detailedReview;
+    private String powerfulPerformance;
+    private String connectionPort;
     private List<ProductSizeDTO> sizes;
     private List<ImageDTO> imageUrls;
-    private double averageRating; // Giữ kiểu double
+    private double averageRating;
     private int numRatings;
     private String topLevelCategory;
     private String secondLevelCategory;
     private Long quantitySold;
     private Integer discountPercent;
-
-    // Thêm trường sellerId để hiển thị thông tin người bán
     private Long sellerId;
 
     // Constructor để chuyển đổi từ Product entity
@@ -48,7 +56,17 @@ public class ProductDTO {
         this.quantity = product.getQuantity();
         this.brand = product.getBrand();
         this.color = product.getColor();
-        this.discountPercent=product.getDiscountPersent();
+        this.weight = product.getWeight();
+        this.dimension = product.getDimension();
+        this.batteryTtype = product.getBatteryType();
+        this.batteryCapacity = product.getBatteryCapacity();
+        this.ramCapacity = product.getRamCapacity();
+        this.romCapacity = product.getRomCapacity();
+        this.screenSize = product.getScreenSize();
+        this.detailedReview = product.getDetailedReview();
+        this.powerfulPerformance = product.getPowerfulPerformance();
+        this.connectionPort = product.getConnectionPort();
+        this.discountPercent = product.getDiscountPersent();
         this.quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
 
         // Lấy danh sách tên size từ List<ProductSize>
@@ -76,12 +94,10 @@ public class ProductDTO {
             this.averageRating = 0.0;
         }
 
-
         // Lấy số lượng đánh giá
         this.numRatings = product.getNumRatings();
         // Thêm sellerId
         this.sellerId = product.getSellerId();
-
 
         // Xử lý categories
         Category category = product.getCategory();

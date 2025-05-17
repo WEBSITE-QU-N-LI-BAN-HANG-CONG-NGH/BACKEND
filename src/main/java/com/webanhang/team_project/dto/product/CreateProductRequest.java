@@ -1,3 +1,4 @@
+
 package com.webanhang.team_project.dto.product;
 
 import com.webanhang.team_project.model.Image;
@@ -7,7 +8,6 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Data
 public class CreateProductRequest {
@@ -40,6 +40,26 @@ public class CreateProductRequest {
     @Size(max = 20, message = "Color must be less than 20 characters")
     private String color;
 
+    private String weight;
+
+    private String dimension;
+
+    private String batteryType;
+
+    private String batteryCapacity;
+
+    private String ramCapacity;
+
+    private String romCapacity;
+
+    private String screenSize;
+
+    private String detailedReview;
+
+    private String powerfulPerformance;
+
+    private String connectionPort;
+
     private List<ProductSize> sizes = new ArrayList<>();
 
     @Size(max = 255, message = "Image URL must be less than 255 characters")
@@ -52,5 +72,4 @@ public class CreateProductRequest {
     private String secondLevelCategory;
 
     private Long sellerId;
-//    private List<Map<String, Object>> sizes = new ArrayList<>();
 }

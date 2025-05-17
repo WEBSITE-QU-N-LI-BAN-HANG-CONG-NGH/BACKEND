@@ -36,13 +36,21 @@ public class UserController {
     private final IUserService userService;
     private final UserRepository userRepository;
 
-    @PutMapping("/{userId}/update")
-    public ResponseEntity<ApiResponse> updateUser(@RequestBody UpdateUserRequest request, @PathVariable Long userId) {
-        UserDTO userDto = userService.updateUser(request, userId);
-        return ResponseEntity.ok(ApiResponse.success(userDto, "Update User Success!"));
+    @PutMapping("/update")
+    public ResponseEntity<ApiResponse> updateUser(@RequestBody UpdateUserRequest request, @RequestHeader("Authorization") String jwt) {
+        // Check if the user exists
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized"));
+        }
+
+        User userTemp = userService.findUserByJwt(jwt);
+        userService.updateUser(request, userTemp.getId());
+        return ResponseEntity.ok(ApiResponse.success(null, "Update User Success!"));
     }
 
-    @DeleteMapping("/{userId}/delete")
+    @DeleteMapping("/delete/{userId}")
     public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success(null, "Delete User Success!"));

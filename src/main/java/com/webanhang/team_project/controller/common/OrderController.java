@@ -150,4 +150,15 @@ public class OrderController {
         }
         return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get cancelled orders success!"));
     }
+
+    @PutMapping("/cancel/{id}")
+    public ResponseEntity<ApiResponse> cancelOrder(@PathVariable("id") Long orderId) {
+        Order order = orderService.cancelOrder(orderId);
+        if (order == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Order not found"));
+        }
+        OrderDTO orderDTO = new OrderDTO(order);
+        return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order cancelled successfully"));
+    }
 }

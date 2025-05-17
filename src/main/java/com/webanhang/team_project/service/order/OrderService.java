@@ -189,8 +189,37 @@ public class OrderService implements IOrderService {
         if (order.getOrderStatus() == OrderStatus.DELIVERED) {
             throw new RuntimeException("Không thể hủy đơn hàng đã giao");
         }
+
+        // Trả lại số lượng sản phẩm vào kho
+        for (OrderItem orderItem : order.getOrderItems()) {
+            Product product = orderItem.getProduct();
+            String sizeName = orderItem.getSize();
+            int cancelledQuantity = orderItem.getQuantity();
+
+            // Tìm ProductSize tương ứng
+            ProductSize targetSize = product.getSizes().stream()
+                    .filter(ps -> ps.getName().equals(sizeName))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy size '" + sizeName +
+                            "' cho sản phẩm '" + product.getTitle() + "' (ID: " + product.getId() + ")"));
+
+            // Tăng số lượng trong kho
+            targetSize.setQuantity(targetSize.getQuantity() + cancelledQuantity);
+
+            // Giảm số lượng đã bán nếu đã cập nhật
+            Long quantitySold = product.getQuantitySold();
+            if (quantitySold != null && quantitySold >= cancelledQuantity) {
+                product.setQuantitySold(quantitySold - cancelledQuantity);
+            }
+
+            // Lưu lại sản phẩm đã cập nhật
+            productRepository.save(product);
+        }
+
+        // Cập nhật trạng thái đơn hàng
         order.setOrderStatus(OrderStatus.CANCELLED);
         order.setPaymentStatus(PaymentStatus.REFUNDED);
+
         return orderRepository.save(order);
     }
 

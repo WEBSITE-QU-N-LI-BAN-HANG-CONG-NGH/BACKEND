@@ -38,6 +38,36 @@ public class Product {
     @Column(name = "brand")
     private String brand;
 
+    @Column(name = "weight")
+    private String weight;
+
+    @Column(name = "dimension")
+    private String dimension;
+
+    @Column(name = "battery_type")
+    private String batteryType;
+
+    @Column(name = "battery_capacity")
+    private String batteryCapacity;
+
+    @Column(name = "ram_capacity")
+    private String ramCapacity;
+
+    @Column(name = "rom_capacity")
+    private String romCapacity;
+
+    @Column(name = "screen_size")
+    private String screenSize;
+
+    @Column(name = "detailed_review")
+    private String detailedReview;
+
+    @Column(name = "powerful_performance")
+    private String powerfulPerformance;
+
+    @Column(name = "connection_port")
+    private String connectionPort;
+
     @NotNull(message = "Price is required")
     @Min(value = 0, message = "Price must be greater than or equal to 0")
     @Column(precision = 19, scale = 2)

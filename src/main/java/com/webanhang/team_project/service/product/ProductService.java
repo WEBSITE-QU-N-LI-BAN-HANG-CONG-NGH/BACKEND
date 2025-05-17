@@ -77,6 +77,16 @@ public class ProductService implements IProductService {
         product.setDiscountPersent(req.getDiscountPersent());
         product.setBrand(req.getBrand());
         product.setColor(req.getColor());
+        product.setWeight(req.getWeight());
+        product.setDimension(req.getDimension());
+        product.setBatteryType(req.getBatteryType());
+        product.setBatteryCapacity(req.getBatteryCapacity());
+        product.setRamCapacity(req.getRamCapacity());
+        product.setRomCapacity(req.getRomCapacity());
+        product.setScreenSize(req.getScreenSize());
+        product.setDetailedReview(req.getDetailedReview());
+        product.setPowerfulPerformance(req.getPowerfulPerformance());
+        product.setConnectionPort(req.getConnectionPort());
         product.setCreatedAt(LocalDateTime.now());
         product.setQuantity(req.getQuantity());
         product.setCategory(category);
