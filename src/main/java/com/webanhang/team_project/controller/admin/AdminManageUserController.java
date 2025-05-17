@@ -66,4 +66,13 @@ public class AdminManageUserController {
         Map<String, Object> stats = adminUserService.getCustomerStatistics();
         return ResponseEntity.ok(ApiResponse.success(stats, "Get customer statistics success"));
     }
+
+    @PutMapping("/{userId}/ban")
+    public ResponseEntity<ApiResponse> banUser(
+            @PathVariable Long userId,
+            @RequestParam boolean banned) {
+        UserDTO updatedUser = adminUserService.banUser(userId, banned);
+        String message = banned ? "Banned account " + userId +" success" : "Unbanned account "+ userId +" success";
+        return ResponseEntity.ok(ApiResponse.success(updatedUser, message));
+    }
 }
