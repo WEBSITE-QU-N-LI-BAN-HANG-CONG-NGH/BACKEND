@@ -6,6 +6,7 @@ import com.webanhang.team_project.dto.order.OrderDTO;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.User;
+import com.webanhang.team_project.security.otp.OtpService;
 import com.webanhang.team_project.service.order.IOrderService;
 import com.webanhang.team_project.service.user.UserService;
 
@@ -29,6 +30,8 @@ public class OrderController {
     private final IOrderService orderService;
 
     private final  UserService userService;
+
+    private final OtpService otpService;
 
     private static final Logger log = LoggerFactory.getLogger(OrderController.class);
 
@@ -160,5 +163,43 @@ public class OrderController {
         }
         OrderDTO orderDTO = new OrderDTO(order);
         return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order cancelled successfully"));
+    }
+
+
+    @PostMapping("/send-mail/{orderId}")
+    public ResponseEntity<ApiResponse> sendMail(@RequestHeader("Authorization") String jwt,
+                                                @PathVariable("orderId") Long orderId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized"));
+        }
+
+        User user = userService.findUserByJwt(jwt);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not found"));
+        }
+
+        try {
+            Order order = orderService.findOrderById(orderId);
+            if (order == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Order not found"));
+            }
+
+            // Kiểm tra xem đơn hàng có thuộc về user hiện tại không
+            if (!order.getUser().getId().equals(user.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("You don't have permission to access this order"));
+            }
+
+            otpService.sendOrderMail(user.getEmail(), order);
+            return ResponseEntity.ok(ApiResponse.success(null, "Email sent successfully"));
+        } catch (Exception e) {
+            log.error("Error sending email for order {}: {}", orderId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to send email: " + e.getMessage()));
+        }
     }
 }

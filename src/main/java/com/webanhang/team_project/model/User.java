@@ -25,6 +25,9 @@ public class User {
         private Long id;
         private boolean active = true;
 
+        @Column(name = "is_baned")
+        private Boolean isBaned = false;
+
         @Size(max = 50, message = "First name must be less than 50 characters")
         @Column(name = "first_name")
         private String firstName;
