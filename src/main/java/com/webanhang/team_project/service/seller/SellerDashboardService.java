@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,28 +31,25 @@ public class SellerDashboardService implements ISellerDashboardService {
     @Override
     @Transactional(readOnly = true)
     public SellerDashboardDTO getDashboardData(Long sellerId) {
-        // Kiểm tra người bán tồn tại
         User seller = userRepository.findById(sellerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người bán"));
 
-        // Tính toán các thông số
         BigDecimal totalRevenue = calculateTotalRevenue(sellerId);
         Integer totalOrders = countTotalOrders(sellerId);
         Integer totalProducts = countTotalProducts(sellerId);
+        Integer totalCustomers = countTotalCustomers(sellerId);
 
-        // Lấy đơn hàng gần đây
         List<OrderStatsDTO> recentOrders = getRecentOrders(sellerId);
 
-        // Doanh thu theo tuần
         Map<String, BigDecimal> revenueByWeek = getRevenueByWeek(sellerId);
 
-        // Doanh thu theo tháng
         Map<String, BigDecimal> revenueByMonth = getRevenueByMonth(sellerId);
 
         return new SellerDashboardDTO(
                 totalRevenue,
                 totalOrders,
                 totalProducts,
+                totalCustomers,
                 recentOrders,
                 revenueByWeek,
                 revenueByMonth
@@ -208,7 +206,7 @@ public class SellerDashboardService implements ISellerDashboardService {
 
     @Transactional(readOnly = true)
     private Integer countTotalOrders(Long sellerId) {
-        List<Order> orders = orderRepository.findByUserId(sellerId);
+        List<Order> orders = orderRepository.findBySellerId(sellerId);
         return orders.size();
     }
 
@@ -261,4 +259,18 @@ public class SellerDashboardService implements ISellerDashboardService {
 
         return revenueByMonth;
     }
+    @Transactional(readOnly = true)
+    private Integer countTotalCustomers(Long sellerId) {
+        // Get all orders associated with this seller
+        List<Order> sellerOrders = orderRepository.findBySellerId(sellerId);
+
+        // Extract unique customer IDs using a Set
+        Set<Long> uniqueCustomerIds = sellerOrders.stream()
+                .map(order -> order.getUser().getId())
+                .collect(Collectors.toSet());
+
+        // Return the count of unique customers
+        return uniqueCustomerIds.size();
+    }
+
 }

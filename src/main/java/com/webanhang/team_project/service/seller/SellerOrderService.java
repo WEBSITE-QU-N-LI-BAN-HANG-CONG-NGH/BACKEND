@@ -38,51 +38,41 @@ public class SellerOrderService implements ISellerOrderService {
                                        OrderStatus status, LocalDate startDate, LocalDate endDate) {
         Pageable pageable = PageRequest.of(page, size);
 
-        // Đảm bảo người bán tồn tại
-        User seller = userRepository.findById(sellerId)
+        userRepository.findById(sellerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người bán"));
 
-        List<Order> sellerOrders = orderRepository.findByUserId(sellerId);
+        List<Order> sellerOrders;
 
-        // Lọc theo trạng thái
-        if (status != null) {
-            sellerOrders = sellerOrders.stream()
-                    .filter(order -> order.getOrderStatus() == status)
-                    .toList();
-        }
-
-        // Lọc theo ngày bắt đầu
-        if (startDate != null) {
+        if (startDate != null && endDate != null && status != null) {
             LocalDateTime startDateTime = startDate.atStartOfDay();
-            sellerOrders = sellerOrders.stream()
-                    .filter(order -> order.getOrderDate().isAfter(startDateTime) || order.getOrderDate().isEqual(startDateTime))
-                    .toList();
-        }
-
-        // Lọc theo ngày kết thúc
-        if (endDate != null) {
             LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-            sellerOrders = sellerOrders.stream()
-                    .filter(order -> order.getOrderDate().isBefore(endDateTime) || order.getOrderDate().isEqual(endDateTime))
-                    .toList();
+            sellerOrders = orderRepository.findBySellerIdAndOrderDateBetweenAndOrderStatus(
+                    sellerId, startDateTime, endDateTime, status);
+        } else if (status != null) {
+            sellerOrders = orderRepository.findBySellerIdAndOrderStatus(sellerId, status);
+        } else if (startDate != null && endDate != null) {
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+            sellerOrders = orderRepository.findBySellerIdAndOrderDateBetween(
+                    sellerId, startDateTime, endDateTime);
+        } else {
+            sellerOrders = orderRepository.findBySellerId(sellerId);
         }
 
-        // Tìm kiếm nếu có từ khóa
         if (search != null && !search.isEmpty()) {
             sellerOrders = sellerOrders.stream()
                     .filter(order ->
                             (order.getUser() != null &&
-                                    (order.getUser().getFirstName() != null &&
+                                    ((order.getUser().getFirstName() != null &&
                                             order.getUser().getFirstName().toLowerCase().contains(search.toLowerCase())) ||
-                                    (order.getUser().getLastName() != null &&
-                                            order.getUser().getLastName().toLowerCase().contains(search.toLowerCase())) ||
-                                    (order.getUser().getEmail() != null &&
-                                            order.getUser().getEmail().toLowerCase().contains(search.toLowerCase())))
+                                            (order.getUser().getLastName() != null &&
+                                                    order.getUser().getLastName().toLowerCase().contains(search.toLowerCase())) ||
+                                            (order.getUser().getEmail() != null &&
+                                                    order.getUser().getEmail().toLowerCase().contains(search.toLowerCase()))))
                     )
                     .toList();
         }
 
-        // Phân trang kết quả
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), sellerOrders.size());
 
@@ -99,16 +89,13 @@ public class SellerOrderService implements ISellerOrderService {
 
     @Override
     public Order getOrderDetail(Long sellerId, Long orderId) {
-        // Đảm bảo người bán tồn tại
-        User seller = userRepository.findById(sellerId)
+        userRepository.findById(sellerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người bán"));
 
-        // Lấy đơn hàng
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
-        // Kiểm tra đơn hàng thuộc người bán
-        if (!order.getUser().getId().equals(sellerId)) {
+        if (!order.getSellerId().equals(sellerId)) {
             throw new RuntimeException("Đơn hàng không thuộc người bán này");
         }
 
@@ -118,13 +105,10 @@ public class SellerOrderService implements ISellerOrderService {
     @Override
     @Transactional
     public Order updateOrderStatus(Long sellerId, Long orderId, OrderStatus status) {
-        // Kiểm tra đơn hàng
         Order order = getOrderDetail(sellerId, orderId);
 
-        // Cập nhật trạng thái
         order.setOrderStatus(status);
 
-        // Cập nhật trạng thái thanh toán nếu cần
         if (status == OrderStatus.DELIVERED) {
             order.setPaymentStatus(PaymentStatus.COMPLETED);
         } else if (status == OrderStatus.CANCELLED) {
@@ -137,13 +121,10 @@ public class SellerOrderService implements ISellerOrderService {
     @Override
     public Map<String, Object> getOrderStatistics(Long sellerId, String period) {
         Map<String, Object> statistics = new HashMap<>();
-        List<Product> sellerProducts = getSellerProducts(sellerId);
 
-        // Đảm bảo người bán tồn tại
-        User seller = userRepository.findById(sellerId)
+        userRepository.findById(sellerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người bán"));
 
-        // Xác định khoảng thời gian
         LocalDateTime startDate;
         LocalDateTime endDate = LocalDateTime.now();
 
@@ -156,19 +137,11 @@ public class SellerOrderService implements ISellerOrderService {
         } else if ("year".equals(period)) {
             startDate = LocalDate.now().minusYears(1).atStartOfDay();
         } else {
-            // Mặc định: tất cả thời gian
             startDate = LocalDateTime.of(2000, 1, 1, 0, 0);
         }
 
-        // Lấy đơn hàng trong khoảng thời gian
-        List<Order> orders = orderRepository.findByOrderDateBetweenAndOrderStatus(startDate, endDate, null);
+        List<Order> sellerOrders = orderRepository.findBySellerIdAndOrderDateBetween(sellerId, startDate, endDate);
 
-        // Lọc đơn hàng của người bán
-        List<Order> sellerOrders = orders.stream()
-                .filter(order -> order.getUser().getId().equals(sellerId))
-                .toList();
-
-        // Thống kê theo trạng thái
         long pendingCount = sellerOrders.stream()
                 .filter(order -> order.getOrderStatus() == OrderStatus.PENDING)
                 .count();
@@ -189,15 +162,12 @@ public class SellerOrderService implements ISellerOrderService {
                 .filter(order -> order.getOrderStatus() == OrderStatus.CANCELLED)
                 .count();
 
-        // Tính tổng doanh thu dựa trên số lượng đã bán của sản phẩm
-        BigDecimal totalRevenue = BigDecimal.ZERO;
-        for (Product product : sellerProducts) {
-            long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
-            BigDecimal productRevenue = BigDecimal.valueOf(product.getDiscountedPrice() * quantitySold);
-            totalRevenue = totalRevenue.add(productRevenue);
-        }
+        BigDecimal totalRevenue = sellerOrders.stream()
+                .filter(order -> order.getOrderStatus() == OrderStatus.DELIVERED)
+                .map(order -> BigDecimal.valueOf(order.getTotalDiscountedPrice() != null ?
+                        order.getTotalDiscountedPrice() : 0))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Đưa vào kết quả
         statistics.put("totalOrders", sellerOrders.size());
         statistics.put("pendingOrders", pendingCount);
         statistics.put("confirmedOrders", confirmedCount);
@@ -208,16 +178,5 @@ public class SellerOrderService implements ISellerOrderService {
         statistics.put("period", period);
 
         return statistics;
-    }
-
-    private List<Product> getSellerProducts(Long sellerId) {
-        List<Product> allProducts = productRepository.findAll();
-
-        return allProducts.stream()
-                .filter(product -> product.getCategory() != null &&
-                        product.getCategory().getProducts() != null &&
-                        product.getCategory().getProducts().stream()
-                                .anyMatch(p -> p.getId().equals(sellerId)))
-                .collect(Collectors.toList());
     }
 }

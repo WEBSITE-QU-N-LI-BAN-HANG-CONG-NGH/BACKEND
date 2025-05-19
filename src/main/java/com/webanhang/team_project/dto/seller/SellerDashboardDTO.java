@@ -12,10 +12,11 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SellerDashboardDTO {
-    private BigDecimal totalRevenue;            // Tổng doanh thu
-    private Integer totalOrders;                // Tổng số đơn hàng
-    private Integer totalProducts;              // Tổng số sản phẩm
-    private List<OrderStatsDTO> recentOrders;   // Đơn hàng gần đây
+    private BigDecimal totalRevenue;
+    private Integer totalOrders;
+    private Integer totalProducts;
+    private Integer totalCustomers;
+    private List<OrderStatsDTO> recentOrders;
     private Map<String, BigDecimal> revenueByWeek;
-    private Map<String, BigDecimal> revenueByMonth; // Doanh thu theo tháng
+    private Map<String, BigDecimal> revenueByMonth;
 }

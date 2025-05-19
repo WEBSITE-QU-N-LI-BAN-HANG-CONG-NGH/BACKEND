@@ -21,10 +21,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByEmailContainingOrFirstNameContainingOrLastNameContainingAndRoleNameNot(
             String email, String firstName, String lastName, UserRole roleName, Pageable pageable);
 
-    // Tìm kiếm người dùng theo email hoặc tên
-    List<User> findByEmailContainingOrFirstNameContainingOrLastNameContaining(
-            String email, String firstName, String lastName, Pageable pageable);
-
     // Lọc người dùng theo role
     List<User> findByRoleName(UserRole roleName, Pageable pageable);
 

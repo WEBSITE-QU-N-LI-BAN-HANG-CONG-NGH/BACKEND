@@ -3,6 +3,7 @@ package com.webanhang.team_project.controller.admin;
 
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.dto.role.ChangeRoleRequest;
+import com.webanhang.team_project.dto.user.UpdateUserInfoRequest;
 import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.dto.user.UpdateUserStatusRequest;
 import com.webanhang.team_project.service.admin.IAdminManageUserService;
@@ -35,6 +36,14 @@ public class AdminManageUserController {
     public ResponseEntity<ApiResponse> getUserDetails(@PathVariable Long userId) {
         UserDTO user = adminUserService.getUserDetails(userId);
         return ResponseEntity.ok(ApiResponse.success(user, "Get user details success"));
+    }
+
+    @PutMapping("/{userId}")
+    public ResponseEntity<ApiResponse> updateUserInfo(
+            @PathVariable Long userId,
+            @RequestBody UpdateUserInfoRequest request) {
+        UserDTO updatedUser = adminUserService.updateUserInfo(userId, request);
+        return ResponseEntity.ok(ApiResponse.success(updatedUser, "Update user info success"));
     }
 
     @PutMapping("/{userId}/change-role")

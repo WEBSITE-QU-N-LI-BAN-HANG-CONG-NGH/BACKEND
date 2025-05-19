@@ -58,8 +58,12 @@ public class AdminProductController {
      * @return Danh sách sản phẩm trong hệ thống
      */
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse> findAllProducts() {
-        List<ProductDTO> productDTOs = productService.getAllProducts();
+    public ResponseEntity<ApiResponse> findAllProducts(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String order) {
+        List<ProductDTO> productDTOs = productService.getAllProducts(search, category, sort, order);
         return ResponseEntity.ok(ApiResponse.success(productDTOs, "Lấy tất cả sản phẩm thành công"));
     }
 
