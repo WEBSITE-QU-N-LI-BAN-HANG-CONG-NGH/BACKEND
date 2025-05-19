@@ -1,5 +1,6 @@
 package com.webanhang.team_project.repository;
 
+import com.webanhang.team_project.model.Category;
 import com.webanhang.team_project.model.Product;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -88,4 +89,11 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     // Calculate total revenue by seller
     @Query("SELECT SUM(p.discountedPrice * p.quantitySold) FROM Product p WHERE p.sellerId = :sellerId")
     Integer calculateTotalRevenueBySellerId(@Param("sellerId") Long sellerId);
+
+    @Query("SELECT p FROM Product p WHERE " +
+            "LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Product> searchProducts(@Param("keyword") String keyword);
+
+    List<Product> findByCategory(Category category);
 }

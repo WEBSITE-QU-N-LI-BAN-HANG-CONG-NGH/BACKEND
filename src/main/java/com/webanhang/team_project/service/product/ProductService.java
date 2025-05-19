@@ -18,11 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -146,8 +142,28 @@ public class ProductService implements IProductService {
 
     @Transactional
     @Override
-    public List<ProductDTO> getAllProducts() {
+    public List<ProductDTO> getAllProducts(String search, String categoryName, String sort, String order) {
         List<Product> products = productRepository.findAll();
+
+        if (search != null && !search.isEmpty()) {
+            products = productRepository.searchProducts(search);
+        } else if (categoryName != null && !categoryName.isEmpty()) {
+            Category category = categoryRepository.findByName(categoryName);
+
+            if (category != null) {
+                products = productRepository.findByCategory(category);
+            } else {
+                products = new ArrayList<>();
+            }
+            products = productRepository.findByCategory(category);
+        } else {
+            products = productRepository.findAll();
+        }
+
+        if (sort != null && order != null) {
+            sortProducts(products, sort, order);
+        }
+
         List<ProductDTO> productDTOs = products.stream()
                 .map(ProductDTO::new)
                 .toList();
@@ -397,5 +413,38 @@ public class ProductService implements IProductService {
         productMap.put("category", p.getCategory() != null ? p.getCategory().getName() : "Uncategorized");
         productMap.put("quantity_sold", p.getQuantitySold());
         return productMap;
+    }
+
+    // helper
+    private void sortProducts(List<Product> products, String sortBy, String order) {
+        Comparator<Product> comparator = null;
+
+        switch (sortBy) {
+            case "price":
+                comparator = Comparator.comparing(Product::getPrice);
+                break;
+            case "createdAt":
+                comparator = Comparator.comparing(Product::getCreatedAt);
+                break;
+            case "quantitySold":
+                comparator = Comparator.comparing(Product::getQuantitySold);
+                break;
+            case "quantity":
+                comparator = Comparator.comparing(Product::getQuantity);
+                break;
+            default:
+                return;
+        }
+
+        if ("desc".equalsIgnoreCase(order)) {
+            comparator = comparator.reversed();
+        }
+
+        products.sort(comparator);
+    }
+
+    private ProductDTO mapToDTO(Product product) {
+        ProductDTO dto = new ProductDTO();
+        return dto;
     }
 }

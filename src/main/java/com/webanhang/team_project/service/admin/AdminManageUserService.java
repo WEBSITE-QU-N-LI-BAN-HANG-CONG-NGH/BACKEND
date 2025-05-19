@@ -1,5 +1,6 @@
 package com.webanhang.team_project.service.admin;
 
+import com.webanhang.team_project.dto.user.UpdateUserInfoRequest;
 import com.webanhang.team_project.dto.user.UserDTO;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.enums.UserRole;
@@ -77,7 +78,34 @@ public class AdminManageUserService implements IAdminManageUserService {
     public UserDTO getUserDetails(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        return convertToDto(user);
+        UserDTO dto = convertToDto(user);
+        long orderCount = orderRepository.findByUserId(userId).size();
+        BigDecimal totalSpent = calculateCustomerSpending(userId);
+        dto.setOrderCount(orderCount);
+        dto.setTotalSpent(totalSpent);
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public UserDTO updateUserInfo(Long userId, UpdateUserInfoRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+        }
+
+        if (request.getMobile() != null) {
+            user.setPhone(request.getMobile());
+        }
+
+        User savedUser = userRepository.save(user);
+        return convertToDto(savedUser);
     }
 
     @Override
@@ -198,6 +226,7 @@ public class AdminManageUserService implements IAdminManageUserService {
         dto.setLastName(user.getLastName());
         dto.setMobile(user.getPhone());
         dto.setActive(user.isActive());
+        dto.setBanned(user.isBanned());
         dto.setCreatedAt(user.getCreatedAt());
 
         if (user.getRole() != null) {

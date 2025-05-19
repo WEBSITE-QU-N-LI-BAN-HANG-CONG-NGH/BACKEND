@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,10 +21,13 @@ public class UserDTO {
     private String role;
     private String mobile;
     private boolean active;
+    private boolean banned;
     private List<Address> addresses;
     private LocalDateTime createdAt;
     private String imageUrl;
     private String oauthProvider;
+    private long orderCount;
+    private BigDecimal totalSpent;
 
     // constructor for orderdetailDTO
     public UserDTO(User user) {

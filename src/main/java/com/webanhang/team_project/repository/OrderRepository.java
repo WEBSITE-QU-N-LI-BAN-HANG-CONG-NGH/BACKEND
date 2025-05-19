@@ -33,4 +33,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.user LEFT JOIN FETCH o.shippingAddress ORDER BY o.orderDate DESC")
     List<Order> findAllWithUserOrderByOrderDateDesc();
 
+    @Query("SELECT SUM(o.totalDiscountedPrice) FROM Order o WHERE o.sellerId = :sellerId AND o.orderStatus = :status")
+    Integer sumTotalDiscountedPriceBySellerIdAndOrderStatus(
+            @Param("sellerId") Long sellerId, @Param("status") OrderStatus status);
+
+    Long countBySellerId(Long sellerId);
+    List<Order> findBySellerId(Long sellerId);
+    List<Order> findBySellerIdAndOrderStatus(Long sellerId, OrderStatus status);
+    List<Order> findBySellerIdAndOrderDateBetween(Long sellerId, LocalDateTime startDate, LocalDateTime endDate);
+    List<Order> findBySellerIdAndOrderDateBetweenAndOrderStatus(
+            Long sellerId, LocalDateTime startDate, LocalDateTime endDate, OrderStatus status);
 }

@@ -28,7 +28,7 @@ public interface IProductService {
 
     public List<Product> findAllProducts() ;
 
-    List<ProductDTO> getAllProducts();
+    List<ProductDTO> getAllProducts(String search, String category, String sort, String order);
 
     public List<Product> searchProducts(String keyword);
 
