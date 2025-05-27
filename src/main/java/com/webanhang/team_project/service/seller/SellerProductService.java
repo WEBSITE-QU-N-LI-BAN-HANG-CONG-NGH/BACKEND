@@ -184,14 +184,12 @@ public class SellerProductService implements ISellerProductService {
         productService.deleteProduct(productId);
     }
 
-    @Override
-    public List<ProductDTO> getSellerProducts(Long sellerId) {
-        List<Product> products = productRepository.findBySellerId(sellerId);
-        List<ProductDTO> productDTOs = products.stream()
-                .map(ProductDTO::new)
-                .toList();
 
-        return productDTOs;
+    @Override
+    public Page<ProductDTO> getSellerProducts(Long sellerId, Pageable pageable) {
+        Page<Product> productPage = productRepository.findBySellerIdWithPagination(sellerId, pageable);
+
+        return productPage.map(ProductDTO::new);
     }
 
     @Override

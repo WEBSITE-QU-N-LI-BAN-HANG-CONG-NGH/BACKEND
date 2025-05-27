@@ -4,6 +4,7 @@ import com.webanhang.team_project.dto.seller.OrderStatsDTO;
 import com.webanhang.team_project.dto.seller.SellerDashboardDTO;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.model.Order;
+import com.webanhang.team_project.model.OrderItem;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.repository.OrderRepository;
@@ -60,25 +61,43 @@ public class SellerDashboardService implements ISellerDashboardService {
     @Transactional(readOnly = true)
     public Map<String, BigDecimal> getMonthlyRevenue(Long sellerId) {
         Map<String, BigDecimal> revenueData = new LinkedHashMap<>();
-        List<Product> sellerProducts = productRepository.findBySellerId(sellerId);
 
         // Lấy dữ liệu 12 tháng gần nhất
         LocalDate now = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yyyy");
 
+        // Khởi tạo map với các tháng và giá trị 0
         for (int i = 11; i >= 0; i--) {
             LocalDate month = now.minusMonths(i);
             String monthLabel = month.format(formatter);
+            revenueData.put(monthLabel, BigDecimal.ZERO);
+        }
 
-            // Tính doanh thu tháng
-            BigDecimal revenue = BigDecimal.ZERO;
+        // Lấy đơn hàng từ 12 tháng trước
+        LocalDateTime startDate = now.minusMonths(11).withDayOfMonth(1).atStartOfDay();
+        LocalDateTime endDate = now.atTime(23, 59, 59);
+        List<Order> allOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
+                startDate, endDate, OrderStatus.DELIVERED);
 
-            for (Product product : sellerProducts) {
-                long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
-                revenue = revenue.add(BigDecimal.valueOf(product.getDiscountedPrice() * quantitySold));
+        // Lọc đơn hàng có sản phẩm của seller
+        for (Order order : allOrders) {
+            // Kiểm tra xem đơn hàng có chứa sản phẩm của seller hay không
+            boolean hasSellersProduct = order.getOrderItems().stream()
+                    .anyMatch(item -> item.getProduct().getSellerId().equals(sellerId));
+
+            if (hasSellersProduct) {
+                // Tính doanh thu chỉ từ sản phẩm của seller trong đơn hàng này
+                BigDecimal orderRevenue = order.getOrderItems().stream()
+                        .filter(item -> item.getProduct().getSellerId().equals(sellerId))
+                        .map(item -> BigDecimal.valueOf(item.getPrice() * item.getQuantity()))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                // Cộng dồn vào tháng tương ứng
+                String monthKey = order.getOrderDate().format(formatter);
+                if (revenueData.containsKey(monthKey)) {
+                    revenueData.put(monthKey, revenueData.get(monthKey).add(orderRevenue));
+                }
             }
-
-            revenueData.put(monthLabel, revenue);
         }
 
         return revenueData;
@@ -87,27 +106,51 @@ public class SellerDashboardService implements ISellerDashboardService {
     @Transactional(readOnly = true)
     public Map<String, BigDecimal> getRevenueByWeek(Long sellerId) {
         Map<String, BigDecimal> revenueByWeek = new LinkedHashMap<>();
-        List<Product> sellerProducts = productRepository.findBySellerId(sellerId);
 
         // Lấy dữ liệu 6 tuần gần nhất
         LocalDate now = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
 
+        // Khởi tạo map với các tuần và giá trị 0
         for (int i = 5; i >= 0; i--) {
             LocalDate weekStart = now.minusWeeks(i);
             LocalDate weekEnd = weekStart.plusDays(6);
             String weekLabel = weekStart.format(formatter) + " - " + weekEnd.format(formatter);
+            revenueByWeek.put(weekLabel, BigDecimal.ZERO);
+        }
 
-            // Tính doanh thu tuần
-            BigDecimal revenue = BigDecimal.ZERO;
+        // Lấy đơn hàng từ 6 tuần trước
+        LocalDateTime startDate = now.minusWeeks(5).atStartOfDay();
+        LocalDateTime endDate = now.atTime(23, 59, 59);
+        List<Order> allOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
+                startDate, endDate, OrderStatus.DELIVERED);
 
-            for (Product product : sellerProducts) {
-                long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
-                BigDecimal productRevenue = BigDecimal.valueOf(product.getDiscountedPrice() * quantitySold);
-                revenue = revenue.add(productRevenue);
+        // Lọc đơn hàng có sản phẩm của seller
+        for (Order order : allOrders) {
+            // Kiểm tra xem đơn hàng có chứa sản phẩm của seller hay không
+            boolean hasSellersProduct = order.getOrderItems().stream()
+                    .anyMatch(item -> item.getProduct().getSellerId().equals(sellerId));
+
+            if (hasSellersProduct) {
+                // Tính doanh thu chỉ từ sản phẩm của seller trong đơn hàng này
+                BigDecimal orderRevenue = order.getOrderItems().stream()
+                        .filter(item -> item.getProduct().getSellerId().equals(sellerId))
+                        .map(item -> BigDecimal.valueOf(item.getPrice() * item.getQuantity()))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                // Xác định tuần của đơn hàng
+                LocalDate orderDate = order.getOrderDate().toLocalDate();
+                for (int i = 5; i >= 0; i--) {
+                    LocalDate weekStart = now.minusWeeks(i);
+                    LocalDate weekEnd = weekStart.plusDays(6);
+
+                    if (!orderDate.isBefore(weekStart) && !orderDate.isAfter(weekEnd)) {
+                        String weekLabel = weekStart.format(formatter) + " - " + weekEnd.format(formatter);
+                        revenueByWeek.put(weekLabel, revenueByWeek.get(weekLabel).add(orderRevenue));
+                        break;
+                    }
+                }
             }
-
-            revenueByWeek.put(weekLabel, revenue);
         }
 
         return revenueByWeek;
@@ -187,19 +230,118 @@ public class SellerDashboardService implements ISellerDashboardService {
         return productStats;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, BigDecimal> getDailyRevenue(Long sellerId) {
+        Map<String, BigDecimal> revenueByDay = new LinkedHashMap<>();
+
+        // Lấy dữ liệu 30 ngày gần nhất
+        LocalDate now = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
+
+        // Khởi tạo map với các ngày và giá trị 0
+        for (int i = 29; i >= 0; i--) {
+            LocalDate day = now.minusDays(i);
+            String dayLabel = day.format(formatter);
+            revenueByDay.put(dayLabel, BigDecimal.ZERO);
+        }
+
+        // Lấy đơn hàng từ 30 ngày trước
+        LocalDateTime startDate = now.minusDays(29).atStartOfDay();
+        LocalDateTime endDate = now.atTime(23, 59, 59);
+        List<Order> allOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
+                startDate, endDate, OrderStatus.DELIVERED);
+
+        // Lọc đơn hàng có sản phẩm của seller
+        for (Order order : allOrders) {
+            // Kiểm tra xem đơn hàng có chứa sản phẩm của seller hay không
+            boolean hasSellersProduct = order.getOrderItems().stream()
+                    .anyMatch(item -> item.getProduct().getSellerId().equals(sellerId));
+
+            if (hasSellersProduct) {
+                // Tính doanh thu chỉ từ sản phẩm của seller trong đơn hàng này
+                BigDecimal orderRevenue = order.getOrderItems().stream()
+                        .filter(item -> item.getProduct().getSellerId().equals(sellerId))
+                        .map(item -> BigDecimal.valueOf(item.getPrice() * item.getQuantity()))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                // Cộng dồn vào ngày tương ứng
+                String dayKey = order.getOrderDate().format(formatter);
+                if (revenueByDay.containsKey(dayKey)) {
+                    revenueByDay.put(dayKey, revenueByDay.get(dayKey).add(orderRevenue));
+                }
+            }
+        }
+
+        return revenueByDay;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, BigDecimal> getCategoryRevenue(Long sellerId) {
+        Map<String, BigDecimal> revenueByCategory = new LinkedHashMap<>();
+
+        // Lấy tất cả đơn hàng DELIVERED
+        List<Order> allDeliveredOrders = orderRepository.findByOrderStatus(OrderStatus.DELIVERED);
+
+        // Lọc các đơn hàng có sản phẩm của seller
+        for (Order order : allDeliveredOrders) {
+            // Xử lý từng order item
+            for (OrderItem item : order.getOrderItems()) {
+                // Kiểm tra xem sản phẩm có phải của seller này không
+                if (item.getProduct().getSellerId().equals(sellerId)) {
+                    // Lấy danh mục của sản phẩm
+                    String categoryName;
+                    if (item.getProduct().getCategory() != null) {
+                        // Ưu tiên lấy danh mục cấp 1 (parent)
+                        if (item.getProduct().getCategory().getLevel() == 2 &&
+                                item.getProduct().getCategory().getParentCategory() != null) {
+                            categoryName = item.getProduct().getCategory().getParentCategory().getName();
+                        } else {
+                            categoryName = item.getProduct().getCategory().getName();
+                        }
+                    } else {
+                        categoryName = "Chưa phân loại";
+                    }
+
+                    // Tính doanh thu từ item này
+                    BigDecimal itemRevenue = BigDecimal.valueOf(item.getPrice() * item.getQuantity());
+
+                    // Cộng dồn vào danh mục tương ứng
+                    if (revenueByCategory.containsKey(categoryName)) {
+                        revenueByCategory.put(categoryName,
+                                revenueByCategory.get(categoryName).add(itemRevenue));
+                    } else {
+                        revenueByCategory.put(categoryName, itemRevenue);
+                    }
+                }
+            }
+        }
+
+        // Sắp xếp theo doanh thu giảm dần
+        Map<String, BigDecimal> sortedMap = revenueByCategory.entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+
+        return sortedMap;
+    }
+
     // Các phương thức hỗ trợ
     @Transactional(readOnly = true)
     private BigDecimal calculateTotalRevenue(Long sellerId) {
-        // Lấy tất cả sản phẩm của người bán
-        List<Product> sellerProducts = productRepository.findBySellerId(sellerId);
 
-        // Tính tổng doanh thu dựa trên số lượng đã bán và giá
+        List<Order> sellerOrders = orderRepository.findBySellerId(sellerId);
         BigDecimal totalRevenue = BigDecimal.ZERO;
-        for (Product product : sellerProducts) {
-            long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
-            BigDecimal productRevenue = BigDecimal.valueOf(product.getDiscountedPrice() * quantitySold);
-            totalRevenue = totalRevenue.add(productRevenue);
-        }
+        totalRevenue = sellerOrders.stream()
+                .map(Order::getTotalDiscountedPrice)
+                .map(BigDecimal::valueOf)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return totalRevenue;
     }
@@ -235,26 +377,43 @@ public class SellerDashboardService implements ISellerDashboardService {
     @Transactional(readOnly = true)
     private Map<String, BigDecimal> getRevenueByMonth(Long sellerId) {
         Map<String, BigDecimal> revenueByMonth = new LinkedHashMap<>();
-        List<Product> sellerProducts = productRepository.findBySellerId(sellerId);
 
         // Lấy dữ liệu 6 tháng gần nhất
         LocalDate now = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yyyy");
 
+        // Khởi tạo map với các tháng và giá trị 0
         for (int i = 5; i >= 0; i--) {
             LocalDate month = now.minusMonths(i);
             String monthLabel = month.format(formatter);
+            revenueByMonth.put(monthLabel, BigDecimal.ZERO);
+        }
 
-            // Tính doanh thu tháng dựa trên số lượng đã bán của sản phẩm
-            BigDecimal revenue = BigDecimal.ZERO;
+        // Lấy đơn hàng từ 6 tháng trước
+        LocalDateTime startDate = now.minusMonths(5).withDayOfMonth(1).atStartOfDay();
+        LocalDateTime endDate = now.atTime(23, 59, 59);
+        List<Order> allOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
+                startDate, endDate, OrderStatus.DELIVERED);
 
-            for (Product product : sellerProducts) {
-                long quantitySold = (product.getQuantitySold() != null) ? product.getQuantitySold() : 0L;
-                BigDecimal productRevenue = BigDecimal.valueOf(product.getDiscountedPrice() * quantitySold);
-                revenue = revenue.add(productRevenue);
+        // Lọc đơn hàng có sản phẩm của seller
+        for (Order order : allOrders) {
+            // Kiểm tra xem đơn hàng có chứa sản phẩm của seller hay không
+            boolean hasSellersProduct = order.getOrderItems().stream()
+                    .anyMatch(item -> item.getProduct().getSellerId().equals(sellerId));
+
+            if (hasSellersProduct) {
+                // Tính doanh thu chỉ từ sản phẩm của seller trong đơn hàng này
+                BigDecimal orderRevenue = order.getOrderItems().stream()
+                        .filter(item -> item.getProduct().getSellerId().equals(sellerId))
+                        .map(item -> BigDecimal.valueOf(item.getPrice() * item.getQuantity()))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                // Cộng dồn vào tháng tương ứng
+                String monthKey = order.getOrderDate().format(formatter);
+                if (revenueByMonth.containsKey(monthKey)) {
+                    revenueByMonth.put(monthKey, revenueByMonth.get(monthKey).add(orderRevenue));
+                }
             }
-
-            revenueByMonth.put(monthLabel, revenue);
         }
 
         return revenueByMonth;

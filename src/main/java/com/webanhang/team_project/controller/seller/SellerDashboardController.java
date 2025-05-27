@@ -71,4 +71,18 @@ public class SellerDashboardController {
         var productStats = sellerDashboardService.getProductStats(seller.getId());
         return ResponseEntity.ok(ApiResponse.success(productStats, "Lấy thống kê sản phẩm thành công"));
     }
+
+    @GetMapping("/revenue/daily")
+    public ResponseEntity<ApiResponse> getDailyRevenue(@RequestHeader("Authorization") String jwt) {
+        User seller = userService.findUserByJwt(jwt);
+        var revenueData = sellerDashboardService.getDailyRevenue(seller.getId());
+        return ResponseEntity.ok(ApiResponse.success(revenueData, "Lấy dữ liệu doanh thu theo ngày thành công"));
+    }
+
+    @GetMapping("/revenue/category")
+    public ResponseEntity<ApiResponse> getCategoryRevenue(@RequestHeader("Authorization") String jwt) {
+        User seller = userService.findUserByJwt(jwt);
+        var revenueData = sellerDashboardService.getCategoryRevenue(seller.getId());
+        return ResponseEntity.ok(ApiResponse.success(revenueData, "Lấy dữ liệu doanh thu theo danh mục thành công"));
+    }
 }

@@ -25,7 +25,7 @@ public class UpdateSellerProfileRequest {
         private String city;
         private String state;
         private String zipCode;
-        private String phoneNumber;
+        private String phone;
         private String businessType;
     }
 }

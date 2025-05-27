@@ -4,6 +4,7 @@ import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.model.Product;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,7 @@ public interface ISellerProductService {
 
     void deleteProduct(Long productId);
 
-    List<ProductDTO> getSellerProducts(Long sellerId);
+    Page<ProductDTO> getSellerProducts(Long sellerId, Pageable pageable);
 
     ProductDTO getProductDetail(Long productId);
 

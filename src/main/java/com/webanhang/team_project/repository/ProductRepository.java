@@ -2,6 +2,7 @@ package com.webanhang.team_project.repository;
 
 import com.webanhang.team_project.model.Category;
 import com.webanhang.team_project.model.Product;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -67,6 +68,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     // Find products by seller ID
     List<Product> findBySellerId(Long sellerId);
+
+    @Query("SELECT p FROM Product p WHERE p.sellerId = :sellerId ORDER BY p.createdAt DESC")
+    Page<Product> findBySellerIdWithPagination(@Param("sellerId") Long sellerId, Pageable pageable);
 
     // Find product by ID and seller ID
     Product findByIdAndSellerId(Long productId, Long sellerId);

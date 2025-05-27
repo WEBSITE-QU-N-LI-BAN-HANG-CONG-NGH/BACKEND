@@ -11,6 +11,10 @@ import com.webanhang.team_project.service.seller.ISellerProductService;
 import com.webanhang.team_project.service.seller.SellerProductService;
 import com.webanhang.team_project.service.user.IUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +32,6 @@ public class SellerProductController {
     private final ISellerProductService sellerProductService;
     private final IUserService userService;
 
-    /**
-     * Tạo mới sản phẩm cho người bán
-     *
-     * @param request DTO chứa thông tin sản phẩm cần tạo
-     * @param jwt Token xác thực của người bán
-     * @return Thông tin sản phẩm đã được tạo
-     */
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createProduct(
             @RequestBody CreateProductRequest req,
@@ -49,14 +46,6 @@ public class SellerProductController {
                 .body(ApiResponse.success(productDto, "Tạo sản phẩm thành công"));
     }
 
-    /**
-     * Cập nhật thông tin sản phẩm của người bán
-     *
-     * @param productId ID sản phẩm cần cập nhật
-     * @param updatedProduct Thông tin mới của sản phẩm
-     * @param jwt Token xác thực của người bán
-     * @return Thông tin sản phẩm sau khi cập nhật
-     */
     @PutMapping("/{productId}/update")
     public ResponseEntity<ApiResponse> updateProduct(
             @PathVariable Long productId,
@@ -68,13 +57,6 @@ public class SellerProductController {
         return ResponseEntity.ok(ApiResponse.success(productDto, "Cập nhật sản phẩm thành công"));
     }
 
-    /**
-     * Xóa sản phẩm
-     *
-     * @param jwt Token xác thực người dùng
-     * @param productId ID của sản phẩm cần xóa
-     * @return Thông báo kết quả
-     */
     @DeleteMapping("/{productId}/delete")
     public ResponseEntity<ApiResponse> deleteProduct(
             @RequestHeader("Authorization") String jwt,
@@ -85,29 +67,37 @@ public class SellerProductController {
         return ResponseEntity.ok(ApiResponse.success(null, "Xóa sản phẩm thành công"));
     }
 
-    /**
-     * Lấy danh sách sản phẩm của người bán
-     *
-     * @param jwt Token xác thực của người bán
-     * @return Danh sách sản phẩm của người bán
-     */
     @GetMapping("/list-products")
-    public ResponseEntity<ApiResponse> getSellerProducts(@RequestHeader("Authorization") String jwt) {
-
+    public ResponseEntity<ApiResponse> getSellerProducts(
+            @RequestHeader("Authorization") String jwt,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
         User seller = userService.findUserByJwt(jwt);
-        List<ProductDTO> productDTOs = sellerProductService.getSellerProducts(seller.getId());
 
-        return ResponseEntity
-                .ok(ApiResponse.success(productDTOs, "Lấy danh sách sản phẩm thành công"));
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ProductDTO> productPage = sellerProductService.getSellerProducts(seller.getId(), pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("products", productPage.getContent());
+        response.put("pagination", Map.of(
+                "currentPage", productPage.getNumber(),
+                "pageSize", productPage.getSize(),
+                "totalElements", productPage.getTotalElements(),
+                "totalPages", productPage.getTotalPages(),
+                "hasNext", productPage.hasNext(),
+                "hasPrevious", productPage.hasPrevious(),
+                "isFirst", productPage.isFirst(),
+                "isLast", productPage.isLast()
+        ));
+
+        return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách sản phẩm thành công"));
     }
 
-    /**
-     * Lấy chi tiết sản phẩm
-     *
-     * @param jwt Token xác thực người dùng
-     * @param productId ID của sản phẩm cần xem
-     * @return Thông tin chi tiết sản phẩm
-     */
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse> getProductDetails(
             @RequestHeader("Authorization") String jwt,
@@ -118,12 +108,6 @@ public class SellerProductController {
         return ResponseEntity.ok(ApiResponse.success(productDTO, "Lấy chi tiết sản phẩm thành công"));
     }
 
-    /**
-     * Lấy thống kê về sản phẩm của người bán
-     *
-     * @param jwt Token xác thực của người bán
-     * @return Thống kê sản phẩm
-     */
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse> getProductStats(@RequestHeader("Authorization") String jwt) {
 
@@ -134,13 +118,6 @@ public class SellerProductController {
                 .ok(ApiResponse.success(stats, "Lấy thống kê sản phẩm thành công"));
     }
 
-    /**
-     * Tạo hàng loạt sản phẩm -> only dev testing
-     *
-     * @param requests List DTO chứa thông tin sản phẩm cần tạo
-     * @param jwt Token xác thực của người bán
-     * @return Tạo hàng loạt sản phẩm
-     */
     @PostMapping("/create-multi-product")
     public ResponseEntity<ApiResponse> createMultipleProduct(
             @RequestBody List<CreateProductRequest> requests,

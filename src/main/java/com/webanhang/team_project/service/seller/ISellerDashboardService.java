@@ -10,4 +10,7 @@ public interface ISellerDashboardService {
     Map<String, BigDecimal> getMonthlyRevenue(Long sellerId);
     Map<String, Integer> getOrderStats(Long sellerId);
     Map<String, Integer> getProductStats(Long sellerId);
+
+    Map<String, BigDecimal> getDailyRevenue(Long sellerId);
+    Map<String, BigDecimal> getCategoryRevenue(Long sellerId);
 }

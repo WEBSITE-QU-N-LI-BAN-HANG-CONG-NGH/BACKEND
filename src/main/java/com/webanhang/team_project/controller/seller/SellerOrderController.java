@@ -2,6 +2,7 @@ package com.webanhang.team_project.controller.seller;
 
 
 import com.webanhang.team_project.dto.order.OrderDTO;
+import com.webanhang.team_project.dto.order.OrderDetailDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.model.Order;
@@ -55,9 +56,9 @@ public class SellerOrderController {
                 startDate != null ? LocalDate.parse(startDate) : null,
                 endDate != null ? LocalDate.parse(endDate) : null);
 
-        List<OrderDTO> orderDTOs = orders.getContent().stream()
-                .map(OrderDTO::new)
-                .collect(Collectors.toList());
+        List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
+                .map(OrderDetailDTO::new)
+                .toList();
 
         Map<String, Object> response = new HashMap<>();
         response.put("orders", orderDTOs);

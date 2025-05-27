@@ -79,6 +79,18 @@ public class User {
         private String oauthProviderId;
         private String imageUrl;
 
+        @Column(name = "website")
+        private String website;
+
+        @Column(name = "business_type")
+        private String businessType;
+
+        @Column(name = "shop_description")
+        private String shopDescription;
+
+        @Column(name = "shop_name")
+        private String shopName;
+
         public User(String firstName, String lastName, String email, String password, Role role) {
                 this.firstName = firstName;
                 this.lastName = lastName;
