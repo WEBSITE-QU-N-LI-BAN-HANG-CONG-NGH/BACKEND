@@ -126,7 +126,7 @@ public class ReviewServiceImpl implements ReviewService{
         long reviewCount = reviewRepository.countByUserIdAndProductId(userId, productId);
 
         // Cho phép đánh giá nếu số lần mua nhiều hơn số lần đã đánh giá
-        return purchaseCount >= reviewCount;
+        return purchaseCount > reviewCount;
     }
 
     // --- Hàm private để cập nhật rating cho Product ---
