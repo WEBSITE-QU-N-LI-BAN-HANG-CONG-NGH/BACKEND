@@ -44,10 +44,4 @@ public class Cart {
 
     @OneToMany(mappedBy="cart", cascade=CascadeType.ALL, orphanRemoval=true)
     private Set<CartItem> cartItems = new HashSet<>();
-
-    public int getTotalAmount() {
-        return cartItems.stream()
-                .mapToInt(item -> item.getProduct().getPrice() * item.getQuantity())
-                .sum();
-    }
 }

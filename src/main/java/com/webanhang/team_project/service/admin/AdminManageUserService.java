@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -121,12 +122,27 @@ public class AdminManageUserService implements IAdminManageUserService {
 
         // Xóa cart items trước khi xóa cart
         if (user.getCart() != null) {
-            // Sử dụng clear() để xóa các cartItems được liên kết
-            user.getCart().getCartItems().clear();
+            user.getCart().getCartItems().clear(); // Xóa CartItem khỏi Cart
+            cartItemRepository.deleteByCartId(user.getCart().getId()); // Xóa CartItem trong DB
             cartRepository.delete(user.getCart());
         }
-        orderItemRepository.deleteByOrderUserId(userId);
-        orderRepository.deleteByUserId(userId);
+
+        // Lấy danh sách các Order ID của user
+        List<Long> orderIds = orderRepository.findByUserId(userId).stream()
+                .map(Order::getId)
+                .collect(Collectors.toList());
+
+        if (!orderIds.isEmpty()) {
+            // Xóa PaymentDetails liên quan đến các Order đó
+            for (Long orderId : orderIds) {
+                paymentDetailRepository.findByOrderId(orderId).ifPresent(paymentDetailRepository::delete);
+            }
+            // Xóa OrderItems liên quan đến các Order đó
+            orderItemRepository.deleteByOrderUserId(userId); // Query này có thể đã xử lý nếu OrderItem có cascade từ Order
+            // Xóa Orders
+            orderRepository.deleteByUserId(userId);
+        }
+
         addressRepository.deleteByUserId(userId);
         reviewRepository.deleteByUserId(userId);
         userRepository.delete(user);
