@@ -28,18 +28,6 @@ public class SellerOrderController {
     private final ISellerOrderService sellerOrderService;
     private final UserService userService;
 
-    /**
-     * Lấy danh sách đơn hàng của người bán với phân trang và lọc
-     *
-     * @param jwt Token xác thực người dùng
-     * @param page Số trang (bắt đầu từ 0)
-     * @param size Kích thước trang
-     * @param search Từ khóa tìm kiếm
-     * @param status Trạng thái đơn hàng cần lọc
-     * @param startDate Ngày bắt đầu khoảng thời gian (định dạng: yyyy-MM-dd)
-     * @param endDate Ngày kết thúc khoảng thời gian (định dạng: yyyy-MM-dd)
-     * @return Danh sách đơn hàng đã phân trang và lọc
-     */
     @GetMapping
     public ResponseEntity<ApiResponse> getSellerOrders(
             @RequestHeader("Authorization") String jwt,
@@ -69,13 +57,6 @@ public class SellerOrderController {
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách đơn hàng thành công"));
     }
 
-    /**
-     * Lấy chi tiết đơn hàng
-     *
-     * @param jwt Token xác thực người dùng
-     * @param orderId ID của đơn hàng cần xem
-     * @return Chi tiết đơn hàng
-     */
     @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponse> getOrderDetails(
             @RequestHeader("Authorization") String jwt,
@@ -88,14 +69,6 @@ public class SellerOrderController {
         return ResponseEntity.ok(ApiResponse.success(orderDTO, "Lấy chi tiết đơn hàng thành công"));
     }
 
-    /**
-     * Cập nhật trạng thái đơn hàng
-     *
-     * @param jwt Token xác thực người dùng
-     * @param orderId ID của đơn hàng cần cập nhật
-     * @param status Trạng thái mới của đơn hàng
-     * @return Thông tin đơn hàng sau khi cập nhật
-     */
     @PutMapping("/{orderId}/status")
     public ResponseEntity<ApiResponse> updateOrderStatus(
             @RequestHeader("Authorization") String jwt,
@@ -109,13 +82,6 @@ public class SellerOrderController {
         return ResponseEntity.ok(ApiResponse.success(orderDTO, "Cập nhật trạng thái đơn hàng thành công"));
     }
 
-    /**
-     * Lấy thống kê đơn hàng
-     *
-     * @param jwt Token xác thực người dùng
-     * @param period Khoảng thời gian thống kê (day/week/month/year)
-     * @return Dữ liệu thống kê đơn hàng
-     */
     @GetMapping("/statistics")
     public ResponseEntity<ApiResponse> getOrderStatistics(
             @RequestHeader("Authorization") String jwt,

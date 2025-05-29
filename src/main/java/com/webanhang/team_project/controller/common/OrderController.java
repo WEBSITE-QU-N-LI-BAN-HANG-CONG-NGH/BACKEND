@@ -20,8 +20,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -74,14 +76,27 @@ public class OrderController {
                         .body(Map.of("error", "Address not found", "code", "ADDRESS_NOT_FOUND"));
             }
 
-            Order order = orderService.placeOrder(addressId, user);
-            if (order == null) {
+            // Create orders (one per seller)
+            List<Order> orders = orderService.placeOrder(addressId, user);
+            if (orders == null || orders.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "Failed to create order", "code", "ORDER_CREATION_FAILED"));
+                        .body(Map.of("error", "Failed to create orders", "code", "ORDER_CREATION_FAILED"));
             }
-            // Convert Order to OrderDTO
-            OrderDTO orderDTO = new OrderDTO(order);
-            return ResponseEntity.status(HttpStatus.CREATED).body(orderDTO);
+
+            // Convert orders to DTOs
+            List<OrderDTO> orderDTOs = orders.stream()
+                    .map(OrderDTO::new)
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("orders", orderDTOs);
+            response.put("totalOrders", orders.size());
+            response.put("totalAmount", orders.stream()
+                    .mapToInt(order -> order.getTotalDiscountedPrice() != null ? order.getTotalDiscountedPrice() : 0)
+                    .sum());
+            response.put("message", "Orders created successfully. Total " + orders.size() + " orders from different sellers.");
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
             } catch (Exception e) {
                 // Ghi lại lỗi chi tiết vào log của server
                 log.error("Error creating order for user {} with addressId {}: {}",

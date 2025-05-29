@@ -17,7 +17,7 @@ public interface IOrderService {
 
     public Order findOrderById(Long orderId);
     public List<Order> userOrderHistory(Long userId);
-    public Order placeOrder(Long addressId, User user);
+    List <Order> placeOrder(Long addressId, User user);
     public Order confirmedOrder(Long orderId);
     public Order shippedOrder(Long orderId);
     public Order deliveredOrder(Long orderId);

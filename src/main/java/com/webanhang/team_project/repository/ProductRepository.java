@@ -100,4 +100,59 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     List<Product> searchProducts(@Param("keyword") String keyword);
 
     List<Product> findByCategory(Category category);
+
+    // Enhanced seller products query with comprehensive filters
+    @Query("SELECT p FROM Product p WHERE p.sellerId = :sellerId " +
+            "AND (:keyword IS NULL OR :keyword = '' OR " +
+            "     LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "     LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:topLevelCategory IS NULL OR :topLevelCategory = '' OR " +
+            "     (p.category.level = 1 AND LOWER(p.category.name) = LOWER(:topLevelCategory)) OR " +
+            "     (p.category.level = 2 AND LOWER(p.category.parentCategory.name) = LOWER(:topLevelCategory))) " +
+            "AND (:secondLevelCategory IS NULL OR :secondLevelCategory = '' OR " +
+            "     (p.category.level = 2 AND LOWER(p.category.name) = LOWER(:secondLevelCategory))) " +
+            "AND (:color IS NULL OR :color = '' OR LOWER(p.color) = LOWER(:color)) " +
+            "AND (:minPrice IS NULL OR p.discountedPrice >= :minPrice) " +
+            "AND (:maxPrice IS NULL OR p.discountedPrice <= :maxPrice) " +
+            "AND (:inStock IS NULL OR " +
+            "     (:inStock = true AND p.quantity > 0) OR " +
+            "     (:inStock = false AND p.quantity = 0))")
+    Page<Product> findBySellerIdWithFilters(
+            @Param("sellerId") Long sellerId,
+            @Param("keyword") String keyword,
+            @Param("topLevelCategory") String topLevelCategory,
+            @Param("secondLevelCategory") String secondLevelCategory,
+            @Param("color") String color,
+            @Param("minPrice") Integer minPrice,
+            @Param("maxPrice") Integer maxPrice,
+            @Param("inStock") Boolean inStock,
+            Pageable pageable);
+
+    // Get distinct top-level categories for a seller
+    @Query("SELECT DISTINCT CASE " +
+            "WHEN p.category.level = 1 THEN p.category.name " +
+            "WHEN p.category.level = 2 THEN p.category.parentCategory.name " +
+            "END " +
+            "FROM Product p WHERE p.sellerId = :sellerId AND p.category IS NOT NULL " +
+            "ORDER BY CASE " +
+            "WHEN p.category.level = 1 THEN p.category.name " +
+            "WHEN p.category.level = 2 THEN p.category.parentCategory.name " +
+            "END")
+    List<String> findDistinctTopLevelCategoriesBySellerId(@Param("sellerId") Long sellerId);
+
+    // Get distinct second-level categories for a seller by top-level category
+    @Query("SELECT DISTINCT p.category.name " +
+            "FROM Product p WHERE p.sellerId = :sellerId " +
+            "AND p.category.level = 2 " +
+            "AND LOWER(p.category.parentCategory.name) = LOWER(:topLevelCategory) " +
+            "ORDER BY p.category.name")
+    List<String> findDistinctSecondLevelCategoriesBySellerIdAndTopLevel(
+            @Param("sellerId") Long sellerId,
+            @Param("topLevelCategory") String topLevelCategory);
+
+    // Get distinct colors for a seller
+    @Query("SELECT DISTINCT p.color FROM Product p " +
+            "WHERE p.sellerId = :sellerId AND p.color IS NOT NULL AND p.color != '' " +
+            "ORDER BY p.color")
+    List<String> findDistinctColorsBySellerId(@Param("sellerId") Long sellerId);
 }

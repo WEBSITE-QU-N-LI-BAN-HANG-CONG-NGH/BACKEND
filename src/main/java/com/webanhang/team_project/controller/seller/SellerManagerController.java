@@ -27,13 +27,6 @@ public class SellerManagerController {
 
     private final UserService userService;
 
-    /**
-     * Kiểm tra vai trò người bán
-     * Xác thực xem người dùng hiện tại có vai trò SELLER hay không
-     *
-     * @param jwt JWT token từ request header
-     * @return Thông tin xác thực vai trò
-     */
     @GetMapping("/verify-role")
     public ResponseEntity<ApiResponse> verifySellerRole(@RequestHeader("Authorization") String jwt) {
         User user = userService.findUserByJwt(jwt);
@@ -45,13 +38,6 @@ public class SellerManagerController {
         return ResponseEntity.ok(ApiResponse.success(roleDTO, message));
     }
 
-    /**
-     * Kiểm tra trạng thái người bán
-     * Xác thực vai trò và trạng thái hoạt động của người bán
-     *
-     * @param jwt JWT token từ request header
-     * @return Thông tin trạng thái người bán
-     */
     @GetMapping("/status")
     public ResponseEntity<?> getSellerStatus(@RequestHeader("Authorization") String jwt) {
         User user = userService.findUserByJwt(jwt);

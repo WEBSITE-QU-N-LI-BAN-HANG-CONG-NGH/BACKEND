@@ -1,6 +1,7 @@
 package com.webanhang.team_project.controller.seller;
 
 import com.webanhang.team_project.dto.product.CreateProductRequest;
+import com.webanhang.team_project.dto.product.FilterProduct;
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Product;
@@ -73,14 +74,34 @@ public class SellerProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
+            @RequestParam(defaultValue = "desc") String sortDir,
+            // Search and filter parameters matching FilterProduct
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String topLevelCategory,
+            @RequestParam(required = false) String secondLevelCategory,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) Integer minPrice,
+            @RequestParam(required = false) Integer maxPrice,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String status // Additional filter for stock status
     ) {
         User seller = userService.findUserByJwt(jwt);
 
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Sort sortObj = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
+        Pageable pageable = PageRequest.of(page, size, sortObj);
 
-        Page<ProductDTO> productPage = sellerProductService.getSellerProducts(seller.getId(), pageable);
+        // Create filter object using existing FilterProduct
+        FilterProduct filter = new FilterProduct();
+        filter.setKeyword(keyword);
+        filter.setTopLevelCategory(topLevelCategory);
+        filter.setSecondLevelCategory(secondLevelCategory);
+        filter.setColor(color);
+        filter.setMinPrice(minPrice);
+        filter.setMaxPrice(maxPrice);
+        filter.setSort(sort);
+
+        Page<ProductDTO> productPage = sellerProductService.getSellerProductsWithFilter(
+                seller.getId(), pageable, filter, status);
 
         Map<String, Object> response = new HashMap<>();
         response.put("products", productPage.getContent());
@@ -96,6 +117,14 @@ public class SellerProductController {
         ));
 
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách sản phẩm thành công"));
+    }
+
+    // Get filter statistics
+    @GetMapping("/filter-stats")
+    public ResponseEntity<ApiResponse> getFilterStatistics(@RequestHeader("Authorization") String jwt) {
+        User seller = userService.findUserByJwt(jwt);
+        Map<String, Object> stats = sellerProductService.getFilterStatistics(seller.getId());
+        return ResponseEntity.ok(ApiResponse.success(stats, "Lấy thống kê bộ lọc thành công"));
     }
 
     @GetMapping("/{productId}")

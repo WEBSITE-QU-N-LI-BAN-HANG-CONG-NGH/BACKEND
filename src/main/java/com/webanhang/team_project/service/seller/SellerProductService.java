@@ -1,6 +1,7 @@
 package com.webanhang.team_project.service.seller;
 
 import com.webanhang.team_project.dto.product.CreateProductRequest;
+import com.webanhang.team_project.dto.product.FilterProduct;
 import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.enums.PaymentStatus;
@@ -9,20 +10,14 @@ import com.webanhang.team_project.repository.*;
 import com.webanhang.team_project.service.product.IProductService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,12 +32,12 @@ public class SellerProductService implements ISellerProductService {
 
     @Override
     @Transactional
-    public ProductDTO createProduct(CreateProductRequest req)  {
-        // Xử lý category theo cấp bậc mới (tối đa 2 cấp)
+    public ProductDTO createProduct(CreateProductRequest req) {
+        // Process two-level categories
         Category parentCategory = null;
         Category category = null;
 
-        // Xử lý cấp 1 (parent category)
+        // Handle top level category
         if (req.getTopLevelCategory() != null && !req.getTopLevelCategory().isEmpty()) {
             parentCategory = categoryRepository.findByName(req.getTopLevelCategory());
             if (parentCategory == null) {
@@ -55,7 +50,7 @@ public class SellerProductService implements ISellerProductService {
                 throw new IllegalArgumentException("Top level category must have level 1");
             }
 
-            // Xử lý cấp 2 (nếu có)
+            // Handle second level category if provided
             if (req.getSecondLevelCategory() != null && !req.getSecondLevelCategory().isEmpty()) {
                 category = categoryRepository.findByName(req.getSecondLevelCategory());
                 if (category == null) {
@@ -69,12 +64,12 @@ public class SellerProductService implements ISellerProductService {
                     throw new IllegalArgumentException("Second level category must have level 2");
                 }
             } else {
-                // Nếu không có cấp 2, sử dụng cấp 1
+                // If no second level, use top level
                 category = parentCategory;
             }
         }
 
-        // Tạo sản phẩm mới
+        // Create the product
         Product product = new Product();
         product.setTitle(req.getTitle());
         product.setDescription(req.getDescription());
@@ -86,18 +81,14 @@ public class SellerProductService implements ISellerProductService {
         product.setQuantity(req.getQuantity());
         product.setImages(req.getImageUrls());
 
-        // Lưu sellerId nếu có
         if (req.getSellerId() != null) {
             product.setSellerId(req.getSellerId());
         }
 
-        // Cập nhật discountedPrice dựa vào price và discountPersent
         product.updateDiscountedPrice();
-
-        // Gán category cho sản phẩm (sẽ là cấp 2 nếu có, nếu không thì là cấp 1)
         product.setCategory(category);
 
-        // Xử lý sizes
+        // Handle sizes
         if (req.getSizes() != null) {
             for (ProductSize size : req.getSizes()) {
                 size.setProduct(product);
@@ -105,25 +96,24 @@ public class SellerProductService implements ISellerProductService {
             product.setSizes(req.getSizes());
         }
 
-        // xu ly hinh anh
+        // Handle images
         if (req.getImageUrls() != null && !req.getImageUrls().isEmpty()) {
             for (Image imageUrl : req.getImageUrls()) {
                 imageUrl.setProduct(product);
             }
             product.setImages(req.getImageUrls());
         }
-        product = productRepository.save(product);
-        ProductDTO productDto = new ProductDTO(product);
 
-        return productDto;
+        product = productRepository.save(product);
+        return new ProductDTO(product);
     }
 
     @Override
     @Transactional
-    public ProductDTO updateProduct(Long productId, Product product)  {
+    public ProductDTO updateProduct(Long productId, Product product) {
         Product existingProduct = productRepository.getProductById(productId);
 
-        // Cập nhật các thuộc tính cơ bản
+        // Update basic properties
         if (product.getTitle() != null) {
             existingProduct.setTitle(product.getTitle());
         }
@@ -137,35 +127,30 @@ public class SellerProductService implements ISellerProductService {
             existingProduct.setColor(product.getColor());
         }
 
-        // Xử lý danh sách hình ảnh mới
+        // Handle images
         if (product.getImages() != null && !product.getImages().isEmpty()) {
-            // Xóa tất cả hình ảnh cũ
             existingProduct.getImages().clear();
-
-            // Thêm hình ảnh mới
             for (Image image : product.getImages()) {
                 image.setProduct(existingProduct);
                 existingProduct.getImages().add(image);
             }
         }
 
-        // Cập nhật giá và giảm giá
+        // Update price and discount
         if (product.getPrice() > 0) {
             existingProduct.setPrice(product.getPrice());
         }
         if (product.getDiscountPersent() >= 0) {
             existingProduct.setDiscountPersent(product.getDiscountPersent());
         }
-
-        // Cập nhật discountedPrice
         existingProduct.updateDiscountedPrice();
 
-        // Cập nhật số lượng
+        // Update quantity
         if (product.getQuantity() >= 0) {
             existingProduct.setQuantity(product.getQuantity());
         }
 
-        // Cập nhật category nếu có thay đổi
+        // Update category if provided
         if (product.getCategory() != null && product.getCategory().getId() != null) {
             Category category = categoryRepository.findById(product.getCategory().getId())
                     .orElseThrow(() -> new EntityNotFoundException("Category not found"));
@@ -173,9 +158,7 @@ public class SellerProductService implements ISellerProductService {
         }
 
         Product res = productRepository.save(existingProduct);
-        ProductDTO productDto = new ProductDTO(res);
-
-        return productDto;
+        return new ProductDTO(res);
     }
 
     @Override
@@ -195,36 +178,34 @@ public class SellerProductService implements ISellerProductService {
     @Override
     public ProductDTO getProductDetail(Long productId) {
         Product product = productService.findProductById(productId);
-        ProductDTO productDTO = new ProductDTO(product);
-        return productDTO;
+        return new ProductDTO(product);
     }
 
     @Override
     @Transactional
     public Map<String, Object> getProductStatOfSeller(Long sellerId) {
-
         List<Product> products = productRepository.findBySellerId(sellerId);
 
         Map<String, Object> stats = new HashMap<>();
 
-        // Tổng số sản phẩm
+        // Total products
         stats.put("totalProducts", products.size());
 
-        // Tổng số lượng đã bán
+        // Total sold
         long totalSold = products.stream()
                 .filter(p -> p.getQuantitySold() != null)
                 .mapToLong(Product::getQuantitySold)
                 .sum();
         stats.put("totalSold", totalSold);
 
-        // Tổng doanh thu
+        // Total revenue
         int totalRevenue = products.stream()
                 .filter(p -> p.getQuantitySold() != null)
                 .mapToInt(p -> p.getDiscountedPrice() * p.getQuantitySold().intValue())
                 .sum();
         stats.put("totalRevenue", totalRevenue);
 
-        // Sản phẩm bán chạy nhất
+        // Best seller
         Product bestSeller = products.stream()
                 .filter(p -> p.getQuantitySold() != null && p.getQuantitySold() > 0)
                 .max((p1, p2) -> p1.getQuantitySold().compareTo(p2.getQuantitySold()))
@@ -248,6 +229,134 @@ public class SellerProductService implements ISellerProductService {
                 .map(req -> productService.createProduct(req))
                 .map(product -> new ProductDTO(product))
                 .toList();
+    }
+
+    @Override
+    public Page<ProductDTO> getSellerProductsWithFilter(Long sellerId, Pageable pageable, FilterProduct filter, String status) {
+        // Convert status to boolean for query
+        Boolean inStock = null;
+        if (status != null && !status.equals("all")) {
+            switch (status) {
+                case "inStock":
+                    inStock = true;
+                    break;
+                case "outOfStock":
+                    inStock = false;
+                    break;
+            }
+        }
+
+        // Apply custom sorting if specified in filter
+        Pageable finalPageable = pageable;
+        if (filter != null && filter.getSort() != null && !filter.getSort().isEmpty()) {
+            finalPageable = applySorting(pageable, filter.getSort());
+        }
+
+        Page<Product> productPage = productRepository.findBySellerIdWithFilters(
+                sellerId,
+                filter != null ? filter.getKeyword() : null,
+                filter != null ? filter.getTopLevelCategory() : null,
+                filter != null ? filter.getSecondLevelCategory() : null,
+                filter != null ? filter.getColor() : null,
+                filter != null ? filter.getMinPrice() : null,
+                filter != null ? filter.getMaxPrice() : null,
+                inStock,
+                finalPageable
+        );
+
+        return productPage.map(ProductDTO::new);
+    }
+
+    // Get available categories for seller's products (two-level structure)
+    @Override
+    public Map<String, Object> getSellerCategories(Long sellerId) {
+        Map<String, Object> categoriesMap = new HashMap<>();
+
+        // Get top-level categories
+        List<String> topLevelCategories = productRepository.findDistinctTopLevelCategoriesBySellerId(sellerId);
+        categoriesMap.put("topLevel", topLevelCategories);
+
+        // Get second-level categories grouped by top-level
+        Map<String, List<String>> secondLevelByTopLevel = new HashMap<>();
+        for (String topLevel : topLevelCategories) {
+            List<String> secondLevel = productRepository.findDistinctSecondLevelCategoriesBySellerIdAndTopLevel(sellerId, topLevel);
+            if (!secondLevel.isEmpty()) {
+                secondLevelByTopLevel.put(topLevel, secondLevel);
+            }
+        }
+        categoriesMap.put("secondLevel", secondLevelByTopLevel);
+
+        return categoriesMap;
+    }
+
+    // Get filter statistics for seller
+    @Override
+    public Map<String, Object> getFilterStatistics(Long sellerId) {
+        List<Product> allProducts = productRepository.findBySellerId(sellerId);
+
+        Map<String, Object> stats = new HashMap<>();
+
+        // Price range
+        OptionalInt minPrice = allProducts.stream()
+                .filter(p -> p.getDiscountedPrice() > 0)
+                .mapToInt(Product::getDiscountedPrice)
+                .min();
+        OptionalInt maxPrice = allProducts.stream()
+                .mapToInt(Product::getDiscountedPrice)
+                .max();
+
+        stats.put("priceRange", Map.of(
+                "min", minPrice.orElse(0),
+                "max", maxPrice.orElse(0)
+        ));
+
+        // Stock status counts
+        long inStockCount = allProducts.stream().filter(p -> p.getQuantity() > 0).count();
+        long outOfStockCount = allProducts.size() - inStockCount;
+
+        stats.put("stockStatus", Map.of(
+                "inStock", inStockCount,
+                "outOfStock", outOfStockCount,
+                "total", allProducts.size()
+        ));
+
+        // Available colors
+        List<String> colors = productRepository.findDistinctColorsBySellerId(sellerId);
+        stats.put("colors", colors);
+
+        // Categories
+        stats.put("categories", getSellerCategories(sellerId));
+
+        return stats;
+    }
+
+    // Helper method to apply custom sorting
+    private Pageable applySorting(Pageable pageable, String sortType) {
+        Sort sort;
+        switch (sortType) {
+            case "price_low":
+                sort = Sort.by(Sort.Direction.ASC, "discountedPrice");
+                break;
+            case "price_high":
+                sort = Sort.by(Sort.Direction.DESC, "discountedPrice");
+                break;
+            case "discount":
+                sort = Sort.by(Sort.Direction.DESC, "discountPersent");
+                break;
+            case "newest":
+                sort = Sort.by(Sort.Direction.DESC, "createdAt");
+                break;
+            case "name_asc":
+                sort = Sort.by(Sort.Direction.ASC, "title");
+                break;
+            case "name_desc":
+                sort = Sort.by(Sort.Direction.DESC, "title");
+                break;
+            default:
+                return pageable; // Keep original sorting
+        }
+
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
     }
 }
 

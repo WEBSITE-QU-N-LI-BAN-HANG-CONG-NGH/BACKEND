@@ -6,6 +6,7 @@ package com.webanhang.team_project.service.order;
 import com.webanhang.team_project.dto.order.OrderDTO;
 import com.webanhang.team_project.dto.order.OrderDetailDTO;
 import com.webanhang.team_project.enums.OrderStatus;
+import com.webanhang.team_project.enums.PaymentMethod;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.exceptions.GlobalExceptionHandler;
 import com.webanhang.team_project.model.*;
@@ -64,7 +65,8 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional // Rất quan trọng để đảm bảo tất cả các thay đổi được commit hoặc rollback cùng nhau
-    public Order placeOrder(Long addressId, User user) {
+    public List<Order> placeOrder(Long addressId, User user) {
+//    public Order placeOrder(Long addressId, User user) {
         Cart cart = cartRepository.findByUserId(user.getId());
         if (cart == null || cart.getCartItems().isEmpty()) {
             throw new RuntimeException("Giỏ hàng trống");
@@ -80,63 +82,151 @@ public class OrderService implements IOrderService {
         // Lưu ý: findUserCart cũng có thể tạo cart mới nếu chưa có, nhưng ở đây ta đã kiểm tra cart != null
         cart = cartService.findUserCart(user.getId()); // Lấy lại thông tin cart với các tổng đã được tính toán
 
-        Order order = new Order();
-        order.setUser(user);
-        order.setOrderDate(LocalDateTime.now());
-        order.setShippingAddress(address); // Gán địa chỉ tìm được
-        order.setOrderStatus(OrderStatus.PENDING);
-        order.setPaymentStatus(PaymentStatus.PENDING);
+        // Group cart items by sellerId
+        Map<Long, List<CartItem>> itemsBySeller = cart.getCartItems().stream()
+                .collect(Collectors.groupingBy(item -> item.getProduct().getSellerId()));
 
-        // Lấy tổng tiền từ Cart đã được tính toán (bao gồm cả discount)
-        order.setOriginalPrice(cart.getOriginalPrice()); // Tổng giá gốc
-        order.setTotalItems(cart.getTotalItems());
-        order.setDiscount(cart.getDiscount());
-        order.setTotalDiscountedPrice(cart.getTotalDiscountedPrice()); // Tổng giá sau khi giảm
+        List<Order> createdOrders = new ArrayList<>();
+        // Create separate order for each seller
+        for (Map.Entry<Long, List<CartItem>> entry : itemsBySeller.entrySet()) {
+            Long sellerId = entry.getKey();
+            List<CartItem> sellerItems = entry.getValue();
 
-        // Lưu order trước để có ID cho OrderItems (cần thiết cho mối quan hệ)
-        order = orderRepository.save(order);
+            // Calculate totals for this seller's items
+            int sellerOriginalPrice = sellerItems.stream()
+                    .mapToInt(item -> item.getPrice() * item.getQuantity())
+                    .sum();
 
-        List<OrderItem> orderItems = new ArrayList<>();
-        for (CartItem cartItem : cart.getCartItems()) {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order); // Liên kết với Order vừa lưu
-            orderItem.setProduct(cartItem.getProduct());
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPrice(cartItem.getPrice());
-            orderItem.setSize(cartItem.getSize()); // Lấy size từ cart item
-            orderItem.setDiscountPercent(cartItem.getDiscountPercent());
-            orderItem.setDiscountedPrice(cartItem.getDiscountedPrice());
-            orderItem.setDeliveryDate(LocalDateTime.now().plusDays(7)); // Dự kiến ngày giao
+            int sellerDiscountedPrice = sellerItems.stream()
+                    .mapToInt(item -> item.getDiscountedPrice() * item.getQuantity())
+                    .sum();
 
-            orderItems.add(orderItem);
+            int sellerTotalItems = sellerItems.stream()
+                    .mapToInt(CartItem::getQuantity)
+                    .sum();
 
-            // --- CẬP NHẬT SỐ LƯỢNG TRONG PRODUCT SIZE ---
-            Product product = cartItem.getProduct(); // Lấy Product từ CartItem
-            String sizeName = cartItem.getSize();
-            int orderedQuantity = cartItem.getQuantity();
+            int sellerDiscount = sellerOriginalPrice - sellerDiscountedPrice;
 
-            // Tìm ProductSize tương ứng trong danh sách sizes của Product
-            ProductSize targetSize = product.getSizes().stream()
-                    .filter(ps -> ps.getName().equals(sizeName))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Lỗi đặt hàng: Không tìm thấy size '" + sizeName +
-                            "' cho sản phẩm '" + product.getTitle() + "' (ID: " + product.getId() + "). Vui lòng kiểm tra lại giỏ hàng."));
+            Order order = new Order();
+            order.setUser(user);
+            order.setSellerId(sellerId); // Set sellerId for the order
+            order.setOrderDate(LocalDateTime.now());
+            order.setShippingAddress(address);
+            order.setOrderStatus(OrderStatus.PENDING);
+            order.setPaymentStatus(PaymentStatus.PENDING);
+            order.setPaymentMethod(PaymentMethod.COD); // Default payment method
 
-            if (targetSize.getQuantity() < orderedQuantity) {
-                throw new RuntimeException("Lỗi đặt hàng: Số lượng yêu cầu lớn hơn số lượng có sẵn cho size '" + sizeName +
-                        "' của sản phẩm '" + product.getTitle() + "' (ID: " + product.getId() + "). Vui lòng kiểm tra lại giỏ hàng.");
+            // Set calculated totals for this seller
+            order.setOriginalPrice(sellerOriginalPrice);
+            order.setTotalItems(sellerTotalItems);
+            order.setDiscount(sellerDiscount);
+            order.setTotalDiscountedPrice(sellerDiscountedPrice);
+
+            // Save order first to get ID for OrderItems
+            order = orderRepository.save(order);
+
+            List<OrderItem> orderItems = new ArrayList<>();
+            for (CartItem cartItem : sellerItems) {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
+                orderItem.setProduct(cartItem.getProduct());
+                orderItem.setQuantity(cartItem.getQuantity());
+                orderItem.setPrice(cartItem.getPrice());
+                orderItem.setSize(cartItem.getSize());
+                orderItem.setDiscountPercent(cartItem.getDiscountPercent());
+                orderItem.setDiscountedPrice(cartItem.getDiscountedPrice());
+                orderItem.setDeliveryDate(LocalDateTime.now().plusDays(7)); // Expected delivery date
+
+                orderItems.add(orderItem);
+
+                // Update product size quantity
+                Product product = cartItem.getProduct();
+                String sizeName = cartItem.getSize();
+                int orderedQuantity = cartItem.getQuantity();
+
+                // Find corresponding ProductSize in the Product's sizes list
+                ProductSize targetSize = product.getSizes().stream()
+                        .filter(ps -> ps.getName().equals(sizeName))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("Order error: Size '" + sizeName +
+                                "' not found for product '" + product.getTitle() + "' (ID: " + product.getId() + "). Please check your cart."));
+
+                if (targetSize.getQuantity() < orderedQuantity) {
+                    throw new RuntimeException("Order error: Requested quantity exceeds available stock for size '" + sizeName +
+                            "' of product '" + product.getTitle() + "' (ID: " + product.getId() + "). Please check your cart.");
+                }
+
+                targetSize.setQuantity(targetSize.getQuantity() - orderedQuantity);
+
+                // Update quantity sold
+                Long quantitySold = product.getQuantitySold() != null ? product.getQuantitySold() : 0L;
+                product.setQuantitySold(quantitySold + orderedQuantity);
             }
 
-            targetSize.setQuantity(targetSize.getQuantity() - orderedQuantity);
-
-            Long quantitySold = product.getQuantitySold() != null ? product.getQuantitySold() : 0L;
-            product.setQuantitySold(quantitySold + orderedQuantity);
-
+            order.setOrderItems(orderItems);
+            Order savedOrder = orderRepository.save(order);
+            createdOrders.add(savedOrder);
         }
+//        Order order = new Order();
+//        order.setUser(user);
+//        order.setOrderDate(LocalDateTime.now());
+//        order.setShippingAddress(address); // Gán địa chỉ tìm được
+//        order.setOrderStatus(OrderStatus.PENDING);
+//        order.setPaymentStatus(PaymentStatus.PENDING);
+//
+//        // Lấy tổng tiền từ Cart đã được tính toán (bao gồm cả discount)
+//        order.setOriginalPrice(cart.getOriginalPrice()); // Tổng giá gốc
+//        order.setTotalItems(cart.getTotalItems());
+//        order.setDiscount(cart.getDiscount());
+//        order.setTotalDiscountedPrice(cart.getTotalDiscountedPrice()); // Tổng giá sau khi giảm
+//
+//        // Lưu order trước để có ID cho OrderItems (cần thiết cho mối quan hệ)
+//        order = orderRepository.save(order);
+//
+//        List<OrderItem> orderItems = new ArrayList<>();
+//        for (CartItem cartItem : cart.getCartItems()) {
+//            OrderItem orderItem = new OrderItem();
+//            orderItem.setOrder(order); // Liên kết với Order vừa lưu
+//            orderItem.setProduct(cartItem.getProduct());
+//            orderItem.setQuantity(cartItem.getQuantity());
+//            orderItem.setPrice(cartItem.getPrice());
+//            orderItem.setSize(cartItem.getSize()); // Lấy size từ cart item
+//            orderItem.setDiscountPercent(cartItem.getDiscountPercent());
+//            orderItem.setDiscountedPrice(cartItem.getDiscountedPrice());
+//            orderItem.setDeliveryDate(LocalDateTime.now().plusDays(7)); // Dự kiến ngày giao
+//
+//            orderItems.add(orderItem);
+//
+//            // --- CẬP NHẬT SỐ LƯỢNG TRONG PRODUCT SIZE ---
+//            Product product = cartItem.getProduct(); // Lấy Product từ CartItem
+//            String sizeName = cartItem.getSize();
+//            int orderedQuantity = cartItem.getQuantity();
+//
+//            // Tìm ProductSize tương ứng trong danh sách sizes của Product
+//            ProductSize targetSize = product.getSizes().stream()
+//                    .filter(ps -> ps.getName().equals(sizeName))
+//                    .findFirst()
+//                    .orElseThrow(() -> new RuntimeException("Lỗi đặt hàng: Không tìm thấy size '" + sizeName +
+//                            "' cho sản phẩm '" + product.getTitle() + "' (ID: " + product.getId() + "). Vui lòng kiểm tra lại giỏ hàng."));
+//
+//            if (targetSize.getQuantity() < orderedQuantity) {
+//                throw new RuntimeException("Lỗi đặt hàng: Số lượng yêu cầu lớn hơn số lượng có sẵn cho size '" + sizeName +
+//                        "' của sản phẩm '" + product.getTitle() + "' (ID: " + product.getId() + "). Vui lòng kiểm tra lại giỏ hàng.");
+//            }
+//
+//            targetSize.setQuantity(targetSize.getQuantity() - orderedQuantity);
+//
+//            Long quantitySold = product.getQuantitySold() != null ? product.getQuantitySold() : 0L;
+//            product.setQuantitySold(quantitySold + orderedQuantity);
+//
+//        }
+//
+//        order.setOrderItems(orderItems); // JPA sẽ quản lý việc lưu các OrderItem này do cascade
 
-        order.setOrderItems(orderItems); // JPA sẽ quản lý việc lưu các OrderItem này do cascade
 
-        return orderRepository.save(order);
+        // Clear the cart after creating all orders
+        cartService.clearCart(user.getId());
+        return createdOrders;
     }
 
     @Override
