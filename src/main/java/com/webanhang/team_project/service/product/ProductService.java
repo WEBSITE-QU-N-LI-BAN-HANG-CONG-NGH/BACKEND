@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -188,7 +190,10 @@ public class ProductService implements IProductService {
 
     @Override
     public List<Product> findAllProductsByFilter(FilterProduct filter) {
-        // IMPROVED: Use a more efficient approach for filtering
+        Specification<Product> spec = Specification.where(null);
+         if (filter.getKeyword() != null && !filter.getKeyword().isEmpty()) {
+             spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("title")), "%" + filter.getKeyword().toLowerCase() + "%"));
+         }
 
         List<Product> filteredProducts;
 
@@ -230,6 +235,7 @@ public class ProductService implements IProductService {
                     .collect(Collectors.toList());
         }
 
+        Sort sort = Sort.unsorted();
         // Step 4: Sort the results if sort parameter is provided
         if (filter.getSort() != null) {
             switch (filter.getSort()) {
@@ -251,7 +257,7 @@ public class ProductService implements IProductService {
             }
         }
 
-        return filteredProducts;
+        return productRepository.findAll(spec, sort);
     }
 
     @Override
