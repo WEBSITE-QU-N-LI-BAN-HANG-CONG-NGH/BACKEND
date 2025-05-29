@@ -78,7 +78,7 @@ public class PaymentController {
      * @param params Các tham số nhận được từ VNPay
      * @return Thông tin kết quả thanh toán
      */
-    @PostMapping("/vnpay-callback")
+    @GetMapping("/vnpay-callback")
     public ResponseEntity<?> vnpayCallbackPost(@RequestParam Map<String, String> params) {
         try {
             // Kiểm tra xem có vnp_TxnRef không trước khi xử lý
