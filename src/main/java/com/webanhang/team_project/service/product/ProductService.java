@@ -5,6 +5,9 @@ import com.webanhang.team_project.model.*;
 import com.webanhang.team_project.repository.CategoryRepository;
 import com.webanhang.team_project.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.PageRequest;
@@ -190,70 +193,75 @@ public class ProductService implements IProductService {
 
     @Override
     public List<Product> findAllProductsByFilter(FilterProduct filter) {
-        Specification<Product> spec = Specification.where(null);
-         if (filter.getKeyword() != null && !filter.getKeyword().isEmpty()) {
-             spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("title")), "%" + filter.getKeyword().toLowerCase() + "%"));
-         }
+        Specification<Product> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-        List<Product> filteredProducts;
-
-        // Step 1: First filter by keyword if provided (most restrictive filter first)
-        if (filter.getKeyword() != null && !filter.getKeyword().isEmpty()) {
-            filteredProducts = productRepository.findByTitleContainingIgnoreCase(filter.getKeyword());
-        } else {
-            // Step 2: If no keyword, filter by category
-            if (filter.getTopLevelCategory() != null && filter.getSecondLevelCategory() != null) {
-                filteredProducts = findByCategoryTopAndSecond(filter.getTopLevelCategory(), filter.getSecondLevelCategory());
-            } else if (filter.getTopLevelCategory() != null) {
-                filteredProducts = findProductByCategory(filter.getTopLevelCategory());
-            } else if (filter.getSecondLevelCategory() != null) {
-                filteredProducts = findProductByCategory(filter.getSecondLevelCategory());
-            } else {
-                filteredProducts = findAllProducts();
+            // Filter by keyword (title)
+            if (filter.getKeyword() != null && !filter.getKeyword().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), "%" + filter.getKeyword().toLowerCase() + "%"));
             }
-        }
 
-        // Step 3: Apply additional filters
+            // Filter by color
+            if (filter.getColor() != null && !filter.getColor().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("color")), filter.getColor().toLowerCase()));
+            }
 
-        // Filter by color
-        if (filter.getColor() != null && !filter.getColor().isEmpty()) {
-            filteredProducts = filteredProducts.stream()
-                    .filter(p -> p.getColor() != null && p.getColor().equalsIgnoreCase(filter.getColor()))
-                    .collect(Collectors.toList());
-        }
+            // Filter by price range
+            if (filter.getMinPrice() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("discountedPrice"), filter.getMinPrice()));
+            }
+            if (filter.getMaxPrice() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("discountedPrice"), filter.getMaxPrice()));
+            }
 
-        // Filter by price range
-        if (filter.getMinPrice() != null) {
-            filteredProducts = filteredProducts.stream()
-                    .filter(p -> p.getDiscountedPrice() >= filter.getMinPrice())
-                    .collect(Collectors.toList());
-        }
+            // Filter by category
+            if (filter.getTopLevelCategory() != null && !filter.getTopLevelCategory().isEmpty()) {
+                Join<Product, Category> categoryJoin = root.join("category", JoinType.LEFT); // Join với bảng Category
+                Join<Category, Category> parentCategoryJoin = categoryJoin.join("parentCategory", JoinType.LEFT); // Join với parentCategory
 
-        if (filter.getMaxPrice() != null) {
-            filteredProducts = filteredProducts.stream()
-                    .filter(p -> p.getDiscountedPrice() <= filter.getMaxPrice())
-                    .collect(Collectors.toList());
-        }
+                if (filter.getSecondLevelCategory() != null && !filter.getSecondLevelCategory().isEmpty()) {
+                    // Lọc theo cả top-level và second-level category
+                    predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(parentCategoryJoin.get("name")), filter.getTopLevelCategory().toLowerCase()));
+                    predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(categoryJoin.get("name")), filter.getSecondLevelCategory().toLowerCase()));
+                    predicates.add(criteriaBuilder.equal(categoryJoin.get("level"), 2)); // Đảm bảo category là level 2
+                } else {
+                    // Chỉ lọc theo top-level category (bao gồm cả sản phẩm thuộc category level 1 đó và các sub-category level 2 của nó)
+                    Predicate topLevelDirect = criteriaBuilder.and(
+                            criteriaBuilder.equal(criteriaBuilder.lower(categoryJoin.get("name")), filter.getTopLevelCategory().toLowerCase()),
+                            criteriaBuilder.equal(categoryJoin.get("level"), 1)
+                    );
+                    Predicate topLevelViaParent = criteriaBuilder.and(
+                            criteriaBuilder.equal(criteriaBuilder.lower(parentCategoryJoin.get("name")), filter.getTopLevelCategory().toLowerCase()),
+                            criteriaBuilder.equal(categoryJoin.get("level"), 2)
+                    );
+                    predicates.add(criteriaBuilder.or(topLevelDirect, topLevelViaParent));
+                }
+            } else if (filter.getSecondLevelCategory() != null && !filter.getSecondLevelCategory().isEmpty()) {
+                // Trường hợp chỉ cung cấp secondLevelCategory (ít phổ biến, nhưng vẫn xử lý)
+                Join<Product, Category> categoryJoin = root.join("category", JoinType.LEFT);
+                predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(categoryJoin.get("name")), filter.getSecondLevelCategory().toLowerCase()));
+                predicates.add(criteriaBuilder.equal(categoryJoin.get("level"), 2));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
 
         Sort sort = Sort.unsorted();
-        // Step 4: Sort the results if sort parameter is provided
-        if (filter.getSort() != null) {
-            switch (filter.getSort()) {
+        if (filter.getSort() != null && !filter.getSort().isEmpty()) {
+            switch (filter.getSort().toLowerCase()) {
                 case "price_low":
-                    filteredProducts.sort((p1, p2) -> Integer.compare(p1.getDiscountedPrice(), p2.getDiscountedPrice()));
+                    sort = Sort.by(Sort.Direction.ASC, "discountedPrice");
                     break;
                 case "price_high":
-                    filteredProducts.sort((p1, p2) -> Integer.compare(p2.getDiscountedPrice(), p1.getDiscountedPrice()));
+                    sort = Sort.by(Sort.Direction.DESC, "discountedPrice");
                     break;
                 case "discount":
-                    filteredProducts.sort((p1, p2) -> Integer.compare(p2.getDiscountPersent(), p1.getDiscountPersent()));
+                    sort = Sort.by(Sort.Direction.DESC, "discountPersent"); // Giả sử tên trường là "discountPersent"
                     break;
                 case "newest":
-                    filteredProducts.sort((p1, p2) -> p2.getCreatedAt().compareTo(p1.getCreatedAt()));
+                    sort = Sort.by(Sort.Direction.DESC, "createdAt");
                     break;
-                default:
-                    // Default sorting can be by ID or any other criteria
-                    break;
+                // Có thể thêm các trường hợp sort khác nếu cần
             }
         }
 

@@ -87,12 +87,19 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(API + "/auth/**").permitAll() // Cho phép tất cả các API xác thực
+                        .requestMatchers(API + "/categories/**").permitAll() // Cho phép API danh mục công khai
+                        .requestMatchers(API + "/products/**").permitAll() // Cho phép API sản phẩm công khai (xem)
+                        .requestMatchers(API + "/contact/info").permitAll() // Cho phép API thông tin liên hệ
+                        .requestMatchers(API + "/chatbot/**").permitAll() // Cho phép API chatbot
+                        .requestMatchers(API + "/actuator/**").permitAll()
+                        .requestMatchers(API + "/payment/vnpay-callback").permitAll() // Cho phép callback từ VNPay
                         .requestMatchers(API + "/admin/**").hasAuthority("ADMIN")
                         .requestMatchers(API + "/seller/**").hasAnyAuthority("SELLER", "ADMIN")
                         .requestMatchers(API + "/customer/**").hasAnyAuthority("CUSTOMER", "ADMIN")
                         .requestMatchers(securedUrls.toArray(String[]::new)).authenticated()
-                        .requestMatchers("/oauth2/**").permitAll()
-                        .anyRequest().permitAll())
+                        .requestMatchers("/oauth2/**").permitAll() // Vẫn cho phép OAuth2 flow
+                        .anyRequest().authenticated()) // <--- THAY ĐỔI: Yêu cầu xác thực cho bất kỳ request nào khác
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oAuth2UserService))
