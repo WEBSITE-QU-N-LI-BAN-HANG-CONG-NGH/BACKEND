@@ -147,6 +147,13 @@ public class SellerProductController {
                 .ok(ApiResponse.success(stats, "Lấy thống kê sản phẩm thành công"));
     }
 
+    @GetMapping("/categories")
+    public ResponseEntity<ApiResponse> getSellerCategories(@RequestHeader("Authorization") String jwt) {
+        User seller = userService.findUserByJwt(jwt);
+        Map<String, Object> categories = sellerProductService.getSellerCategories(seller.getId());
+        return ResponseEntity.ok(ApiResponse.success(categories, "Lấy danh mục thành công"));
+    }
+
     @PostMapping("/create-multi-product")
     public ResponseEntity<ApiResponse> createMultipleProduct(
             @RequestBody List<CreateProductRequest> requests,

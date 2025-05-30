@@ -41,52 +41,14 @@ public class SellerOrderService implements ISellerOrderService {
         userRepository.findById(sellerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người bán"));
 
-        List<Order> sellerOrders;
+        // Convert LocalDate to LocalDateTime if needed
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
 
-        if (startDate != null && endDate != null && status != null) {
-            LocalDateTime startDateTime = startDate.atStartOfDay();
-            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-            sellerOrders = orderRepository.findBySellerIdAndOrderDateBetweenAndOrderStatus(
-                    sellerId, startDateTime, endDateTime, status);
-        } else if (status != null) {
-            sellerOrders = orderRepository.findBySellerIdAndOrderStatus(sellerId, status);
-        } else if (startDate != null && endDate != null) {
-            LocalDateTime startDateTime = startDate.atStartOfDay();
-            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-            sellerOrders = orderRepository.findBySellerIdAndOrderDateBetween(
-                    sellerId, startDateTime, endDateTime);
-        } else {
-            sellerOrders = orderRepository.findBySellerId(sellerId);
-        }
-
-        if (search != null && !search.isEmpty()) {
-            sellerOrders = sellerOrders.stream()
-                    .filter(order ->
-                            (order.getUser() != null &&
-                                    ((order.getUser().getFirstName() != null &&
-                                            order.getUser().getFirstName().toLowerCase().contains(search.toLowerCase())) ||
-                                            (order.getUser().getLastName() != null &&
-                                                    order.getUser().getLastName().toLowerCase().contains(search.toLowerCase())) ||
-                                            (order.getUser().getEmail() != null &&
-                                                    order.getUser().getEmail().toLowerCase().contains(search.toLowerCase()))))
-                    )
-                    .toList();
-        }
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), sellerOrders.size());
-
-        if (start >= sellerOrders.size()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, sellerOrders.size());
-        }
-
-        return new PageImpl<>(
-                sellerOrders.subList(start, end),
-                pageable,
-                sellerOrders.size()
-        );
+        // Use repository method with all filters applied at database level
+        return orderRepository.findSellerOrdersWithFilters(
+                sellerId, search, status, startDateTime, endDateTime, pageable);
     }
-
     @Override
     public Order getOrderDetail(Long sellerId, Long orderId) {
         userRepository.findById(sellerId)

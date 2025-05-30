@@ -77,7 +77,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        List<String> securedUrls = List.of(API + "/carts/**", API + "/cartItems/**", API + "/orders/**");
+        List<String> securedUrls = List.of(API + "/cart/**", API + "/cartItems/**", API + "/orders/**");
 
         http
                 .csrf(AbstractHttpConfigurer::disable)  //Tắt CSRF (csrf().disable()): Phù hợp với API không trạng thái (stateless) sử dụng JWT.
@@ -95,8 +95,8 @@ public class SecurityConfig {
                         .requestMatchers(API + "/actuator/**").permitAll()
                         .requestMatchers(API + "/payment/vnpay-callback").permitAll() // Cho phép callback từ VNPay
                         .requestMatchers(API + "/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers(API + "/seller/**").hasAnyAuthority("SELLER", "ADMIN")
-                        .requestMatchers(API + "/customer/**").hasAnyAuthority("CUSTOMER", "ADMIN")
+                        .requestMatchers(API + "/seller/**").hasAnyAuthority("SELLER")
+                        .requestMatchers(API + "/customer/**").hasAnyAuthority("CUSTOMER")
                         .requestMatchers(securedUrls.toArray(String[]::new)).authenticated()
                         .requestMatchers("/oauth2/**").permitAll() // Vẫn cho phép OAuth2 flow
                         .anyRequest().authenticated()) // <--- THAY ĐỔI: Yêu cầu xác thực cho bất kỳ request nào khác

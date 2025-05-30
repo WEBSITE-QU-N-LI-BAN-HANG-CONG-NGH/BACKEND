@@ -27,7 +27,7 @@ public class SellerDashboardController {
         return ResponseEntity.ok(ApiResponse.success(dashboardData, "Lấy dữ liệu tổng quan thành công"));
     }
 
-    @GetMapping("/revenue")
+    @GetMapping("/revenue/month")
     public ResponseEntity<ApiResponse> getMonthlyRevenue(@RequestHeader("Authorization") String jwt) {
         User seller = userService.findUserByJwt(jwt);
         var revenueData = sellerDashboardService.getMonthlyRevenue(seller.getId());

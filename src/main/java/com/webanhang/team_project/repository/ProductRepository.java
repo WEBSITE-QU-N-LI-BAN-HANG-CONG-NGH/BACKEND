@@ -104,16 +104,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     // Enhanced seller products query with comprehensive filters
     @Query("SELECT p FROM Product p WHERE p.sellerId = :sellerId " +
             "AND (:keyword IS NULL OR :keyword = '' OR " +
-            "     LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "     LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "     LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:topLevelCategory IS NULL OR :topLevelCategory = '' OR " +
             "     (p.category.level = 1 AND LOWER(p.category.name) = LOWER(:topLevelCategory)) OR " +
             "     (p.category.level = 2 AND LOWER(p.category.parentCategory.name) = LOWER(:topLevelCategory))) " +
             "AND (:secondLevelCategory IS NULL OR :secondLevelCategory = '' OR " +
             "     (p.category.level = 2 AND LOWER(p.category.name) = LOWER(:secondLevelCategory))) " +
             "AND (:color IS NULL OR :color = '' OR LOWER(p.color) = LOWER(:color)) " +
-            "AND (:minPrice IS NULL OR p.discountedPrice >= :minPrice) " +
-            "AND (:maxPrice IS NULL OR p.discountedPrice <= :maxPrice) " +
+            "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
+            "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
             "AND (:inStock IS NULL OR " +
             "     (:inStock = true AND p.quantity > 0) OR " +
             "     (:inStock = false AND p.quantity = 0))")

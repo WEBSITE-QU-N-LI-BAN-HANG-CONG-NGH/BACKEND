@@ -3,6 +3,8 @@ package com.webanhang.team_project.repository;
 
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.model.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -37,10 +39,36 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Integer sumTotalDiscountedPriceBySellerIdAndOrderStatus(
             @Param("sellerId") Long sellerId, @Param("status") OrderStatus status);
 
-    Long countBySellerId(Long sellerId);
     List<Order> findBySellerId(Long sellerId);
     List<Order> findBySellerIdAndOrderStatus(Long sellerId, OrderStatus status);
     List<Order> findBySellerIdAndOrderDateBetween(Long sellerId, LocalDateTime startDate, LocalDateTime endDate);
     List<Order> findBySellerIdAndOrderDateBetweenAndOrderStatus(
             Long sellerId, LocalDateTime startDate, LocalDateTime endDate, OrderStatus status);
+
+    @Query("SELECT o FROM Order o " +
+            "JOIN o.orderItems oi " +
+            "WHERE oi.product.sellerId = :sellerId " +
+            "AND o.orderDate BETWEEN :startDate AND :endDate " +
+            "AND o.orderStatus = :status")
+    List<Order> findBySellerIdAndDateRangeAndStatus(
+            @Param("sellerId") Long sellerId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("status") OrderStatus status);
+
+    @Query("SELECT o FROM Order o WHERE o.sellerId = :sellerId " +
+            "AND (:search IS NULL OR " +
+            "LOWER(CONCAT(o.user.firstName, ' ', o.user.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(o.user.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "CAST(o.id AS string) LIKE CONCAT('%', :search, '%')) " +
+            "AND (:status IS NULL OR o.orderStatus = :status) " +
+            "AND (:startDate IS NULL OR o.orderDate >= :startDate) " +
+            "AND (:endDate IS NULL OR o.orderDate <= :endDate)")
+    Page<Order> findSellerOrdersWithFilters(
+            @Param("sellerId") Long sellerId,
+            @Param("search") String search,
+            @Param("status") OrderStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable);
 }

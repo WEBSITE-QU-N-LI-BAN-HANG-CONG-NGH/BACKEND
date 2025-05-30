@@ -61,42 +61,35 @@ public class SellerDashboardService implements ISellerDashboardService {
     @Transactional(readOnly = true)
     public Map<String, BigDecimal> getMonthlyRevenue(Long sellerId) {
         Map<String, BigDecimal> revenueData = new LinkedHashMap<>();
-
-        // Lấy dữ liệu 12 tháng gần nhất
         LocalDate now = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yyyy");
 
-        // Khởi tạo map với các tháng và giá trị 0
+        // Initialize map with zero values
         for (int i = 11; i >= 0; i--) {
             LocalDate month = now.minusMonths(i);
             String monthLabel = month.format(formatter);
             revenueData.put(monthLabel, BigDecimal.ZERO);
         }
 
-        // Lấy đơn hàng từ 12 tháng trước
+        // Get orders for THIS SELLER ONLY with date range
         LocalDateTime startDate = now.minusMonths(11).withDayOfMonth(1).atStartOfDay();
         LocalDateTime endDate = now.atTime(23, 59, 59);
-        List<Order> allOrders = orderRepository.findByOrderDateBetweenAndOrderStatus(
-                startDate, endDate, OrderStatus.DELIVERED);
 
-        // Lọc đơn hàng có sản phẩm của seller
-        for (Order order : allOrders) {
-            // Kiểm tra xem đơn hàng có chứa sản phẩm của seller hay không
-            boolean hasSellersProduct = order.getOrderItems().stream()
-                    .anyMatch(item -> item.getProduct().getSellerId().equals(sellerId));
+        List<Order> sellerOrders = orderRepository.findBySellerId(sellerId);
+        List<Order> filteredOrders = sellerOrders.stream()
+                .filter(order -> order.getOrderStatus() == OrderStatus.DELIVERED)
+                .filter(order -> {
+                    LocalDateTime orderDate = order.getOrderDate();
+                    return !orderDate.isBefore(startDate) && !orderDate.isAfter(endDate);
+                })
+                .toList();
 
-            if (hasSellersProduct) {
-                // Tính doanh thu chỉ từ sản phẩm của seller trong đơn hàng này
-                BigDecimal orderRevenue = order.getOrderItems().stream()
-                        .filter(item -> item.getProduct().getSellerId().equals(sellerId))
-                        .map(item -> BigDecimal.valueOf(item.getPrice() * item.getQuantity()))
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                // Cộng dồn vào tháng tương ứng
-                String monthKey = order.getOrderDate().format(formatter);
-                if (revenueData.containsKey(monthKey)) {
-                    revenueData.put(monthKey, revenueData.get(monthKey).add(orderRevenue));
-                }
+        // Calculate revenue using same logic as total revenue
+        for (Order order : filteredOrders) {
+            String monthKey = order.getOrderDate().format(formatter);
+            if (revenueData.containsKey(monthKey)) {
+                BigDecimal orderRevenue = BigDecimal.valueOf(order.getTotalDiscountedPrice());
+                revenueData.put(monthKey, revenueData.get(monthKey).add(orderRevenue));
             }
         }
 
@@ -339,6 +332,7 @@ public class SellerDashboardService implements ISellerDashboardService {
         List<Order> sellerOrders = orderRepository.findBySellerId(sellerId);
         BigDecimal totalRevenue = BigDecimal.ZERO;
         totalRevenue = sellerOrders.stream()
+                .filter(order -> order.getOrderStatus() == OrderStatus.DELIVERED)
                 .map(Order::getTotalDiscountedPrice)
                 .map(BigDecimal::valueOf)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

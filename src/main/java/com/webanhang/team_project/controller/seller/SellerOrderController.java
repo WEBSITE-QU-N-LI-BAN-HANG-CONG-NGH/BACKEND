@@ -50,9 +50,16 @@ public class SellerOrderController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("orders", orderDTOs);
-        response.put("currentPage", orders.getNumber());
-        response.put("totalItems", orders.getTotalElements());
-        response.put("totalPages", orders.getTotalPages());
+        response.put("pagination", Map.of(
+                "currentPage", orders.getNumber(),
+                "pageSize", orders.getSize(),
+                "totalElements", orders.getTotalElements(),
+                "totalPages", orders.getTotalPages(),
+                "hasNext", orders.hasNext(),
+                "hasPrevious", orders.hasPrevious(),
+                "isFirst", orders.isFirst(),
+                "isLast", orders.isLast()
+        ));
 
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách đơn hàng thành công"));
     }
