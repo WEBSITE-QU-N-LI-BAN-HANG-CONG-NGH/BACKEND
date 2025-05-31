@@ -3,10 +3,7 @@ package com.webanhang.team_project.service.seller;
 import com.webanhang.team_project.dto.seller.OrderStatsDTO;
 import com.webanhang.team_project.dto.seller.SellerDashboardDTO;
 import com.webanhang.team_project.enums.OrderStatus;
-import com.webanhang.team_project.model.Order;
-import com.webanhang.team_project.model.OrderItem;
-import com.webanhang.team_project.model.Product;
-import com.webanhang.team_project.model.User;
+import com.webanhang.team_project.model.*;
 import com.webanhang.team_project.repository.OrderRepository;
 import com.webanhang.team_project.repository.ProductRepository;
 import com.webanhang.team_project.repository.UserRepository;
@@ -274,45 +271,33 @@ public class SellerDashboardService implements ISellerDashboardService {
     public Map<String, BigDecimal> getCategoryRevenue(Long sellerId) {
         Map<String, BigDecimal> revenueByCategory = new LinkedHashMap<>();
 
-        // Lấy tất cả đơn hàng DELIVERED
-        List<Order> allDeliveredOrders = orderRepository.findByOrderStatus(OrderStatus.DELIVERED);
+        // Get delivered orders for this specific seller
+        List<Order> sellerDeliveredOrders = orderRepository.findBySellerIdAndOrderStatus(sellerId, OrderStatus.DELIVERED);
 
-        // Lọc các đơn hàng có sản phẩm của seller
-        for (Order order : allDeliveredOrders) {
-            // Xử lý từng order item
+        for (Order order : sellerDeliveredOrders) {
             for (OrderItem item : order.getOrderItems()) {
-                // Kiểm tra xem sản phẩm có phải của seller này không
-                if (item.getProduct().getSellerId().equals(sellerId)) {
-                    // Lấy danh mục của sản phẩm
-                    String categoryName;
-                    if (item.getProduct().getCategory() != null) {
-                        // Ưu tiên lấy danh mục cấp 1 (parent)
-                        if (item.getProduct().getCategory().getLevel() == 2 &&
-                                item.getProduct().getCategory().getParentCategory() != null) {
-                            categoryName = item.getProduct().getCategory().getParentCategory().getName();
-                        } else {
-                            categoryName = item.getProduct().getCategory().getName();
-                        }
+                // Get category name (prefer top-level category)
+                String categoryName;
+                if (item.getProduct().getCategory() != null) {
+                    Category category = item.getProduct().getCategory();
+                    if (category.getLevel() == 2 && category.getParentCategory() != null) {
+                        categoryName = category.getParentCategory().getName();
                     } else {
-                        categoryName = "Chưa phân loại";
+                        categoryName = category.getName();
                     }
-
-                    // Tính doanh thu từ item này
-                    BigDecimal itemRevenue = BigDecimal.valueOf(item.getPrice() * item.getQuantity());
-
-                    // Cộng dồn vào danh mục tương ứng
-                    if (revenueByCategory.containsKey(categoryName)) {
-                        revenueByCategory.put(categoryName,
-                                revenueByCategory.get(categoryName).add(itemRevenue));
-                    } else {
-                        revenueByCategory.put(categoryName, itemRevenue);
-                    }
+                } else {
+                    categoryName = "Chưa phân loại";
                 }
+
+                // Use discounted price instead of original price
+                BigDecimal itemRevenue = BigDecimal.valueOf(item.getDiscountedPrice() * item.getQuantity());
+
+                revenueByCategory.merge(categoryName, itemRevenue, BigDecimal::add);
             }
         }
 
-        // Sắp xếp theo doanh thu giảm dần
-        Map<String, BigDecimal> sortedMap = revenueByCategory.entrySet()
+        // Sort by revenue descending
+        return revenueByCategory.entrySet()
                 .stream()
                 .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
                 .collect(Collectors.toMap(
@@ -321,18 +306,14 @@ public class SellerDashboardService implements ISellerDashboardService {
                         (e1, e2) -> e1,
                         LinkedHashMap::new
                 ));
-
-        return sortedMap;
     }
 
-    // Các phương thức hỗ trợ
+    // helper methods
     @Transactional(readOnly = true)
     private BigDecimal calculateTotalRevenue(Long sellerId) {
-
-        List<Order> sellerOrders = orderRepository.findBySellerId(sellerId);
+        List<Order> sellerDeliveredOrders = orderRepository.findBySellerIdAndOrderStatus(sellerId, OrderStatus.DELIVERED);
         BigDecimal totalRevenue = BigDecimal.ZERO;
-        totalRevenue = sellerOrders.stream()
-                .filter(order -> order.getOrderStatus() == OrderStatus.DELIVERED)
+        totalRevenue = sellerDeliveredOrders.stream()
                 .map(Order::getTotalDiscountedPrice)
                 .map(BigDecimal::valueOf)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
