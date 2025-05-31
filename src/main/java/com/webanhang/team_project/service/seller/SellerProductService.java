@@ -7,6 +7,8 @@ import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.model.*;
 import com.webanhang.team_project.repository.*;
+import com.webanhang.team_project.service.cart.CartService;
+import com.webanhang.team_project.service.image.ImageService;
 import com.webanhang.team_project.service.product.IProductService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,11 @@ public class SellerProductService implements ISellerProductService {
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
     private final IProductService productService;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ReviewRepository reviewRepository;
+    private final ImageService imageService;
 
     @Override
     @Transactional
@@ -164,7 +171,36 @@ public class SellerProductService implements ISellerProductService {
     @Override
     @Transactional
     public void deleteProduct(Long productId) {
-        productService.deleteProduct(productId);
+        // Check if product belongs to this seller
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+        // Check if product is referenced in any orders
+        List<OrderItem> orderItems = orderItemRepository.findByProductId(productId);
+        if (!orderItems.isEmpty()) {
+            throw new RuntimeException("Cannot delete product that has been ordered. Found in " +
+                    orderItems.size() + " order(s)");
+        }
+
+        // Check if product is in any active carts
+        List<CartItem> cartItems = cartItemRepository.findByProductId(productId);
+        if (!cartItems.isEmpty()) {
+            // Remove from carts first
+            cartItemRepository.deleteAll(cartItems);
+        }
+
+        // Check if product has reviews
+        List<Review> reviews = reviewRepository.findAllByProductId(productId);
+        if (!reviews.isEmpty()) {
+            // Delete reviews first
+            reviewRepository.deleteAll(reviews);
+        }
+
+        // Delete product images from cloudinary and database
+        imageService.deleteAllProductImages(productId);
+
+        // Finally delete the product
+        productRepository.delete(product);
     }
 
 
@@ -246,6 +282,16 @@ public class SellerProductService implements ISellerProductService {
             }
         }
 
+        // Add debug logging
+        System.out.println("Filter params:");
+        System.out.println("- sellerId: " + sellerId);
+        System.out.println("- status: " + status);
+        System.out.println("- inStock: " + inStock);
+        if (filter != null) {
+            System.out.println("- keyword: " + filter.getKeyword());
+            System.out.println("- topLevelCategory: " + filter.getTopLevelCategory());
+        }
+
         // Apply custom sorting if specified in filter
         Pageable finalPageable = pageable;
         if (filter != null && filter.getSort() != null && !filter.getSort().isEmpty()) {
@@ -263,6 +309,8 @@ public class SellerProductService implements ISellerProductService {
                 inStock,
                 finalPageable
         );
+
+        System.out.println("Query returned " + productPage.getTotalElements() + " products");
 
         return productPage.map(ProductDTO::new);
     }

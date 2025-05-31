@@ -38,6 +38,12 @@ public class SellerOrderController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate) {
 
+        System.out.println("=== DEBUG ORDER FILTER ===");
+        System.out.println("startDate: " + startDate);
+        System.out.println("endDate: " + endDate);
+        System.out.println("status: " + status);
+        System.out.println("search: " + search);
+
         User seller = userService.findUserByJwt(jwt);
         Page<Order> orders = sellerOrderService.getSellerOrders(
                 seller.getId(), page, size, search, status,

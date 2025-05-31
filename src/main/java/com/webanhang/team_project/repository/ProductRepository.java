@@ -114,8 +114,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
             "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
             "AND (:inStock IS NULL OR " +
-            "     (:inStock = true AND p.quantity > 0) OR " +
-            "     (:inStock = false AND p.quantity = 0))")
+            "     (:inStock = true AND EXISTS (SELECT 1 FROM ProductSize ps WHERE ps.product = p AND ps.quantity > 0)) OR " +
+            "     (:inStock = false AND NOT EXISTS (SELECT 1 FROM ProductSize ps WHERE ps.product = p AND ps.quantity > 0)))")
     Page<Product> findBySellerIdWithFilters(
             @Param("sellerId") Long sellerId,
             @Param("keyword") String keyword,

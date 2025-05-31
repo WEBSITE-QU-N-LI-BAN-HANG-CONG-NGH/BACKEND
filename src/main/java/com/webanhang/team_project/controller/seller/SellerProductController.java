@@ -11,6 +11,7 @@ import com.webanhang.team_project.service.product.IProductService;
 import com.webanhang.team_project.service.seller.ISellerProductService;
 import com.webanhang.team_project.service.seller.SellerProductService;
 import com.webanhang.team_project.service.user.IUserService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +33,7 @@ public class SellerProductController {
 
     private final ISellerProductService sellerProductService;
     private final IUserService userService;
+    private final ProductRepository productRepository;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createProduct(
@@ -63,9 +65,25 @@ public class SellerProductController {
             @RequestHeader("Authorization") String jwt,
             @PathVariable Long productId) {
 
-        sellerProductService.deleteProduct(productId);
+        try {
+            User seller = userService.findUserByJwt(jwt);
 
-        return ResponseEntity.ok(ApiResponse.success(null, "Xóa sản phẩm thành công"));
+            // Verify product belongs to seller
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+            if (!product.getSellerId().equals(seller.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("You can only delete your own products"));
+            }
+
+            sellerProductService.deleteProduct(productId);
+            return ResponseEntity.ok(ApiResponse.success(null, "Xóa sản phẩm thành công"));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
     }
 
     @GetMapping("/list-products")
