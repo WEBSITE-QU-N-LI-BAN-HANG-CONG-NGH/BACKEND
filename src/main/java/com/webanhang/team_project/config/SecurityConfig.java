@@ -92,7 +92,7 @@ public class SecurityConfig {
                         .requestMatchers(API + "/products/**").permitAll() // Cho phép API sản phẩm công khai (xem)
                         .requestMatchers(API + "/contact/info").permitAll() // Cho phép API thông tin liên hệ
                         .requestMatchers(API + "/chatbot/**").permitAll() // Cho phép API chatbot
-                        .requestMatchers(API + "/actuator/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(API + "/payment/vnpay-callback").permitAll() // Cho phép callback từ VNPay
                         .requestMatchers(API + "/admin/**").hasAuthority("ADMIN")
                         .requestMatchers(API + "/seller/**").hasAnyAuthority("SELLER")

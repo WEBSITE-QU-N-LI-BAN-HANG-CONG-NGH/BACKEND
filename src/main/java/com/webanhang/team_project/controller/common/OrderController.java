@@ -1,11 +1,11 @@
 package com.webanhang.team_project.controller.common;
 
-
-
 import com.webanhang.team_project.dto.order.OrderDTO;
+import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.User;
+import com.webanhang.team_project.repository.CartRepository;
 import com.webanhang.team_project.security.otp.OtpService;
 import com.webanhang.team_project.service.order.IOrderService;
 import com.webanhang.team_project.service.user.UserService;
@@ -30,22 +30,24 @@ import java.util.stream.Collectors;
 @RequestMapping("${api.prefix}/orders")
 public class OrderController {
     private final IOrderService orderService;
-
-    private final  UserService userService;
-
+    private final UserService userService;
     private final OtpService otpService;
+    private final CartRepository cartRepository;
 
     private static final Logger log = LoggerFactory.getLogger(OrderController.class);
 
     @GetMapping("/user")
     private ResponseEntity<ApiResponse> getUserOrders(@RequestHeader("Authorization") String jwt){
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if ( authentication == null ){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("Unauthorized"));
         }
         User user = userService.findUserByJwt(jwt);
+        if (user == null) { // Kiểm tra user từ JWT
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid user session."));
+        }
 
         List<Order> orders = orderService.userOrderHistory(user.getId());
         List<OrderDTO> orderDTOs = new ArrayList<>();
@@ -53,7 +55,7 @@ public class OrderController {
             OrderDTO orderDTO = new OrderDTO(order);
             orderDTOs.add(orderDTO);
         }
-        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get history order success!"));
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Lấy lịch sử đơn hàng thành công!"));
     }
 
     @PostMapping("/create/{addressId}")
@@ -61,52 +63,77 @@ public class OrderController {
                                          @PathVariable("addressId") Long addressId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if ( authentication == null ){
+            log.warn("Unauthorized attempt to create order: No authentication found.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("Unauthorized"));
+                    .body(Map.of("error", "Vui lòng đăng nhập để đặt hàng.", "code", "UNAUTHORIZED"));
         }
         User user = userService.findUserByJwt(jwt);
+        if (user == null) {
+            log.warn("Unauthorized attempt to create order: User not found for JWT.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.", "code", "INVALID_SESSION"));
+        }
 
         try {
-            // Validate if address exists for this user
             boolean addressExists = user.getAddress().stream()
                     .anyMatch(address -> address.getId().equals(addressId));
 
             if (!addressExists) {
+                log.warn("Address ID {} not found for user {}", addressId, user.getEmail());
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Address not found", "code", "ADDRESS_NOT_FOUND"));
+                        .body(Map.of("error", "Địa chỉ giao hàng không tìm thấy hoặc không thuộc về bạn.", "code", "ADDRESS_NOT_FOUND"));
             }
 
-            // Create orders (one per seller)
             List<Order> orders = orderService.placeOrder(addressId, user);
+
             if (orders == null || orders.isEmpty()) {
+                log.warn("Order creation resulted in no orders for user {}, addressId {}. This might be due to all cart items having null products or other issues.", user.getEmail(), addressId);
+                // Kiểm tra lại giỏ hàng để đưa ra thông báo chính xác hơn
+                Cart cart = cartRepository.findByUserId(user.getId());
+                if (cart == null || cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("error", "Giỏ hàng của bạn đang trống. Không thể tạo đơn hàng.", "code", "EMPTY_CART_ON_CREATE"));
+                }
+                // Nếu giỏ hàng không rỗng nhưng không tạo được đơn, có thể do tất cả product trong cart item đều null hoặc không xử lý được
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "Failed to create orders", "code", "ORDER_CREATION_FAILED"));
+                        .body(Map.of("error", "Không có sản phẩm hợp lệ nào trong giỏ hàng của bạn để đặt hàng. Vui lòng kiểm tra lại.", "code", "NO_VALID_ITEMS_FOR_ORDER"));
             }
 
-            // Convert orders to DTOs
             List<OrderDTO> orderDTOs = orders.stream()
                     .map(OrderDTO::new)
                     .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
             response.put("orders", orderDTOs);
-            response.put("totalOrders", orders.size());
-            response.put("totalAmount", orders.stream()
+            response.put("totalOrdersCreated", orders.size());
+            response.put("totalAmountForAllOrders", orders.stream()
                     .mapToInt(order -> order.getTotalDiscountedPrice() != null ? order.getTotalDiscountedPrice() : 0)
                     .sum());
-            response.put("message", "Orders created successfully. Total " + orders.size() + " orders from different sellers.");
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-            } catch (Exception e) {
-                // Ghi lại lỗi chi tiết vào log của server
-                log.error("Error creating order for user {} with addressId {}: {}",
-                        (user != null ? user.getId() : "unknown"), addressId, e.getMessage(), e); // Log cả stack trace
-
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(Map.of("error", "An unexpected error occurred", "code", "INTERNAL_ERROR"));
+            response.put("message", "Đã tạo thành công " + orders.size() + " đơn hàng.");
+            if (orders.stream().anyMatch(order -> order.getSellerId() == null)) {
+                response.put("message", response.get("message") + " Một số sản phẩm không có thông tin người bán cụ thể đã được gom vào một đơn hàng chung.");
             }
+
+
+            log.info("Successfully created {} order(s) for user {}", orders.size(), user.getEmail());
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IllegalArgumentException e) {
+            log.error("Error creating order for user {}: {}", (user != null ? user.getEmail() : "unknown_user_due_to_null"), e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage(), "code", "INVALID_ARGUMENT"));
+        } catch (RuntimeException e) {
+            log.error("Runtime error creating order for user {}: {}", (user != null ? user.getEmail() : "unknown_user_due_to_null"), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage(), "code", "ORDER_PROCESSING_ERROR"));
+        } catch (Exception e) {
+            log.error("Unexpected error creating order for user {}: {}", (user != null ? user.getEmail() : "unknown_user_due_to_null"), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Đã xảy ra lỗi không mong muốn trong quá trình xử lý đơn hàng. Vui lòng thử lại sau.", "code", "INTERNAL_SERVER_ERROR"));
+        }
     }
 
+    // ... (các phương thức khác giữ nguyên)
     @GetMapping("/{id}")
     public ResponseEntity<OrderDTO> findOrderById(@PathVariable("id") Long orderId) {
         Order order = orderService.findOrderById(orderId);
@@ -122,7 +149,7 @@ public class OrderController {
             OrderDTO orderDTO = new OrderDTO(order);
             orderDTOs.add(orderDTO);
         }
-        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get pending orders success!"));
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Lấy danh sách đơn hàng chờ xử lý thành công!"));
     }
 
     @GetMapping("/confirmed")
@@ -133,7 +160,7 @@ public class OrderController {
             OrderDTO orderDTO = new OrderDTO(order);
             orderDTOs.add(orderDTO);
         }
-        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get confirmed orders success!"));
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Lấy danh sách đơn hàng đã xác nhận thành công!"));
     }
 
     @GetMapping("/shipped")
@@ -144,7 +171,7 @@ public class OrderController {
             OrderDTO orderDTO = new OrderDTO(order);
             orderDTOs.add(orderDTO);
         }
-        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get shipped orders success!"));
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Lấy danh sách đơn hàng đang giao thành công!"));
     }
 
     @GetMapping("/delivered")
@@ -155,7 +182,7 @@ public class OrderController {
             OrderDTO orderDTO = new OrderDTO(order);
             orderDTOs.add(orderDTO);
         }
-        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get delivered orders success!"));
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Lấy danh sách đơn hàng đã giao thành công!"));
     }
 
     @GetMapping("/cancelled")
@@ -166,18 +193,29 @@ public class OrderController {
             OrderDTO orderDTO = new OrderDTO(order);
             orderDTOs.add(orderDTO);
         }
-        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Get cancelled orders success!"));
+        return ResponseEntity.ok(ApiResponse.success(orderDTOs, "Lấy danh sách đơn hàng đã hủy thành công!"));
     }
 
     @PutMapping("/cancel/{id}")
-    public ResponseEntity<ApiResponse> cancelOrder(@PathVariable("id") Long orderId) {
-        Order order = orderService.cancelOrder(orderId);
+    public ResponseEntity<ApiResponse> cancelOrder(@PathVariable("id") Long orderId, @RequestHeader("Authorization") String jwt) {
+        User user = userService.findUserByJwt(jwt);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Phiên đăng nhập không hợp lệ."));
+        }
+        Order order = orderService.findOrderById(orderId);
         if (order == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Order not found"));
+                    .body(ApiResponse.error("Không tìm thấy đơn hàng."));
         }
-        OrderDTO orderDTO = new OrderDTO(order);
-        return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order cancelled successfully"));
+        if (!order.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Bạn không có quyền hủy đơn hàng này."));
+        }
+
+        Order cancelledOrder = orderService.cancelOrder(orderId);
+        OrderDTO orderDTO = new OrderDTO(cancelledOrder);
+        return ResponseEntity.ok(ApiResponse.success(orderDTO, "Hủy đơn hàng thành công."));
     }
 
 
@@ -203,7 +241,6 @@ public class OrderController {
                         .body(ApiResponse.error("Order not found"));
             }
 
-            // Kiểm tra xem đơn hàng có thuộc về user hiện tại không
             if (!order.getUser().getId().equals(user.getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(ApiResponse.error("You don't have permission to access this order"));
