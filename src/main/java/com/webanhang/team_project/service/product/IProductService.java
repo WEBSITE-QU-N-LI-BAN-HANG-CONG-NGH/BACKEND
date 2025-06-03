@@ -44,4 +44,6 @@ public interface IProductService {
     Map<String, Object> getAdminFilterStatistics();
 
     Map<String, Object> getAllCategories();
+
+    public void adminDeleteProduct(Long productId);
 }

@@ -43,8 +43,8 @@ public class AdminProductController {
 
     @DeleteMapping("/{productId}/delete")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) {
-        String result = productService.deleteProduct(productId);
-        return ResponseEntity.ok(ApiResponse.success(null, result));
+        productService.adminDeleteProduct(productId);
+        return ResponseEntity.ok(ApiResponse.success(null, String.format("Delete product have ID %d successfully", productId)));
     }
 
     @GetMapping("/all")

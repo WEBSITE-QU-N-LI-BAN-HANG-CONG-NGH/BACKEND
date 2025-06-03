@@ -2,8 +2,9 @@ package com.webanhang.team_project.service.product;
 
 import com.webanhang.team_project.dto.product.*;
 import com.webanhang.team_project.model.*;
-import com.webanhang.team_project.repository.CategoryRepository;
-import com.webanhang.team_project.repository.ProductRepository;
+import com.webanhang.team_project.repository.*;
+import com.webanhang.team_project.service.image.ImageService;
+import com.webanhang.team_project.service.order.OrderService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -28,6 +29,10 @@ public class ProductService implements IProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
+    private final CartItemRepository cartItemRepository;
+    private final ReviewRepository reviewRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final ImageService imageService;
 
     @Override
     @Transactional
@@ -318,6 +323,37 @@ public class ProductService implements IProductService {
         categoriesMap.put("secondLevel", secondLevelByTopLevel);
 
         return categoriesMap;
+    }
+
+    @Override
+    @Transactional
+    public void adminDeleteProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+        // 1. Remove from active carts first
+        List<CartItem> cartItems = cartItemRepository.findByProductId(productId);
+        if (!cartItems.isEmpty()) {
+            cartItemRepository.deleteAll(cartItems);
+        }
+
+        // 2. Delete all reviews for this product
+        List<Review> reviews = reviewRepository.findAllByProductId(productId);
+        if (!reviews.isEmpty()) {
+            reviewRepository.deleteAll(reviews);
+        }
+
+        // 3. Delete order items completely (loses order history)
+        List<OrderItem> orderItems = orderItemRepository.findByProductId(productId);
+        if (!orderItems.isEmpty()) {
+            orderItemRepository.deleteAll(orderItems);
+        }
+
+        // 4. Delete product images
+        imageService.deleteAllProductImages(productId);
+
+        // 5. Finally delete the product
+        productRepository.delete(product);
     }
 
     @Transactional(readOnly = true)
