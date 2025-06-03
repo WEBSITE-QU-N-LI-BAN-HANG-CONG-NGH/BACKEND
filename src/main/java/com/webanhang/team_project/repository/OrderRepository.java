@@ -71,4 +71,36 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable);
+
+    @Query("SELECT o FROM Order o WHERE " +
+            "(:search IS NULL OR " +
+            "LOWER(CONCAT(o.user.firstName, ' ', o.user.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(o.user.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "CAST(o.id AS string) LIKE CONCAT('%', :search, '%')) " +
+            "AND (:status IS NULL OR o.orderStatus = :status) " +
+            "AND (:startDate IS NULL OR o.orderDate >= :startDate) " +
+            "AND (:endDate IS NULL OR o.orderDate <= :endDate)")
+    Page<Order> findAdminOrdersWithFilters(
+            @Param("search") String search,
+            @Param("status") OrderStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE " +
+            "(:startDate IS NULL OR o.orderDate >= :startDate) " +
+            "AND (:endDate IS NULL OR o.orderDate <= :endDate) " +
+            "AND (:status IS NULL OR o.orderStatus = :status)")
+    Long countOrdersByStatusAndDateRange(
+            @Param("status") OrderStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT SUM(o.totalDiscountedPrice) FROM Order o WHERE " +
+            "(:startDate IS NULL OR o.orderDate >= :startDate) " +
+            "AND (:endDate IS NULL OR o.orderDate <= :endDate) " +
+            "AND o.orderStatus = 'DELIVERED'")
+    Double sumRevenueByDateRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 }

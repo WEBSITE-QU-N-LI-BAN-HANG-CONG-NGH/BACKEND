@@ -10,6 +10,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -205,6 +206,118 @@ public class ProductService implements IProductService {
     @Override
     public List<Product> findByCategoryTopAndSecond(String topCategory, String secondCategory) {
         return productRepository.findProductsByTopAndSecondCategoryNames(topCategory, secondCategory);
+    }
+
+    @Override
+    public Page<ProductDTO> getProductsWithFilter(Pageable pageable, FilterProduct filter, String status) {
+
+        Boolean inStock = null;
+        if (status != null && !status.equals("all")) {
+            switch (status) {
+                case "inStock":
+                    inStock = true;
+                    break;
+                case "outOfStock":
+                    inStock = false;
+                    break;
+            }
+        }
+
+        // Add debug logging
+        System.out.println("Filter params:");
+        System.out.println("- status: " + status);
+        System.out.println("- inStock: " + inStock);
+        if (filter != null) {
+            System.out.println("- keyword: " + filter.getKeyword());
+            System.out.println("- topLevelCategory: " + filter.getTopLevelCategory());
+        }
+
+        // Apply custom sorting if specified in filter
+        Pageable finalPageable = pageable;
+        if (filter != null && filter.getSort() != null && !filter.getSort().isEmpty()) {
+            finalPageable = applySorting(pageable, filter.getSort());
+        }
+
+        Page<Product> productPage = productRepository.getProductsWithFilter(
+                filter != null ? filter.getKeyword() : null,
+                filter != null ? filter.getTopLevelCategory() : null,
+                filter != null ? filter.getSecondLevelCategory() : null,
+                filter != null ? filter.getColor() : null,
+                filter != null ? filter.getMinPrice() : null,
+                filter != null ? filter.getMaxPrice() : null,
+                inStock,
+                finalPageable
+        );
+
+        System.out.println("Query returned " + productPage.getTotalElements() + " products");
+
+        return productPage.map(ProductDTO::new);
+    }
+
+    @Override
+    public Map<String, Object> getAdminFilterStatistics() {
+        List<Product> allProducts = productRepository.findAll();
+
+        Map<String, Object> stats = new HashMap<>();
+
+        // Price range
+        OptionalInt minPrice = allProducts.stream()
+                .filter(p -> p.getDiscountedPrice() > 0)
+                .mapToInt(Product::getDiscountedPrice)
+                .min();
+        OptionalInt maxPrice = allProducts.stream()
+                .mapToInt(Product::getDiscountedPrice)
+                .max();
+
+        stats.put("priceRange", Map.of(
+                "min", minPrice.orElse(0),
+                "max", maxPrice.orElse(0)
+        ));
+
+        // Stock status counts
+        long inStockCount = allProducts.stream().filter(p -> p.getQuantity() > 0).count();
+        long outOfStockCount = allProducts.size() - inStockCount;
+
+        stats.put("stockStatus", Map.of(
+                "inStock", inStockCount,
+                "outOfStock", outOfStockCount,
+                "total", allProducts.size()
+        ));
+
+        // Available colors
+        List<String> colors = allProducts.stream()
+                .map(Product::getColor)
+                .filter(color -> color != null && !color.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+        stats.put("colors", colors);
+
+        // Categories
+        stats.put("categories", getAllCategories());
+
+        return stats;
+    }
+
+    @Override
+    public Map<String, Object> getAllCategories() {
+        Map<String, Object> categoriesMap = new HashMap<>();
+
+        // Get top-level categories
+        List<String> topLevelCategories = productRepository.findDistinctTopLevelCategories();
+        categoriesMap.put("topLevel", topLevelCategories);
+
+        // Get second-level categories grouped by top-level
+        Map<String, List<String>> secondLevelByTopLevel = new HashMap<>();
+        for (String topLevel : topLevelCategories) {
+            List<String> secondLevel = productRepository.findDistinctSecondLevelCategoriesByTopLevel(topLevel);
+            if (!secondLevel.isEmpty()) {
+                secondLevelByTopLevel.put(topLevel, secondLevel);
+            }
+        }
+        categoriesMap.put("secondLevel", secondLevelByTopLevel);
+
+        return categoriesMap;
     }
 
     @Transactional(readOnly = true)
@@ -443,8 +556,33 @@ public class ProductService implements IProductService {
         products.sort(comparator);
     }
 
-    private ProductDTO mapToDTO(Product product) {
-        ProductDTO dto = new ProductDTO();
-        return dto;
+    // helper methods
+    private Pageable applySorting(Pageable pageable, String sortType) {
+        Sort sort;
+        switch (sortType) {
+            case "price_low":
+                sort = Sort.by(Sort.Direction.ASC, "discountedPrice");
+                break;
+            case "price_high":
+                sort = Sort.by(Sort.Direction.DESC, "discountedPrice");
+                break;
+            case "discount":
+                sort = Sort.by(Sort.Direction.DESC, "discountPersent");
+                break;
+            case "newest":
+                sort = Sort.by(Sort.Direction.DESC, "createdAt");
+                break;
+            case "name_asc":
+                sort = Sort.by(Sort.Direction.ASC, "title");
+                break;
+            case "name_desc":
+                sort = Sort.by(Sort.Direction.DESC, "title");
+                break;
+            default:
+                return pageable; // Keep original sorting
+        }
+
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
     }
+
 }

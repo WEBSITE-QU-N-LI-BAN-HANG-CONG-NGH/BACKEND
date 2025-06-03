@@ -3,6 +3,7 @@ package com.webanhang.team_project.controller.seller;
 import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.dto.product.FilterProduct;
 import com.webanhang.team_project.dto.product.ProductDTO;
+import com.webanhang.team_project.dto.product.UpdateProductRequest;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.model.Product;
 import com.webanhang.team_project.model.User;
@@ -52,7 +53,7 @@ public class SellerProductController {
     @PutMapping("/{productId}/update")
     public ResponseEntity<ApiResponse> updateProduct(
             @PathVariable Long productId,
-            @RequestBody Product updatedProduct,
+            @RequestBody UpdateProductRequest updatedProduct,
             @RequestHeader("Authorization") String jwt) {
 
         ProductDTO productDto = sellerProductService.updateProduct(productId, updatedProduct);

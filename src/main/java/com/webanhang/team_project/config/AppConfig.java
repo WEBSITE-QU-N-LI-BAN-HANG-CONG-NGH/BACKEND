@@ -11,7 +11,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.client.RestTemplate;
 
 
-// Cấu hình chung của ứng dụng, chứa các bean và thông tin cấu hình toàn cục.
 @Configuration
 public class AppConfig {
 

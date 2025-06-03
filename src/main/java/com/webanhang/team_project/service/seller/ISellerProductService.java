@@ -3,6 +3,7 @@ package com.webanhang.team_project.service.seller;
 import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.dto.product.FilterProduct;
 import com.webanhang.team_project.dto.product.ProductDTO;
+import com.webanhang.team_project.dto.product.UpdateProductRequest;
 import com.webanhang.team_project.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +14,7 @@ import java.util.Map;
 public interface ISellerProductService {
     ProductDTO createProduct(CreateProductRequest request);
 
-    ProductDTO updateProduct(Long productId, Product product);
+    ProductDTO updateProduct(Long productId, UpdateProductRequest product);
 
     void deleteProduct(Long productId);
 

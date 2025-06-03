@@ -7,6 +7,7 @@ import com.webanhang.team_project.dto.product.ProductDTO;
 import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.model.Product;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -37,4 +38,10 @@ public interface IProductService {
     public Map<String, Object> getRevenueByCateogry();
 
     public List<Product> findByCategoryTopAndSecond(String topCategory, String secondCategory);
+
+    Page<ProductDTO> getProductsWithFilter(Pageable pageable, FilterProduct filter, String status);
+
+    Map<String, Object> getAdminFilterStatistics();
+
+    Map<String, Object> getAllCategories();
 }

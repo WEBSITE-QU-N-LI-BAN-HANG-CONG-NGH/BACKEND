@@ -20,6 +20,8 @@ import com.webanhang.team_project.service.product.ProductService;
 import com.webanhang.team_project.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -332,47 +334,32 @@ public class OrderService implements IOrderService {
 
     @Override
     public Map<String, Object> getOrderStatistics(LocalDate start, LocalDate end) {
-        // Lấy tất cả đơn hàng từ cơ sở dữ liệu
-        List<Order> allOrders = orderRepository.findAll();
-        
-        // Lọc ra các đơn hàng trong khoảng thời gian
-        List<Order> filteredOrders = allOrders.stream()
-                .filter(order -> {
-                    LocalDate orderDate = order.getOrderDate().toLocalDate();
-                    return !orderDate.isBefore(start) && !orderDate.isAfter(end);
-                })
-                .collect(Collectors.toList());
-        
-        // Tính toán số liệu thống kê
-        long totalOrders = filteredOrders.size();
-        double totalRevenue = filteredOrders.stream()
-                .mapToDouble(order -> order.getTotalDiscountedPrice().doubleValue())
-                .sum();
-        
-        // Thống kê theo trạng thái
-        Map<OrderStatus, Long> ordersByStatus = filteredOrders.stream()
-                .collect(Collectors.groupingBy(Order::getOrderStatus, Collectors.counting()));
-        
-        // Thống kê đơn hàng theo ngày
-        Map<LocalDate, Long> ordersByDate = filteredOrders.stream()
-                .collect(Collectors.groupingBy(
-                        order -> order.getOrderDate().toLocalDate(),
-                        Collectors.counting()));
-        
-        // Thống kê doanh thu theo ngày
-        Map<LocalDate, Double> revenueByDate = filteredOrders.stream()
-                .collect(Collectors.groupingBy(
-                        order -> order.getOrderDate().toLocalDate(),
-                        Collectors.summingDouble(order -> order.getTotalDiscountedPrice().doubleValue())));
-        
-        // Kết quả trả về
+        // Convert LocalDate to LocalDateTime
+        LocalDateTime startDateTime = start != null ? start.atStartOfDay() : null;
+        LocalDateTime endDateTime = end != null ? end.atTime(23, 59, 59) : null;
+
+        // Use optimized count queries instead of loading all data
+        long totalOrders = orderRepository.countOrdersByStatusAndDateRange(null, startDateTime, endDateTime);
+        long pendingOrders = orderRepository.countOrdersByStatusAndDateRange(OrderStatus.PENDING, startDateTime, endDateTime);
+        long confirmedOrders = orderRepository.countOrdersByStatusAndDateRange(OrderStatus.CONFIRMED, startDateTime, endDateTime);
+        long deliveredOrders = orderRepository.countOrdersByStatusAndDateRange(OrderStatus.DELIVERED, startDateTime, endDateTime);
+        long cancelledOrders = orderRepository.countOrdersByStatusAndDateRange(OrderStatus.CANCELLED, startDateTime, endDateTime);
+
+        // Get total revenue efficiently
+        Double totalRevenue = orderRepository.sumRevenueByDateRange(startDateTime, endDateTime);
+        totalRevenue = totalRevenue != null ? totalRevenue : 0.0;
+
+        double averageOrderValue = deliveredOrders > 0 ? totalRevenue / deliveredOrders : 0;
+
         Map<String, Object> result = new HashMap<>();
         result.put("totalOrders", totalOrders);
+        result.put("pendingOrders", pendingOrders);
+        result.put("confirmedOrders", confirmedOrders);
+        result.put("completedOrders", deliveredOrders);
+        result.put("cancelledOrders", cancelledOrders);
         result.put("totalRevenue", totalRevenue);
-        result.put("ordersByStatus", ordersByStatus);
-        result.put("ordersByDate", ordersByDate);
-        result.put("revenueByDate", revenueByDate);
-        
+        result.put("averageOrderValue", averageOrderValue);
+
         return result;
     }
 
@@ -385,6 +372,21 @@ public class OrderService implements IOrderService {
                 .map(order -> new OrderDetailDTO(order))
                 .toList();
         return orderDTOs;
+    }
+
+    @Override
+    public Page<OrderDetailDTO> getAllOrdersWithFilters(String search, OrderStatus status,
+                                                        LocalDate startDate, LocalDate endDate,
+                                                        Pageable pageable) {
+        // Convert LocalDate to LocalDateTime
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
+
+        // Reuse the existing query but remove sellerId filter
+        Page<Order> orders = orderRepository.findAdminOrdersWithFilters(
+                search, status, startDateTime, endDateTime, pageable);
+
+        return orders.map(OrderDetailDTO::new);
     }
 
     @Override

@@ -77,7 +77,7 @@ public class SellerOrderController {
 
         User seller = userService.findUserByJwt(jwt);
         Order order = sellerOrderService.getOrderDetail(seller.getId(), orderId);
-        OrderDTO orderDTO = new OrderDTO(order);
+        OrderDetailDTO orderDTO = new OrderDetailDTO(order);
 
         return ResponseEntity.ok(ApiResponse.success(orderDTO, "Lấy chi tiết đơn hàng thành công"));
     }

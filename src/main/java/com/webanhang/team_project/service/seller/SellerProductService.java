@@ -3,6 +3,7 @@ package com.webanhang.team_project.service.seller;
 import com.webanhang.team_project.dto.product.CreateProductRequest;
 import com.webanhang.team_project.dto.product.FilterProduct;
 import com.webanhang.team_project.dto.product.ProductDTO;
+import com.webanhang.team_project.dto.product.UpdateProductRequest;
 import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.enums.PaymentStatus;
 import com.webanhang.team_project.model.*;
@@ -40,7 +41,7 @@ public class SellerProductService implements ISellerProductService {
     @Override
     @Transactional
     public ProductDTO createProduct(CreateProductRequest req) {
-        // Process two-level categories
+        // Process two-level categories (giữ nguyên code category)
         Category parentCategory = null;
         Category category = null;
 
@@ -86,7 +87,21 @@ public class SellerProductService implements ISellerProductService {
         product.setColor(req.getColor());
         product.setCreatedAt(LocalDateTime.now());
         product.setQuantity(req.getQuantity());
-        product.setImages(req.getImageUrls());
+
+        // Initialize quantitySold to 0 for new products
+        product.setQuantitySold(0L);
+
+        // Set product specifications from request
+        product.setWeight(req.getWeight());
+        product.setDimension(req.getDimension());
+        product.setBatteryType(req.getBatteryType());
+        product.setBatteryCapacity(req.getBatteryCapacity());
+        product.setRamCapacity(req.getRamCapacity());
+        product.setRomCapacity(req.getRomCapacity());
+        product.setScreenSize(req.getScreenSize());
+        product.setDetailedReview(req.getDetailedReview());
+        product.setPowerfulPerformance(req.getPowerfulPerformance());
+        product.setConnectionPort(req.getConnectionPort());
 
         if (req.getSellerId() != null) {
             product.setSellerId(req.getSellerId());
@@ -117,51 +132,105 @@ public class SellerProductService implements ISellerProductService {
 
     @Override
     @Transactional
-    public ProductDTO updateProduct(Long productId, Product product) {
+    public ProductDTO updateProduct(Long productId, UpdateProductRequest request) { // Change parameter type
         Product existingProduct = productRepository.getProductById(productId);
 
         // Update basic properties
-        if (product.getTitle() != null) {
-            existingProduct.setTitle(product.getTitle());
+        if (request.getTitle() != null) {
+            existingProduct.setTitle(request.getTitle());
         }
-        if (product.getDescription() != null) {
-            existingProduct.setDescription(product.getDescription());
+        if (request.getDescription() != null) {
+            existingProduct.setDescription(request.getDescription());
         }
-        if (product.getBrand() != null) {
-            existingProduct.setBrand(product.getBrand());
+        if (request.getBrand() != null) {
+            existingProduct.setBrand(request.getBrand());
         }
-        if (product.getColor() != null) {
-            existingProduct.setColor(product.getColor());
+        if (request.getColor() != null) {
+            existingProduct.setColor(request.getColor());
         }
 
-        // Handle images
-        if (product.getImages() != null && !product.getImages().isEmpty()) {
-            existingProduct.getImages().clear();
-            for (Image image : product.getImages()) {
-                image.setProduct(existingProduct);
-                existingProduct.getImages().add(image);
+        // Handle category update using the same logic as createProduct
+        if (request.getTopLevelCategory() != null && !request.getTopLevelCategory().isEmpty()) {
+            Category parentCategory = null;
+            Category category = null;
+
+            // Find or create top level category
+            parentCategory = categoryRepository.findByName(request.getTopLevelCategory());
+            if (parentCategory == null) {
+                parentCategory = new Category();
+                parentCategory.setName(request.getTopLevelCategory());
+                parentCategory.setLevel(1);
+                parentCategory.setParent(true);
+                parentCategory = categoryRepository.save(parentCategory);
+            } else if (parentCategory.getLevel() != 1) {
+                throw new IllegalArgumentException("Top level category must have level 1");
             }
+
+            // Handle second level category if provided
+            if (request.getSecondLevelCategory() != null && !request.getSecondLevelCategory().isEmpty()) {
+                category = categoryRepository.findByName(request.getSecondLevelCategory());
+                if (category == null) {
+                    category = new Category();
+                    category.setName(request.getSecondLevelCategory());
+                    category.setLevel(2);
+                    category.setParent(false);
+                    category.setParentCategory(parentCategory);
+                    category = categoryRepository.save(category);
+                } else if (category.getLevel() != 2) {
+                    throw new IllegalArgumentException("Second level category must have level 2");
+                }
+            } else {
+                // If no second level, use top level
+                category = parentCategory;
+            }
+
+            existingProduct.setCategory(category);
+        }
+
+        // Update specifications
+        if (request.getWeight() != null) {
+            existingProduct.setWeight(request.getWeight());
+        }
+        if (request.getDimension() != null) {
+            existingProduct.setDimension(request.getDimension());
+        }
+        if (request.getBatteryType() != null) {
+            existingProduct.setBatteryType(request.getBatteryType());
+        }
+        if (request.getBatteryCapacity() != null) {
+            existingProduct.setBatteryCapacity(request.getBatteryCapacity());
+        }
+        if (request.getRamCapacity() != null) {
+            existingProduct.setRamCapacity(request.getRamCapacity());
+        }
+        if (request.getRomCapacity() != null) {
+            existingProduct.setRomCapacity(request.getRomCapacity());
+        }
+        if (request.getScreenSize() != null) {
+            existingProduct.setScreenSize(request.getScreenSize());
+        }
+        if (request.getDetailedReview() != null) {
+            existingProduct.setDetailedReview(request.getDetailedReview());
+        }
+        if (request.getPowerfulPerformance() != null) {
+            existingProduct.setPowerfulPerformance(request.getPowerfulPerformance());
+        }
+        if (request.getConnectionPort() != null) {
+            existingProduct.setConnectionPort(request.getConnectionPort());
         }
 
         // Update price and discount
-        if (product.getPrice() > 0) {
-            existingProduct.setPrice(product.getPrice());
+        if (request.getPrice() != null && request.getPrice() > 0) {
+            existingProduct.setPrice(request.getPrice());
         }
-        if (product.getDiscountPersent() >= 0) {
-            existingProduct.setDiscountPersent(product.getDiscountPersent());
+        if (request.getDiscountPersent() != null && request.getDiscountPersent() >= 0) {
+            existingProduct.setDiscountPersent(request.getDiscountPersent());
         }
         existingProduct.updateDiscountedPrice();
 
         // Update quantity
-        if (product.getQuantity() >= 0) {
-            existingProduct.setQuantity(product.getQuantity());
-        }
-
-        // Update category if provided
-        if (product.getCategory() != null && product.getCategory().getId() != null) {
-            Category category = categoryRepository.findById(product.getCategory().getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-            existingProduct.setCategory(category);
+        if (request.getQuantity() != null && request.getQuantity() >= 0) {
+            existingProduct.setQuantity(request.getQuantity());
         }
 
         Product res = productRepository.save(existingProduct);
