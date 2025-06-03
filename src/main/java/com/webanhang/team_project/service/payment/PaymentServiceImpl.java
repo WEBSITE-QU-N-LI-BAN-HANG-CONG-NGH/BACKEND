@@ -6,7 +6,7 @@ import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.model.PaymentDetail;
 import com.webanhang.team_project.repository.PaymentRepository;
 import com.google.gson.Gson;
-import com.webanhang.team_project.service.cart.ICartService;
+// import com.webanhang.team_project.service.cart.ICartService; // Bỏ nếu không dùng
 import com.webanhang.team_project.service.order.IOrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -38,35 +38,35 @@ public class PaymentServiceImpl implements PaymentService {
     private String vnp_PayUrl;
 
     @Value("${vnpay.return-url}")
-    private String vnp_Returnurl;
+    private String vnp_Returnurl; // Đảm bảo giá trị này được cấu hình đúng trong application.properties
 
     private final IOrderService orderService;
-
     private final PaymentRepository paymentRepository;
-
-    private final ICartService ICartService;
+    // private final ICartService ICartService; // Bỏ nếu không dùng trực tiếp ở đây
 
     @Override
     @Transactional
     public String createPayment(Long orderId) {
         try {
-            // Lấy thông tin đơn hàng
             Order order = orderService.findOrderById(orderId);
             if (order == null) {
-                throw new RuntimeException("Không tìm thấy đơn hàng");
+                throw new RuntimeException("Không tìm thấy đơn hàng với ID: " + orderId);
+            }
+            if (order.getTotalDiscountedPrice() == null || order.getTotalDiscountedPrice() <= 0) {
+                throw new RuntimeException("Tổng tiền đơn hàng không hợp lệ.");
             }
 
+            // QUAN TRỌNG: Gán PaymentMethod cho Order trước khi lưu PaymentDetail
             order.setPaymentMethod(PaymentMethod.VNPAY);
-            // Tạo mã giao dịch ngẫu nhiên - đảm bảo duy nhất
-            String vnp_TxnRef = orderId + "_" + getRandomNumber(8);
+            // Cân nhắc cập nhật trạng thái đơn hàng ở đây nếu cần, ví dụ: PENDING_PAYMENT
+            // orderService.saveOrder(order); // Lưu thay đổi paymentMethod vào Order nếu cần thiết
 
-            // Thông tin thanh toán
+            String vnp_TxnRef = orderId + "_" + getRandomNumber(8); // Mã giao dịch tham chiếu
             String vnp_OrderInfo = "Thanh toan don hang #" + orderId;
-            String vnp_OrderType = "other"; // Thay đổi từ "billpayment" sang "other"
+            String vnp_OrderType = "other";
             String vnp_IpAddr = getIpAddress();
-            long amount = order.getTotalDiscountedPrice() * 100L;
+            long amount = order.getTotalDiscountedPrice() * 100L; // VNPay yêu cầu nhân 100
 
-            // Tạo map các tham số
             Map<String, String> vnp_Params = new HashMap<>();
             vnp_Params.put("vnp_Version", "2.1.0");
             vnp_Params.put("vnp_Command", "pay");
@@ -77,129 +77,161 @@ public class PaymentServiceImpl implements PaymentService {
             vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
             vnp_Params.put("vnp_OrderType", vnp_OrderType);
             vnp_Params.put("vnp_Locale", "vn");
-
-            // Sửa Return URL - không đính kèm orderId vào URL
-            vnp_Params.put("vnp_ReturnUrl", vnp_Returnurl);
+            vnp_Params.put("vnp_ReturnUrl", vnp_Returnurl); // URL VNPay sẽ redirect về sau khi thanh toán
             vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
-            // Tạo ngày thanh toán theo múi giờ GMT+7
             Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
             String vnp_CreateDate = formatter.format(cld.getTime());
             vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
-            // Thêm thời gian hết hạn (15 phút)
-            cld.add(Calendar.MINUTE, 15);
+            cld.add(Calendar.MINUTE, 15); // Thời gian hết hạn thanh toán
             String vnp_ExpireDate = formatter.format(cld.getTime());
             vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
-            // Tạo chi tiết thanh toán và lưu vào DB
+            // Tạo và lưu PaymentDetail
             PaymentDetail paymentDetail = new PaymentDetail();
             paymentDetail.setOrder(order);
-            paymentDetail.setPaymentMethod(PaymentMethod.VNPAY);
+            paymentDetail.setPaymentMethod(PaymentMethod.VNPAY); // Gán PaymentMethod
             paymentDetail.setPaymentStatus(PaymentStatus.PENDING);
             paymentDetail.setTotalAmount(order.getTotalDiscountedPrice());
-            paymentDetail.setTransactionId(vnp_TxnRef);
+            paymentDetail.setTransactionId(vnp_TxnRef); // Lưu vnp_TxnRef để đối chiếu khi callback
             paymentDetail.setCreatedAt(LocalDateTime.now());
+            // paymentDetail = paymentRepository.save(paymentDetail); // Lưu trước khi tạo hash để có ID nếu cần thiết
 
-            // Sắp xếp tham số và tạo chuỗi hash
             List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
             Collections.sort(fieldNames);
             StringBuilder hashData = new StringBuilder();
             StringBuilder query = new StringBuilder();
-
-            for (String fieldName : fieldNames) {
+            Iterator<String> itr = fieldNames.iterator();
+            while (itr.hasNext()) {
+                String fieldName = itr.next();
                 String fieldValue = vnp_Params.get(fieldName);
                 if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                    // Xây dựng dữ liệu hash
                     hashData.append(fieldName);
                     hashData.append('=');
-                    hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
+                    hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII)); // VNPay thường dùng US_ASCII cho hash
 
-                    // Xây dựng query
-                    query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8)); // SỬA THÀNH UTF_8
+                    query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8));
                     query.append('=');
                     query.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
-
-                    if (fieldNames.indexOf(fieldName) < fieldNames.size() - 1) {
+                    if (itr.hasNext()) {
                         query.append('&');
                         hashData.append('&');
                     }
                 }
             }
-
-            // Tạo secure hash
             String queryUrl = query.toString();
             String vnp_SecureHash = hmacSHA512(vnp_HashSecret, hashData.toString());
             queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
 
-//            queryUrl += "&orderId=" + orderId; // Thêm orderId vào queryUrl
+            paymentDetail.setVnp_SecureHash(vnp_SecureHash); // Lưu hash để kiểm tra lại nếu cần
+            paymentRepository.save(paymentDetail); // Lưu paymentDetail sau khi có hash
 
-            paymentDetail.setVnp_SecureHash(vnp_SecureHash);
-            // Lưu chi tiết thanh toán
-            paymentRepository.save(paymentDetail);
-
-            // URL thanh toán hoàn chỉnh
             return vnp_PayUrl + "?" + queryUrl;
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi tạo yêu cầu thanh toán: " + e.getMessage());
+            // Log lỗi chi tiết ở backend
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi tạo yêu cầu thanh toán VNPay: " + e.getMessage(), e);
         }
     }
 
     @Override
     public PaymentDetail getPaymentById(Long paymentId) {
         return paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin thanh toán: " + paymentId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin thanh toán với ID: " + paymentId));
     }
 
     @Override
     @Transactional
     public PaymentDetail processPaymentCallback(Map<String, String> vnpParams) {
+        System.out.println("[PaymentServiceImpl] Processing VNPAY Callback with params: " + vnpParams); // LOGGING
         try {
-            // Lấy các tham số quan trọng
-            String vnp_ResponseCode = vnpParams.get("vnp_ResponseCode");
             String vnp_TxnRef = vnpParams.get("vnp_TxnRef");
-            String vnp_Amount = vnpParams.get("vnp_Amount");
-            String vnp_OrderInfo = vnpParams.get("vnp_OrderInfo");
-            String vnp_TransactionNo = vnpParams.get("vnp_TransactionNo");
-            String vnp_BankCode = vnpParams.get("vnp_BankCode");
-            String vnp_PayDate = vnpParams.get("vnp_PayDate");
+            if (vnp_TxnRef == null || vnp_TxnRef.isEmpty()) {
+                throw new IllegalArgumentException("vnp_TxnRef không được để trống trong params callback.");
+            }
 
-            // Xác minh chữ ký
-            String secureHash = vnpParams.get("vnp_SecureHash");
-
-            // Tìm PaymentDetail dựa trên vnp_TxnRef
             PaymentDetail payment = paymentRepository.findByTransactionId(vnp_TxnRef)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy giao dịch: " + vnp_TxnRef));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy giao dịch với vnp_TxnRef: " + vnp_TxnRef));
 
-            // Kiểm tra mã phản hồi
-            if ("00".equals(vnp_ResponseCode)) {
-                // Thanh toán thành công
+            // Xác minh SecureHash (Rất quan trọng)
+            // Tạo lại hashData từ params nhận được (trừ vnp_SecureHash)
+            Map<String, String> paramsToHashMap = new HashMap<>(vnpParams);
+            paramsToHashMap.remove("vnp_SecureHashType"); // Bỏ nếu có
+            paramsToHashMap.remove("vnp_SecureHash");     // Bỏ hash gốc
 
+            List<String> fieldNames = new ArrayList<>(paramsToHashMap.keySet());
+            Collections.sort(fieldNames);
+            StringBuilder hashData = new StringBuilder();
+            Iterator<String> itr = fieldNames.iterator();
+            while (itr.hasNext()) {
+                String fieldName = itr.next();
+                String fieldValue = paramsToHashMap.get(fieldName);
+                if ((fieldValue != null) && (fieldValue.length() > 0)) {
+                    hashData.append(fieldName);
+                    hashData.append('=');
+                    // Quan trọng: VNPay dùng URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()) cho dữ liệu hash
+                    hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                    if (itr.hasNext()) {
+                        hashData.append('&');
+                    }
+                }
+            }
+            String calculatedSecureHash = hmacSHA512(vnp_HashSecret, hashData.toString());
+            String receivedSecureHash = vnpParams.get("vnp_SecureHash");
 
-                payment.setPaymentStatus(PaymentStatus.COMPLETED);
-                payment.setPaymentDate(LocalDateTime.now());
-                payment.setPaymentLog(new Gson().toJson(vnpParams));
-                payment.setVnp_ResponseCode(vnp_ResponseCode);
-
-                // Cập nhật trạng thái thanh toán cho đơn hàng
-                Order order = payment.getOrder();
-                order.setPaymentStatus(PaymentStatus.COMPLETED);
-
-                // Lưu thông tin thanh toán
-                return paymentRepository.save(payment);
-            } else {
-                // Thanh toán thất bại
+            if (!calculatedSecureHash.equalsIgnoreCase(receivedSecureHash)) {
+                System.err.println("[PaymentServiceImpl] SecureHash mismatch! Calculated: " + calculatedSecureHash + ", Received: " + receivedSecureHash);
                 payment.setPaymentStatus(PaymentStatus.FAILED);
-                payment.setPaymentLog(new Gson().toJson(vnpParams));
+                payment.setPaymentLog("SecureHash mismatch. " + new Gson().toJson(vnpParams));
+                payment.setVnp_ResponseCode("97"); // Mã lỗi cho sai chữ ký
+                // Không cập nhật trạng thái đơn hàng nếu hash sai
                 return paymentRepository.save(payment);
             }
+            System.out.println("[PaymentServiceImpl] SecureHash verified successfully for TxnRef: " + vnp_TxnRef);
+
+
+            // Tiếp tục xử lý nếu hash đúng
+            String vnp_ResponseCode = vnpParams.get("vnp_ResponseCode");
+            if (vnp_ResponseCode == null && vnpParams.containsKey("vnp_TransactionStatus")) {
+                vnp_ResponseCode = vnpParams.get("vnp_TransactionStatus");
+            }
+            payment.setVnp_ResponseCode(vnp_ResponseCode); // Lưu response code
+
+            if ("00".equals(vnp_ResponseCode)) {
+                System.out.println("[PaymentServiceImpl] Payment successful for TxnRef: " + vnp_TxnRef);
+                payment.setPaymentStatus(PaymentStatus.COMPLETED);
+                payment.setPaymentDate(LocalDateTime.now()); // Thời gian hoàn tất thanh toán
+
+                Order order = payment.getOrder();
+                if (order == null) {
+                    throw new RuntimeException("Không tìm thấy đơn hàng liên kết với payment TxnRef: " + vnp_TxnRef);
+                }
+                order.setPaymentStatus(PaymentStatus.COMPLETED);
+                // orderService.saveOrder(order); // Lưu lại order đã cập nhật paymentStatus
+            } else {
+                System.err.println("[PaymentServiceImpl] Payment failed or pending for TxnRef: " + vnp_TxnRef + ", ResponseCode: " + vnp_ResponseCode);
+                payment.setPaymentStatus(PaymentStatus.FAILED);
+                Order order = payment.getOrder();
+                if (order != null) {
+                    order.setPaymentStatus(PaymentStatus.FAILED); // Cập nhật trạng thái đơn hàng thất bại
+                    // orderService.saveOrder(order);
+                }
+            }
+            payment.setPaymentLog(new Gson().toJson(vnpParams)); // Lưu toàn bộ log params
+            return paymentRepository.save(payment);
+
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi xử lý callback thanh toán: " + e.getMessage());
+            System.err.println("[PaymentServiceImpl] Exception during processPaymentCallback for params: " + vnpParams + " - Error: " + e.getMessage());
+            e.printStackTrace();
+            // Cân nhắc: không nên ném RuntimeException chung chung ở đây nếu có thể.
+            // Nếu tìm thấy payment và có lỗi xử lý, có thể cập nhật trạng thái payment là FAILED.
+            // Nếu không tìm thấy payment, thì đó là lỗi nghiêm trọng.
+            throw new RuntimeException("Lỗi khi xử lý callback thanh toán VNPay: " + e.getMessage(), e);
         }
     }
 
-    // Các phương thức hỗ trợ
     private String getRandomNumber(int len) {
         Random rnd = new Random();
         String chars = "0123456789";
@@ -211,27 +243,47 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private String getIpAddress() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-        String ipAddress = request.getHeader("X-FORWARDED-FOR");
-        if (ipAddress == null || ipAddress.isEmpty()) {
-            ipAddress = request.getRemoteAddr();
+        try {
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+            String ipAddress = request.getHeader("X-FORWARDED-FOR");
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getHeader("Proxy-Client-IP");
+            }
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getHeader("WL-Proxy-Client-IP");
+            }
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getRemoteAddr();
+            }
+            return ipAddress;
+        } catch (Exception e) {
+            // Fallback IP nếu không lấy được từ request (ví dụ: chạy trong môi trường test không có request)
+            return "127.0.0.1";
         }
-        return ipAddress;
     }
 
-    private String hmacSHA512(String key, String data) {
+    private String hmacSHA512(final String key, final String data) {
         try {
-            Mac sha512_HMAC = Mac.getInstance("HmacSHA512");
-            SecretKeySpec secret_key = new SecretKeySpec(key.getBytes(), "HmacSHA512");
-            sha512_HMAC.init(secret_key);
-            byte[] hash = sha512_HMAC.doFinal(data.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
+            if (key == null || data == null) {
+                throw new NullPointerException();
+            }
+            final Mac hmac512 = Mac.getInstance("HmacSHA512");
+            byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8); // Quan trọng: dùng UTF-8
+            final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA512");
+            hmac512.init(secretKey);
+            byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8); // Quan trọng: dùng UTF-8
+            byte[] result = hmac512.doFinal(dataBytes);
+            StringBuilder sb = new StringBuilder(2 * result.length);
+            for (byte b : result) {
                 sb.append(String.format("%02x", b));
             }
             return sb.toString();
+
         } catch (Exception ex) {
-            return "";
+            // Log lỗi chi tiết hơn
+            System.err.println("Error generating HMAC SHA512: " + ex.getMessage());
+            ex.printStackTrace();
+            return ""; // Hoặc ném một exception cụ thể
         }
     }
 }
