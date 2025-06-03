@@ -109,7 +109,9 @@ public class OrderService implements IOrderService {
 
             Order order = new Order();
             order.setUser(user);
-            order.setSellerId(sellerId); // Set sellerId for the order
+            if( sellerId != null) {
+                order.setSellerId(sellerId); // Set sellerId for the order
+            }
             order.setOrderDate(LocalDateTime.now());
             order.setShippingAddress(address);
             order.setOrderStatus(OrderStatus.PENDING);
