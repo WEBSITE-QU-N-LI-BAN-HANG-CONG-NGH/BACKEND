@@ -1,7 +1,3 @@
-Chắc chắn rồi\! Dưới đây là tệp `README.md` chi tiết hướng dẫn cách cài đặt và chạy dự án backend của bạn. Tôi đã tập trung vào các bước chính để giúp bạn khởi động máy chủ một cách nhanh chóng, đồng thời làm mờ các thông tin nhạy cảm trong tệp cấu hình.
-
------
-
 # 🚀 TechShop - Backend
 
 Chào mừng bạn đến với dự án backend của **TechShop**\! Đây là một hệ thống thương mại điện tử hoàn chỉnh được xây dựng trên nền tảng Spring Boot, cung cấp các API mạnh mẽ để quản lý sản phẩm, đơn hàng, người dùng và tích hợp thanh toán.
