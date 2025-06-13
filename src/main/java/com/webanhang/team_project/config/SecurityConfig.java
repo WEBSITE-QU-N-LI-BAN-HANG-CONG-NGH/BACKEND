@@ -1,7 +1,5 @@
 package com.webanhang.team_project.config;
 
-import com.webanhang.team_project.security.ratelimit.CloudflareFilter;
-import com.webanhang.team_project.security.ratelimit.RateLimitFilter;
 import com.webanhang.team_project.security.jwt.AuthTokenFilter;
 import com.webanhang.team_project.security.jwt.JwtEntryPoint;
 import com.webanhang.team_project.security.oauth2.OAuth2FailureHandler;
@@ -46,10 +44,7 @@ public class SecurityConfig {
     private final OAuth2FailureHandler oAuth2FailureHandler;
     private final ErrorResponseUtils errorResponseUtils;
     private final PasswordEncoder passwordEncoder;
-    private final CloudflareFilter cloudflareFilter;
-    private final RateLimitFilter rateLimitFilter;
-
-
+    // Đã xóa CloudflareFilter và RateLimitFilter khỏi đây
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
@@ -103,8 +98,7 @@ public class SecurityConfig {
                         .successHandler(oAuth2SuccessHandler)
                         .failureHandler(oAuth2FailureHandler))
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(cloudflareFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(rateLimitFilter, CloudflareFilter.class)
+                // Đã xóa 2 dòng addFilterBefore cho CloudflareFilter và RateLimitFilter
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
