@@ -62,89 +62,87 @@ Dự án sử dụng MySQL để lưu trữ dữ liệu. Tệp `Script_Database.
 Sao chép toàn bộ nội dung dưới đây và dán vào tệp vừa tạo. Sau đó, **thay thế các giá trị có dạng `your_...`** bằng thông tin cấu hình của bạn.
 
 ```properties
-# ===============================================
-#          APPLICATION CONFIGURATION
-# ===============================================
-spring.application.name=TechShop
+server.port=8080
+
+# API Prefix
 api.prefix=/api/v1
 
-# ===============================================
-#          DATABASE (MySQL) CONFIGURATION
-# ===============================================
-spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_shop
 spring.datasource.username=root
-spring.datasource.password=your_mysql_password
+spring.datasource.password=your_key
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# JPA / Hibernate
 spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.format_sql=true
+#spring.jpa.show-sql=true
+#spring.jpa.properties.hibernate.format_sql=true
+#spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+spring.jpa.open-in-view=true
 
-# ===============================================
-#          JWT & SECURITY CONFIGURATION
-# ===============================================
-jwt.secret=your_super_secret_jwt_key_that_is_long_and_secure
-auth.token.jwtSecret=your_super_secret_jwt_key_that_is_long_and_secure
-auth.token.accessExpirationInMils=30000000
-auth.token.refreshExpirationInMils=90000000
-app.useSecureCookie=true
+# JWT Configuration
+auth.token.jwtSecret=your_key
+auth.token.accessExpirationInMils=3600000999
+auth.token.refreshExpirationInMils=864000000
 
-# ===============================================
-#          OAUTH2 (GOOGLE & GITHUB)
-# ===============================================
+# Cookie Configuration
+app.useSecureCookie=false
+
+# OAuth2 Configuration
 # Google OAuth2
-spring.security.oauth2.client.registration.google.client-id=your_google_client_id
-spring.security.oauth2.client.registration.google.client-secret=your_google_client_secret
+spring.security.oauth2.client.registration.google.client-id=your_key
+spring.security.oauth2.client.registration.google.client-secret=your_key
 spring.security.oauth2.client.registration.google.scope=email,profile
 
 # GitHub OAuth2
-spring.security.oauth2.client.registration.github.client-id=your_github_client_id
-spring.security.oauth2.client.registration.github.client-secret=your_github_client_secret
-spring.security.oauth2.client.registration.github.scope=read:user,user:email
+spring.security.oauth2.client.registration.github.client-id=your_key
+spring.security.oauth2.client.registration.github.client-secret=your_key
+spring.security.oauth2.client.registration.github.scope=user:email
 
-# OAuth2 Redirect URIs
 app.oauth2.redirectUri=http://localhost:5173/oauth2/redirect
 app.oauth2.failureRedirectUri=http://localhost:5173/login
-
-# ===============================================
-#          EMAIL & OTP CONFIGURATION
-# ===============================================
-# Mail Configuration
-spring.mail.host=smtp.gmail.com
-spring.mail.port=587
-spring.mail.username=your_email@gmail.com
-spring.mail.password=your_gmail_app_password
-spring.mail.properties.mail.smtp.auth=true
-spring.mail.properties.mail.smtp.starttls.enable=true
 
 # OTP Configuration
 app.otp.expiration-minutes=10
 app.otp.resend-cooldown-minutes=2
-app.company.logo.url=https://res.cloudinary.com/dgygvrrjs/image/upload/v1745387610/ChatGPT_Image_Apr_5_2025_12_08_58_AM_ociguu.png
 
-# ===============================================
-#          EXTERNAL SERVICES (CLOUDINARY & VNPAY)
-# ===============================================
+# CORS Configuration
+cors.allowed-origins=http://localhost:5173,http://localhost:5174,http://localhost:5175
+
+# Mail Configuration
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=your_key
+spring.mail.password=your_key
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# Logging Configuration
+logging.level.org.springframework.security=DEBUG
+logging.level.com.webanhang.team_project=DEBUG
+
+# VNPAY Configuration
+vnpay.tmn-code=your_key
+vnpay.hash-secret=your_key
+vnpay.pay-url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+vnpay.return-url=http://localhost:5173/payment/result
+
 # Cloudinary Configuration
 cloudinary.cloudName=your_cloudinary_cloud_name
 cloudinary.apiKey=your_cloudinary_api_key
 cloudinary.apiSecret=your_cloudinary_api_secret
 cloudinary.apiSecure=true
 
-# VNPay Configuration
-vnpay.tmn-code=N7MGBPT4
-vnpay.hash-secret=your_vnpay_hash_secret
-vnpay.pay-url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-vnpay.return-url=http://localhost:5173/checkout?step=4
+app.company.logo.url=https://res.cloudinary.com/dgygvrrjs/image/upload/v1745387610/ChatGPT_Image_Apr_5_2025_12_08_58_AM_ociguu.png?fbclid=IwY2xjawJ4KxJleHRuA2FlbQIxMABicmlkETFnbUszR1o2RlZrQXJ2VFRXAR7SKjjUPYQHQovx3wZg3p14ksqpKnPTakahujkwPCwl21n8F7-sQJX0fXLfRg_aem_ghKIYi2m6VITMUEzqoiUOg
 
-# ===============================================
-#          SERVER & NETWORKING
-# ===============================================
-# CORS Configuration
-cors.allowed-origins=http://localhost:5173,http://localhost:5174,http://localhost:5175
-
-# Cloudflare Trusted Proxies (Keep as is)
-cloudflare.trusted-proxies=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22
+# contact info
+contact.info.phone = +1111111111
+contact.info.email = sonvtthanhthanh@gmail.com
+contact.info.address = 212F2/11 Nguyen Huu Canh, Phuong Thang Nhat, TP Vung Tau, Ba Ria - Vung Tau
+contact.info.businessHours = 8:00 - 22:00, th? Hai - Ch? Nh?t
+contact.info.facebook = https://www.facebook.com/techshop
+contact.info.instagram = https://www.instagram.com/techshop
+contact.info.youtube = https://youtube.com/techshop
 ```
 
 > ⚠️ **Lưu ý quan trọng về Mật khẩu ứng dụng Gmail:**
