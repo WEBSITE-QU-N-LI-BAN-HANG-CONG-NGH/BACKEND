@@ -28,16 +28,13 @@ Làm theo các bước sau để thiết lập và chạy dự án.
 Mở terminal của bạn và clone repository về máy:
 
 ```bash
-git clone <your-repository-url>
-cd <thư-mục-dự-án>
+git clone https://github.com/WEBSITE-QU-N-LI-BAN-HANG-CONG-NGH/BACKEND
+cd BACKEND
 ```
 
 #### Bước 2: Thiết lập Cơ sở dữ liệu
 
 Dự án sử dụng MySQL để lưu trữ dữ liệu. Tệp `Script_Database.sql` đã bao gồm mọi thứ bạn cần, từ việc tạo cơ sở dữ liệu `ecommerce` cho đến các bảng và dữ liệu mẫu cần thiết.
-
-\<details\>
-\<summary\>➡️  Click vào đây để xem hướng dẫn import database\</summary\>
 
 ##### **Cách 1: Sử dụng Command Line (Khuyên dùng)**
 
@@ -61,7 +58,6 @@ Dự án sử dụng MySQL để lưu trữ dữ liệu. Tệp `Script_Database.
 4.  Dán vào một cửa sổ truy vấn mới trong công cụ GUI.
 5.  Thực thi (Run) toàn bộ script để tạo database và các bảng.
 
-\</details\>
 
 #### Bước 3: Cấu hình `application.properties`
 
@@ -178,16 +174,11 @@ Maven sẽ tự động tải các dependency cần thiết, build và khởi ch
 2.  Tìm và mở tệp `TeamProjectApplication.java`.
 3.  Nhấn nút `Run` hoặc `Debug` bên cạnh phương thức `main`.
 
-🎉 **Tuyệt vời\!** Server của bạn giờ đang chạy tại `http://localhost:8080`. Bạn có thể bắt đầu tương tác với các API được liệt kê trong phần dưới đây.
-
 -----
 
 ## 🗺️ Cấu trúc API
 
 Tất cả các API đều có tiền tố là `/api/v1`.
-
-\<details\>
-\<summary\>➡️ Click vào đây để xem chi tiết các API Endpoints\</summary\>
 
   * `/api/v1/auth/**`: Các API liên quan đến xác thực (đăng nhập, đăng ký, OTP,...).
   * `/api/v1/admin/**`: Các API dành cho quản trị viên.
@@ -199,4 +190,3 @@ Tất cả các API đều có tiền tố là `/api/v1`.
   * `/api/v1/orders/**`: Các API quản lý đơn hàng.
   * `/api/v1/payment/**`: Các API xử lý thanh toán.
 
-\</details\>
