@@ -38,7 +38,7 @@ public class OtpService {
     @Value("${app.otp.resend-cooldown-minutes}")
     private int resendCooldownMinutes;
 
-    @Value("${app.company.logo.url}") // Thêm URL logo từ config
+    @Value("${app.company.logo.url}")
     private String companyLogoUrl;
 
     // Lưu trữ OTP và thời gian hết hạn (email -> [otp, expirationTime])
@@ -49,22 +49,18 @@ public class OtpService {
      */
     public String generateOtp(String email) {
         SecureRandom random = new SecureRandom();
-        int otp = 100000 + random.nextInt(900000); // OTP 6 số
+        int otp = 100000 + random.nextInt(900000);
         String otpString = String.valueOf(otp);
 
-        // Lưu OTP và thời gian hết hạn
         otpStorage.put(email, new OtpData(
                 otpString,
                 LocalDateTime.now().plusMinutes(otpExpirationMinutes),
-                LocalDateTime.now() // Lưu thời gian tạo OTP
+                LocalDateTime.now()
         ));
 
         return otpString;
     }
 
-    /**
-     * Kiểm tra OTP có hợp lệ không
-     */
     public boolean validateOtp(String email, String otp) {
         OtpData otpData = otpStorage.get(email);
 
@@ -72,7 +68,6 @@ public class OtpService {
             return false;
         }
 
-        // Check if OTP matches and is not expired
         boolean isValid = otpData.getOtp().equals(otp) &&
                 LocalDateTime.now().isBefore(otpData.getExpirationTime());
 
@@ -86,10 +81,8 @@ public class OtpService {
             if (user != null && !user.isActive() && !user.isBanned()) {
                 activateUserAccount(email);
             }
-            // Xóa OTP sau khi đã dùng thành công
             otpStorage.remove(email);
         } else if (LocalDateTime.now().isAfter(otpData.getExpirationTime())) {
-            // Nếu OTP hết hạn, xóa nó khỏi storage
             otpStorage.remove(email);
         }
 
@@ -97,7 +90,6 @@ public class OtpService {
         return isValid;
     }
 
-    /// --- New: Check if resend is allowed based on cooldown ---
     public boolean isResendAllowed(String email) {
         OtpData existingOtpData = otpStorage.get(email);
         if (existingOtpData == null) {
@@ -128,9 +120,6 @@ public class OtpService {
         return 0; // Cooldown has passed
     }
 
-    /**
-     * Gửi email chứa OTP với định dạng HTML
-     */
     public void sendOtpEmail(String email, String otp) {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         try {
@@ -157,14 +146,10 @@ public class OtpService {
 
         } catch (MessagingException e) {
             log.error("Lỗi khi gửi email OTP HTML tới {}: {}", email, e.getMessage());
-            // Xử lý lỗi phù hợp (ví dụ: throw exception tùy chỉnh)
             throw new RuntimeException("Không thể gửi email OTP.", e);
         }
     }
 
-    /**
-     * Kích hoạt tài khoản user sau khi xác thực OTP thành công
-     */
     private void activateUserAccount(String email) {
         User user = userRepository.findByEmail(email);
         if (user != null) {
@@ -175,11 +160,11 @@ public class OtpService {
 
 
     @Getter
-    @AllArgsConstructor// Use Lombok Getter for cleaner code
+    @AllArgsConstructor
     private static class OtpData {
         private final String otp;
         private final LocalDateTime expirationTime;
-        private final LocalDateTime generationTime; // Added generation time
+        private final LocalDateTime generationTime;
     }
 
     public void sendOrderMail(String email, Order order) {

@@ -53,9 +53,8 @@ public class AppUserDetails implements UserDetails, OAuth2User {
         return new AppUserDetails(
                 user.getId(),
                 user.getEmail(),
-                // Mật khẩu có thể không cần thiết hoặc là một giá trị ngẫu nhiên cho OAuth2 user
                 user.getPassword(),
-                user.isActive(), // Sử dụng trạng thái active từ User
+                user.isActive(),
                 authorities,
                 attributes
         );

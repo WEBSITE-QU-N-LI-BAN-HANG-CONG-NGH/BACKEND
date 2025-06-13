@@ -3,12 +3,11 @@ package com.webanhang.team_project.controller.admin;
 import com.webanhang.team_project.dto.response.ApiResponse;
 import com.webanhang.team_project.service.admin.IAdminDashboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -47,5 +46,15 @@ public class AdminDashboardController {
     public ResponseEntity<ApiResponse> getTopSellingProduct(@PathVariable int limit) {
         List<Map<String, Object>> topSellingProducts = adminDashboardService.getTopSellingProducts(limit);
         return ResponseEntity.ok(ApiResponse.success(topSellingProducts, "Get top selling product success"));
+    }
+
+    // add revenue by range of time
+    @GetMapping("/revenue-by-date-range")
+    public ResponseEntity<ApiResponse> getRevenueByDateRange(
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate)
+    {
+        List<Map<String, Object>> revenueData = adminDashboardService.getRevenueByDateRange(startDate, endDate);
+        return ResponseEntity.ok(ApiResponse.success(revenueData, "Get revenue by date range success"));
     }
 }

@@ -27,14 +27,6 @@ public class ImageController {
     private final CloudinaryService cloudinaryService;
     private final ProductService productService;
 
-    /**
-     * Tải lên hình ảnh cho sản phẩm
-     *
-     * @param productId ID của sản phẩm cần thêm hình ảnh
-     * @param file File hình ảnh được tải lên (MultipartFile)
-     * @return Thông tin hình ảnh đã tải lên
-     * @throws IOException Khi có lỗi xử lý file
-     */
     @PostMapping("/upload/{productId}")
     public ResponseEntity<?> uploadImage(
             @PathVariable Long productId,
@@ -55,12 +47,6 @@ public class ImageController {
         return ResponseEntity.ok(ApiResponse.success(data, "Tải lên hình ảnh thành công"));
     }
 
-    /**
-     * Xóa hình ảnh theo ID
-     *
-     * @param imageId ID của hình ảnh cần xóa
-     * @return Thông báo kết quả xóa
-     */
     @DeleteMapping("/delete/{imageId}")
     public ResponseEntity<?> deleteImage(@PathVariable Long imageId) {
         try {
@@ -82,12 +68,6 @@ public class ImageController {
         }
     }
 
-    /**
-     * Lấy danh sách hình ảnh của sản phẩm
-     *
-     * @param productId ID của sản phẩm
-     * @return Danh sách hình ảnh của sản phẩm
-     */
     @GetMapping("/product/{productId}")
     public ResponseEntity<ApiResponse> getProductImages(@PathVariable Long productId) {
         productService.findProductById(productId);

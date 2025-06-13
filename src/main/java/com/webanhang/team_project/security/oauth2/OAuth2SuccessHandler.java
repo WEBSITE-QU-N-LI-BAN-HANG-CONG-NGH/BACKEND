@@ -1,10 +1,9 @@
 package com.webanhang.team_project.security.oauth2;
 
-// ... (Các import khác giữ nguyên)
-import com.webanhang.team_project.model.User; // Cần thiết nếu AppUserDetails không có getter cho email
+import com.webanhang.team_project.model.User;
 import com.webanhang.team_project.repository.UserRepository;
 import com.webanhang.team_project.security.jwt.JwtUtils;
-import com.webanhang.team_project.security.userdetails.AppUserDetails; // ** Thêm import này **
+import com.webanhang.team_project.security.userdetails.AppUserDetails;
 import com.webanhang.team_project.utils.CookieUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,15 +14,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-// import org.springframework.security.oauth2.core.user.OAuth2User; // Không cần trực tiếp nữa
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder; // ** Thêm import này cho redirect lỗi **
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.net.URLEncoder; // ** Thêm import này cho redirect lỗi **
-import java.nio.charset.StandardCharsets; // ** Thêm import này cho redirect lỗi **
-// import java.util.Map; // Không cần trực tiếp nữa
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor

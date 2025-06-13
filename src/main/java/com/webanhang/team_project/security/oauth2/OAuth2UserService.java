@@ -30,7 +30,7 @@ import java.util.Optional; // Thêm import này
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor // Giữ nguyên nếu bạn dùng Lombok và final fields
+@RequiredArgsConstructor
 @Slf4j
 public class OAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;

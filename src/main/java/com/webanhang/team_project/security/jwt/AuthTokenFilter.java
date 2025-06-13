@@ -20,14 +20,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Filter xử lý xác thực JWT token cho mỗi request
- * Kiểm tra và set thông tin authentication vào SecurityContext
- *
- * Mục đích: Bộ lọc (filter) xử lý xác thực JWT token cho mỗi yêu cầu HTTP,
- * kiểm tra token hợp lệ và thiết lập thông tin xác thực vào SecurityContext của Spring Security.
- */
-
 @Component
 @RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {

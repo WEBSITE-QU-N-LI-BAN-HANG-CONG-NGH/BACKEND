@@ -1,4 +1,4 @@
-package com.webanhang.team_project.security;
+package com.webanhang.team_project.security.ratelimit;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,7 +17,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final Map<String, RequestCount> requestCounts = new ConcurrentHashMap<>();
 
     private final int MAX_REQUESTS = 100;
-    private final long TIME_WINDOW = 60 * 1000; // 1 phút
+    private final long TIME_WINDOW = 60 * 1000;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)

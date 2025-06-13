@@ -1,6 +1,7 @@
 package com.webanhang.team_project.service.admin;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -23,4 +24,6 @@ public interface IAdminDashboardService {
 
     // 5. API cho sản phẩm bán chạy
     List<Map<String, Object>> getTopSellingProducts(int limit);
+
+    List<Map<String, Object>> getRevenueByDateRange(LocalDate startDate, LocalDate endDate);
 }

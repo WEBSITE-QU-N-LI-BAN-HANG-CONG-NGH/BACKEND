@@ -19,6 +19,7 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -239,6 +240,36 @@ public class AdminDashboardService implements IAdminDashboardService {
         }
 
         return topProducts;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<Map<String, Object>> getRevenueByDateRange(LocalDate startDate, LocalDate endDate) {
+        List<Order> ordersInRange = orderRepository.findByOrderDateBetweenAndOrderStatus(
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59),
+                OrderStatus.DELIVERED
+        );
+
+        Map<LocalDate, BigDecimal> revenueByDay = ordersInRange.stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getOrderDate().toLocalDate(),
+                        Collectors.reducing(
+                                BigDecimal.ZERO,
+                                order -> BigDecimal.valueOf(order.getTotalDiscountedPrice()),
+                                BigDecimal::add
+                        )
+                ));
+
+        return revenueByDay.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> {
+                    Map<String, Object> dayData = new HashMap<>();
+                    dayData.put("name", entry.getKey().format(DateTimeFormatter.ofPattern("dd/MM")));
+                    dayData.put("revenue", entry.getValue());
+                    return dayData;
+                })
+                .collect(Collectors.toList());
     }
 
 

@@ -1,7 +1,7 @@
 package com.webanhang.team_project.config;
 
-import com.webanhang.team_project.security.CloudflareFilter;
-import com.webanhang.team_project.security.RateLimitFilter;
+import com.webanhang.team_project.security.ratelimit.CloudflareFilter;
+import com.webanhang.team_project.security.ratelimit.RateLimitFilter;
 import com.webanhang.team_project.security.jwt.AuthTokenFilter;
 import com.webanhang.team_project.security.jwt.JwtEntryPoint;
 import com.webanhang.team_project.security.oauth2.OAuth2FailureHandler;
@@ -29,7 +29,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.List;
-//: Cấu hình bảo mật cho ứng dụng Spring Security, định nghĩa các quy tắc xác thực và phân quyền.
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -51,13 +51,11 @@ public class SecurityConfig {
 
 
 
-//  Cung cấp AuthenticationManager để xác thực người dùng.
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
-    //Cấu hình DaoAuthenticationProvider sử dụng AppUserDetailsService và PasswordEncoder để xác thực.
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         var authProvider = new DaoAuthenticationProvider();
@@ -66,7 +64,6 @@ public class SecurityConfig {
         return authProvider;
     }
 
-//    Tùy chỉnh phản hồi khi người dùng bị từ chối truy cập (HTTP 403) bằng ErrorResponseUtils.
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (request, response, accessDeniedException) ->
@@ -80,26 +77,26 @@ public class SecurityConfig {
         List<String> securedUrls = List.of(API + "/cart/**", API + "/cartItems/**", API + "/orders/**");
 
         http
-                .csrf(AbstractHttpConfigurer::disable)  //Tắt CSRF (csrf().disable()): Phù hợp với API không trạng thái (stateless) sử dụng JWT.
+                .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authEntryPoint)  //Thiết lập xử lý lỗi xác thực (authEntryPoint) và từ chối truy cập (accessDeniedHandler).
+                        .authenticationEntryPoint(authEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(API + "/auth/**").permitAll() // Cho phép tất cả các API xác thực
-                        .requestMatchers(API + "/categories/**").permitAll() // Cho phép API danh mục công khai
-                        .requestMatchers(API + "/products/**").permitAll() // Cho phép API sản phẩm công khai (xem)
-                        .requestMatchers(API + "/contact/info").permitAll() // Cho phép API thông tin liên hệ
-                        .requestMatchers(API + "/chatbot/**").permitAll() // Cho phép API chatbot
+                        .requestMatchers(API + "/auth/**").permitAll()
+                        .requestMatchers(API + "/categories/**").permitAll()
+                        .requestMatchers(API + "/products/**").permitAll()
+                        .requestMatchers(API + "/contact/info").permitAll()
+                        .requestMatchers(API + "/chatbot/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers(API + "/payment/vnpay-callback").permitAll() // Cho phép callback từ VNPay
+                        .requestMatchers(API + "/payment/vnpay-callback").permitAll()
                         .requestMatchers(API + "/admin/**").hasAuthority("ADMIN")
                         .requestMatchers(API + "/seller/**").hasAnyAuthority("SELLER")
                         .requestMatchers(API + "/customer/**").hasAnyAuthority("CUSTOMER")
                         .requestMatchers(securedUrls.toArray(String[]::new)).authenticated()
-                        .requestMatchers("/oauth2/**").permitAll() // Vẫn cho phép OAuth2 flow
-                        .anyRequest().authenticated()) // <--- THAY ĐỔI: Yêu cầu xác thực cho bất kỳ request nào khác
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oAuth2UserService))
@@ -107,7 +104,7 @@ public class SecurityConfig {
                         .failureHandler(oAuth2FailureHandler))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(cloudflareFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(rateLimitFilter, CloudflareFilter.class) // Đúng: rateLimitFilter sẽ được chèn vào ngay trước cloudflareFilter
+                .addFilterBefore(rateLimitFilter, CloudflareFilter.class)
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

@@ -47,11 +47,6 @@ public class AuthController {
     @Value("${auth.token.refreshExpirationInMils}")
     private Long refreshTokenExpirationTime;
 
-    /**
-     * Xử lý đăng nhập và tạo cặp access token + refresh token
-     * Access token trả về trong response body
-     * Refresh token được lưu trong cookie
-     */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> authenticateUser(@RequestBody LoginRequest request,
             HttpServletResponse response) {
@@ -67,7 +62,6 @@ public class AuthController {
 
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("accessToken", accessToken);
-//            responseData.put("refreshToken", refreshToken);
 
             Map<String, Object> userMap = new HashMap<>();
             userMap.put("id", user.getId());
@@ -86,19 +80,12 @@ public class AuthController {
         }
     }
 
-    /**
-     * Đăng ký tài khoản mới
-     * Gửi OTP qua email để xác thực
-     */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> registerUser(@RequestBody RegisterRequest request) {
         userService.registerUser(request);
         return ResponseEntity.ok(ApiResponse.success(null, "Mã xác thực đã được gửi tới email. Vui lòng kiểm tra và xác thực."));
     }
 
-    /**
-     * Xác thực OTP khi đăng ký
-     */
     @PostMapping("/register/verify")
     public ResponseEntity<ApiResponse> verifyOtp(@RequestBody OtpVerificationRequest request) {
         try {
@@ -117,10 +104,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Tạo access token mới từ refresh token
-     * Kiểm tra tính hợp lệ của refresh token trong cookie
-     */
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse> refreshAccessToken(HttpServletRequest request) {
         try {
@@ -146,18 +129,12 @@ public class AuthController {
         }
     }
 
-    /**
-     * Đăng xuất - xóa refresh token cookie
-     */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse> logout(HttpServletResponse response) {
         cookieUtils.deleteRefreshTokenCookie(response);
         return ResponseEntity.ok(ApiResponse.success(null, "Đăng xuất thành công!"));
     }
 
-    /**
-     * Gửi lại OTP nếu người dùng không nhận được
-     */
     @PostMapping("/register/resend-otp")
     public ResponseEntity<ApiResponse> resendOtp(@RequestBody Map<String, String> request) {
         String email = request.get("email");
