@@ -7,19 +7,27 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
-    @Value("${cors.allowed-origins}")
-    private String allowedOrigins;
+
     @Value("${api.prefix}")
     private String API;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // Danh sách các pattern của origin được phép
+        String[] allowedOriginPatterns = new String[]{
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:5175",
+            "https://*.vercel.app" // Chấp nhận tất cả các tên miền phụ của vercel.app
+        };
+
         registry.addMapping(API + "/**")
-                .allowedOrigins(allowedOrigins.split(","))
-                .allowedMethods("GET", "POST", "PUT", "DELETE","OPTIONS")
+                // Sử dụng allowedOriginPatterns thay cho allowedOrigins
+                .allowedOriginPatterns(allowedOriginPatterns)
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH") // Thêm PATCH nếu cần
                 .allowedHeaders("*")
-                .exposedHeaders("CF-IPCountry", "CF-RAY", "CF-Connecting-IP") // IPCountry, ID-request of Cloudflare, IP of client
+                .exposedHeaders("CF-IPCountry", "CF-RAY", "CF-Connecting-IP")
                 .allowCredentials(true)
-                .maxAge(3600); // ~ 1h
+                .maxAge(3600);
     }
 }
