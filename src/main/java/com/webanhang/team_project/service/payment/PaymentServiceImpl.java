@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -82,15 +85,19 @@ public class PaymentServiceImpl implements PaymentService {
             vnp_Params.put("vnp_ReturnUrl", vnp_Returnurl);
             vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
-            // Tạo ngày thanh toán theo múi giờ GMT+7
-            Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-            String vnp_CreateDate = formatter.format(cld.getTime());
-            vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
+            ZoneId vietnamZoneId = ZoneId.of("Asia/Ho_Chi_Minh");
 
-            // Thêm thời gian hết hạn (15 phút)
-            cld.add(Calendar.MINUTE, 15);
-            String vnp_ExpireDate = formatter.format(cld.getTime());
+            // Lấy thời gian hiện tại theo múi giờ Việt Nam
+            LocalDateTime now = LocalDateTime.now(vietnamZoneId);
+
+            // Định dạng theo yêu cầu của VNPAY (yyyyMMddHHmmss)
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
+            // Tạo ngày tạo và ngày hết hạn
+            String vnp_CreateDate = now.format(formatter);
+            String vnp_ExpireDate = now.plusMinutes(15).format(formatter); // Thêm 15 phút cho thời gian hết hạn
+
+            vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
             vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
             // Tạo chi tiết thanh toán và lưu vào DB
