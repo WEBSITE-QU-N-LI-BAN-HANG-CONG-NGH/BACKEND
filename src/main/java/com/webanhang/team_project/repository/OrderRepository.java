@@ -103,4 +103,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Double sumRevenueByDateRange(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+            
 }

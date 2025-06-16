@@ -19,7 +19,7 @@ public interface IOrderService {
     OrderDTO convertToDto(Order order);
 
     public Order findOrderById(Long orderId);
-    public List<Order> userOrderHistory(Long userId);
+    public List<Order> userOrderHistory(Long userId, OrderStatus status);
     List <Order> placeOrder(Long addressId, User user);
     public Order confirmedOrder(Long orderId);
     public Order shippedOrder(Long orderId);
@@ -33,14 +33,4 @@ public interface IOrderService {
             String search, OrderStatus status,
             LocalDate startDate, LocalDate endDate,
             Pageable pageable);
-
-    List<Order> getPendingOrders();
-
-    List<Order> getConfirmedOrders();
-
-    List<Order> getShippedOrders();
-
-    List<Order> getDeliveredOrders();
-
-    List<Order> getCancelledOrders();
 }

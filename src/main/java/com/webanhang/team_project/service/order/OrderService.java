@@ -60,8 +60,12 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public List<Order> userOrderHistory(Long userId) {
-        return orderRepository.findByUserId(userId);
+    public List<Order> userOrderHistory(Long userId, OrderStatus status) {
+        if (status != null) {
+            return orderRepository.findByUserIdAndOrderStatus(userId, status);
+        } else {
+            return orderRepository.findByUserId(userId);
+        }
     }
 
     @Override
@@ -384,33 +388,4 @@ public class OrderService implements IOrderService {
         return orders.map(OrderDetailDTO::new);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Order> getPendingOrders() {
-        return orderRepository.findByOrderStatus(OrderStatus.PENDING);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Order> getConfirmedOrders() {
-        return orderRepository.findOrderByOrderStatus(OrderStatus.CONFIRMED);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Order> getShippedOrders() {
-        return orderRepository.findOrderByOrderStatus(OrderStatus.SHIPPED);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Order> getDeliveredOrders() {
-        return orderRepository.findOrderByOrderStatus(OrderStatus.DELIVERED);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Order> getCancelledOrders() {
-        return orderRepository.findOrderByOrderStatus(OrderStatus.CANCELLED);
-    }
 }

@@ -1,6 +1,7 @@
 package com.webanhang.team_project.controller.common;
 
 import com.webanhang.team_project.dto.order.OrderDTO;
+import com.webanhang.team_project.enums.OrderStatus;
 import com.webanhang.team_project.model.Cart;
 import com.webanhang.team_project.model.Order;
 import com.webanhang.team_project.dto.response.ApiResponse;
@@ -49,7 +50,7 @@ public class OrderController {
                     .body(ApiResponse.error("Invalid user session."));
         }
 
-        List<Order> orders = orderService.userOrderHistory(user.getId());
+        List<Order> orders = orderService.userOrderHistory(user.getId(), null);
         List<OrderDTO> orderDTOs = new ArrayList<>();
         for (Order order : orders) {
             OrderDTO orderDTO = new OrderDTO(order);
@@ -142,8 +143,18 @@ public class OrderController {
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<ApiResponse> getPendingOrders() {
-        List<Order> orders = orderService.getPendingOrders();
+    public ResponseEntity<ApiResponse> getPendingOrders(@RequestHeader("Authorization") String jwt) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized"));
+        }
+        User user = userService.findUserByJwt(jwt);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid user session."));
+        }
+        List<Order> orders = orderService.userOrderHistory(user.getId(), OrderStatus.PENDING);
         List<OrderDTO> orderDTOs = new ArrayList<>();
         for (Order order : orders) {
             OrderDTO orderDTO = new OrderDTO(order);
@@ -153,8 +164,18 @@ public class OrderController {
     }
 
     @GetMapping("/confirmed")
-    public ResponseEntity<ApiResponse> getConfirmedOrders() {
-        List<Order> orders = orderService.getConfirmedOrders();
+    public ResponseEntity<ApiResponse> getConfirmedOrders(@RequestHeader("Authorization") String jwt) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized"));
+        }
+        User user = userService.findUserByJwt(jwt);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid user session."));
+        }
+        List<Order> orders = orderService.userOrderHistory(user.getId(), OrderStatus.CONFIRMED);
         List<OrderDTO> orderDTOs = new ArrayList<>();
         for (Order order : orders) {
             OrderDTO orderDTO = new OrderDTO(order);
@@ -164,8 +185,18 @@ public class OrderController {
     }
 
     @GetMapping("/shipped")
-    public ResponseEntity<ApiResponse> getShippedOrders() {
-        List<Order> orders = orderService.getShippedOrders();
+    public ResponseEntity<ApiResponse> getShippedOrders(@RequestHeader("Authorization") String jwt) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized"));
+        }
+        User user = userService.findUserByJwt(jwt);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid user session."));
+        }
+        List<Order> orders = orderService.userOrderHistory(user.getId(), OrderStatus.SHIPPED);
         List<OrderDTO> orderDTOs = new ArrayList<>();
         for (Order order : orders) {
             OrderDTO orderDTO = new OrderDTO(order);
@@ -175,8 +206,18 @@ public class OrderController {
     }
 
     @GetMapping("/delivered")
-    public ResponseEntity<ApiResponse> getDeliveredOrders() {
-        List<Order> orders = orderService.getDeliveredOrders();
+    public ResponseEntity<ApiResponse> getDeliveredOrders(@RequestHeader("Authorization") String jwt) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized"));
+        }
+        User user = userService.findUserByJwt(jwt);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid user session."));
+        }
+        List<Order> orders = orderService.userOrderHistory(user.getId(), OrderStatus.DELIVERED);
         List<OrderDTO> orderDTOs = new ArrayList<>();
         for (Order order : orders) {
             OrderDTO orderDTO = new OrderDTO(order);
@@ -186,8 +227,18 @@ public class OrderController {
     }
 
     @GetMapping("/cancelled")
-    public ResponseEntity<ApiResponse> getCancelledOrders() {
-        List<Order> orders = orderService.getCancelledOrders();
+    public ResponseEntity<ApiResponse> getCancelledOrders(@RequestHeader("Authorization") String jwt) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized"));
+        }
+        User user = userService.findUserByJwt(jwt);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid user session."));
+        }
+        List<Order> orders = orderService.userOrderHistory(user.getId(), OrderStatus.CANCELLED);
         List<OrderDTO> orderDTOs = new ArrayList<>();
         for (Order order : orders) {
             OrderDTO orderDTO = new OrderDTO(order);
