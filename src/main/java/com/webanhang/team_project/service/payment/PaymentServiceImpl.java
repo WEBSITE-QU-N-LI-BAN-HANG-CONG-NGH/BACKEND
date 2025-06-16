@@ -43,9 +43,6 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${vnpay.return-url}")
     private String vnp_Returnurl;
 
-    // @Value("${vnpay.ipn-url}")
-    // private String vnp_IpnUrl;
-
     private final IOrderService orderService;
 
     private final PaymentRepository paymentRepository;
@@ -87,7 +84,6 @@ public class PaymentServiceImpl implements PaymentService {
             // Sửa Return URL - không đính kèm orderId vào URL
             vnp_Params.put("vnp_ReturnUrl", vnp_Returnurl);
             vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
-            // vnp_Params.put("vnp_IpnUrl", vnp_IpnUrl);
 
             ZoneId vietnamZoneId = ZoneId.of("Asia/Ho_Chi_Minh");
 
