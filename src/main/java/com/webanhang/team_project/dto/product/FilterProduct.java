@@ -17,4 +17,5 @@ public class FilterProduct {
     private Integer maxPrice;
     private String sort;
     private String keyword;
+    private String brand; // Thêm trường này
 }

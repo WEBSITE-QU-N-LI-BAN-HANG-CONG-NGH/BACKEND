@@ -27,9 +27,11 @@ public class ProductController {
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            // Thêm tham số brand để nhận từ API
+            @RequestParam(required = false) String brand
     ) {
-        // Create FilterProduct object from request parameters
+        // Tạo đối tượng FilterProduct từ các tham số request
         FilterProduct filterProduct = new FilterProduct();
         filterProduct.setTopLevelCategory(topLevelCategory);
         filterProduct.setSecondLevelCategory(secondLevelCategory);
@@ -38,14 +40,11 @@ public class ProductController {
         filterProduct.setMaxPrice(maxPrice);
         filterProduct.setSort(sort);
         filterProduct.setKeyword(keyword);
+        // Gán giá trị brand nhận được
+        filterProduct.setBrand(brand);
 
-        // Log the filter request for debugging
-        System.out.println("Processing filter request with parameters: " + filterProduct);
-
-        // Get filtered products
         List<Product> filteredProducts = productService.findAllProductsByFilter(filterProduct);
 
-        // Convert to DTOs
         List<ProductDTO> productDTOs = filteredProducts.stream()
                 .map(ProductDTO::new)
                 .toList();
